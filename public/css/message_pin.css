@@ -1,0 +1,339 @@
+
+.system-message{
+
+    text-align:center;
+    margin:10px 0;
+    font-size:13px;
+    color:#667781;
+
+}
+
+.system-message span{
+
+    background:#f0f2f5;
+    padding:6px 10px;
+    border-radius:8px;
+
+}
+
+.pin-system{
+    text-align:center;
+    color:#8696a0;
+    font-size:13px;
+    margin:10px 0;
+}
+
+.pinned-bar{
+    background:#202c33;
+    padding:8px 12px;
+    border-bottom:1px solid #2f3b43;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    cursor:pointer;
+}
+
+.pinned-bar .pin-icon{
+    color:#25D366;
+}
+
+.pinned-bar .pin-text{
+    color:#e9edef;
+    font-size:13px;
+    flex:1;
+}
+
+.pinned-bar .pin-count{
+    color:#8696a0;
+    font-size:12px;
+}
+
+.pin-navigator{
+    position:fixed;
+    bottom:120px;
+    right:30px;
+    background:#202c33;
+    padding:10px;
+    border-radius:8px;
+    z-index:9999;
+}
+
+.pin-nav-box{
+    display:flex;
+    gap:10px;
+    align-items:center;
+}
+
+.pin-nav-box button{
+    background:#2a3942;
+    border:none;
+    color:white;
+    padding:6px 10px;
+    border-radius:4px;
+    cursor:pointer;
+}
+
+
+.pin-menu-arrow{
+cursor:pointer;
+padding:4px;
+}
+
+#pinned-bar{
+position:relative;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:8px 12px 8px 16px;
+background:#202c33;
+border-bottom:1px solid #2a3942;
+cursor:pointer;
+overflow:hidden;
+z-index:5;
+user-select:none;
+}
+
+#pinned-bar:hover .pin-menu-arrow{
+opacity:1;
+}
+
+#pin-context-menu{
+position:absolute;
+background:#233138;
+color:white;
+border-radius:8px;
+box-shadow:0 4px 20px rgba(0,0,0,0.4);
+width:160px;
+z-index:9999;
+}
+
+.pin-menu-item{
+padding:10px 14px;
+cursor:pointer;
+}
+
+.pin-menu-item:hover{
+background:#2a3942;
+}
+
+
+
+/* slide animation */
+
+.pin-slide{
+display:flex;
+width:100%;
+align-items:center;
+justify-content:space-between;
+animation:pinSlideIn 0.25s ease;
+}
+
+.pin-slide-out{
+animation:pinSlideOut 0.15s ease forwards;
+}
+
+@keyframes pinSlideIn{
+from{
+transform:translateY(-10px);
+opacity:0;
+}
+to{
+transform:translateY(0);
+opacity:1;
+}
+}
+
+@keyframes pinSlideOut{
+to{
+transform:translateY(10px);
+opacity:0;
+}
+}
+
+/* left section */
+
+.pinned-left{
+display:flex;
+align-items:center;
+gap:8px;
+overflow:hidden;
+flex:1;
+}
+
+.pin-media-icon{
+font-size:14px;
+}
+
+/* preview text */
+
+.pin-text{
+font-size:13px;
+color:#d1d7db;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+max-width:260px;
+}
+
+/* thumbnail preview */
+
+.pin-thumb{
+width:26px;
+height:26px;
+border-radius:4px;
+object-fit:cover;
+}
+
+/* arrow */
+
+.pin-menu-arrow{
+opacity:0;
+transition:opacity 0.2s;
+margin-left:6px;
+}
+
+#pinned-bar:hover .pin-menu-arrow{
+opacity:1;
+}
+
+/* progress lines */
+
+.pin-progress{
+position:absolute;
+left:2px;
+top:6px;
+bottom:6px;
+width:4px;
+display:flex;
+flex-direction:column;
+gap:2px;
+overflow:hidden; /* prevents green overflow glitch */
+}
+
+.pin-line{
+flex:1;
+width:3px;
+background:#2a3942;
+border-radius:2px;
+transition:background 0.15s ease;
+}
+
+.pin-line.active{
+background:#25D366;
+}
+
+/* ===============================
+   PIN LIMIT MODAL (WhatsApp style)
+================================ */
+
+#pin-limit-modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+
+display:flex;
+align-items:center;
+justify-content:center;
+
+background:rgba(0,0,0,0.35);
+backdrop-filter:blur(6px);
+
+z-index:9999;
+
+animation:pinFade .18s ease;
+}
+
+@keyframes pinFade{
+from{opacity:0}
+to{opacity:1}
+}
+
+.pin-limit-box{
+
+background:#202c33;
+width:340px;
+
+border-radius:16px;
+
+padding:22px;
+
+text-align:center;
+
+box-shadow:
+0 20px 60px rgba(0,0,0,0.6),
+0 4px 12px rgba(0,0,0,0.3);
+
+animation:pinScale .18s cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes pinScale{
+from{
+transform:scale(.85);
+opacity:0;
+}
+to{
+transform:scale(1);
+opacity:1;
+}
+}
+
+.pin-limit-title{
+font-size:17px;
+font-weight:600;
+color:#e9edef;
+margin-bottom:10px;
+}
+
+.pin-limit-text{
+color:#d1d7db;
+font-size:14px;
+margin-bottom:6px;
+}
+
+.pin-limit-text2{
+color:#8696a0;
+font-size:13px;
+margin-bottom:18px;
+}
+
+.pin-limit-actions{
+display:flex;
+justify-content:center;
+gap:12px;
+}
+
+.pin-btn{
+border:none;
+padding:9px 16px;
+border-radius:10px;
+cursor:pointer;
+font-size:13px;
+font-weight:500;
+transition:all .15s ease;
+}
+
+.cancel-btn{
+background:#2a3942;
+color:#e9edef;
+}
+
+.cancel-btn:hover{
+background:#34444d;
+}
+
+.replace-btn{
+background:#25D366;
+color:white;
+}
+
+.replace-btn:hover{
+background:#20bd5a;
+transform:translateY(-1px);
+}
+.msg-pin{
+font-size:11px;
+margin-right:4px;
+opacity:0.9;
+}

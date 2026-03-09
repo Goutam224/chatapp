@@ -1,0 +1,124 @@
+/* ===============================
+WHATSAPP HOVER ARROW FIX
+=============================== */
+
+.msg{
+    position:relative;
+}
+
+/* arrow button */
+.msg-hover-arrow{
+
+    position:absolute;
+    top:6px;
+    right:6px;
+
+    width:22px;
+    height:22px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    background:rgba(0,0,0,0.55);
+    border-radius:50%;
+
+    font-size:12px;
+    color:#e9edef;
+
+    cursor:pointer;
+
+    opacity:0;
+    transition:opacity .15s ease;
+
+    z-index:5; /* IMPORTANT */
+}
+
+/* show arrow on hover */
+.msg:hover .msg-hover-arrow{
+    opacity:1;
+}
+
+/* arrow symbol */
+.msg-hover-arrow::before{
+    content:"▾";
+}
+
+/* ===============================
+WHATSAPP CONTEXT MENU
+=============================== */
+
+#custom-context-menu{
+
+    background:#233138;
+    border-radius:8px;
+    padding:6px 0;
+
+    min-width:200px;
+
+    box-shadow:0 4px 18px rgba(0,0,0,0.35);
+
+    font-size:14px;
+    color:#e9edef;
+
+    animation:menuFade .12s ease;
+}
+
+@keyframes menuFade{
+    from{
+        opacity:0;
+        transform:translateY(-5px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+.context-item{
+
+    display:flex;
+    align-items:center;
+    gap:12px;
+
+    padding:10px 16px;
+
+    cursor:pointer;
+
+    transition:background .12s ease;
+}
+
+.context-item:hover{
+    background:#182229;
+}
+
+.context-icon{
+    width:16px;
+    text-align:center;
+    opacity:.9;
+}
+
+.context-divider{
+    height:1px;
+    background:#2a3942;
+    margin:6px 0;
+}
+#custom-context-menu{
+    position:fixed;
+    z-index:999999;
+}
+
+#custom-context-menu{
+    animation: menuFadeIn .12s ease;
+}
+
+@keyframes menuFadeIn{
+    from{
+        opacity:0;
+        transform:scale(.95);
+    }
+    to{
+        opacity:1;
+        transform:scale(1);
+    }
+}

@@ -1,0 +1,148 @@
+.wa-profile-panel{
+
+    position:absolute;
+
+    top:0;
+
+    left:0;
+
+    width:100%;
+
+    height:100%;
+
+    background:#111b21;
+
+    display:none;
+
+    flex-direction:column;
+
+    z-index:20;
+
+}
+
+.wa-profile-panel.open{
+
+    display:flex;
+
+}
+
+
+.wa-profile-header{
+
+    height:60px;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:15px;
+
+    padding:0 15px;
+
+    background:#202c33;
+
+    color:white;
+
+    font-size:18px;
+
+}
+
+
+.wa-back-btn{
+
+    background:none;
+
+    border:none;
+
+    color:white;
+
+    font-size:20px;
+
+    cursor:pointer;
+
+}
+
+
+.wa-profile-body{
+
+    padding:20px;
+
+    color:white;
+
+}
+
+
+.wa-photo-container{
+
+    position:relative;
+
+    width:200px;
+
+    height:200px;
+
+    margin:20px auto;
+
+}
+
+
+.wa-profile-photo{
+
+    width:200px;
+
+    height:200px;
+
+    border-radius:50%;
+
+}
+
+
+.wa-photo-overlay{
+
+    position:absolute;
+
+    bottom:0;
+
+    width:100%;
+
+    background:rgba(0,0,0,0.6);
+
+    text-align:center;
+
+    padding:8px;
+
+    cursor:pointer;
+
+}
+
+
+.wa-field{
+
+    margin-top:25px;
+
+}
+
+
+.wa-field label{
+
+    color:#8696a0;
+
+    font-size:13px;
+
+}
+
+
+.wa-field input{
+
+    width:100%;
+
+    padding:10px;
+
+    margin-top:5px;
+
+    background:#202c33;
+
+    border:none;
+
+    color:white;
+
+}

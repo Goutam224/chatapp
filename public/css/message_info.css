@@ -1,0 +1,265 @@
+
+/* ===============================
+MESSAGE INFO PANEL
+=============================== */
+
+#message-info-panel{
+    position:fixed;
+    top:0;
+    right:-360px;
+    width:360px;
+    height:100vh;
+    background:#111b21;
+    border-left:1px solid #222;
+    transition:right .25s ease;
+    z-index:999999;
+    display:flex;
+    flex-direction:column;
+}
+
+#message-info-panel.open{
+    right:0;
+}
+
+.mi-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:14px 16px;
+    background:#202c33;
+    font-weight:500;
+}
+
+.mi-header button{
+    background:none;
+    border:none;
+    color:white;
+    font-size:18px;
+    cursor:pointer;
+}
+
+.mi-content{
+    padding:20px;
+}
+
+.mi-row{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.mi-icon.blue{
+    color:#53bdeb;
+}
+
+.mi-icon.grey{
+    color:#8696a0;
+}
+
+.mi-time{
+    font-size:12px;
+    color:#8696a0;
+}
+
+/* ===============================
+MESSAGE INFO PREVIEW
+=============================== */
+
+.mi-preview{
+    padding:20px;
+    border-bottom:1px solid #222;
+    background:#0b141a;
+}
+
+.mi-bubble{
+    background:#005c4b;
+    color:white;
+    padding:10px 12px;
+    border-radius:8px;
+    display:inline-block;
+    max-width:80%;
+    font-size:14px;
+}
+
+.mi-preview-date{
+    text-align:center;
+    font-size:12px;
+    color:#8696a0;
+    margin-bottom:12px;
+}
+
+/* =========================
+MESSAGE INFO MEDIA PREVIEW
+========================= */
+
+.mi-media{
+max-width:260px;
+border-radius:8px;
+overflow:hidden;
+background:#111b21;
+}
+
+/* IMAGE */
+
+.mi-image img{
+width:100%;
+display:block;
+border-radius:8px;
+}
+
+/* VIDEO */
+
+.mi-video video{
+width:100%;
+border-radius:8px;
+background:black;
+}
+
+/* AUDIO */
+.mi-audio {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #005c4b;
+    border-radius: 28px;
+    padding: 10px 14px;
+    width: 260px;
+}
+
+.mi-audio-play {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mi-audio-play:hover {
+    background: rgba(255,255,255,0.25);
+}
+
+.mi-audio-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.mi-audio-progress {
+    position: relative;
+    height: 4px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 4px;
+}
+
+.mi-audio-filled {
+    position: absolute;
+    left: 0; top: 0;
+    height: 100%;
+    width: 0%;
+    background: white;
+    border-radius: 4px;
+    transition: width 0.1s linear;
+}
+
+.mi-audio-dot {
+    position: absolute;
+    top: 50%;
+    left: 0%;
+    transform: translate(-50%, -50%);
+    width: 11px;
+    height: 11px;
+    background: white;
+    border-radius: 50%;
+    transition: left 0.1s linear;
+}
+
+.mi-audio-duration {
+    font-size: 11px;
+    color: rgba(255,255,255,0.65);
+}
+
+.mi-audio-avatar {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    background: #f0a500;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+/* DOCUMENT */
+.mi-doc {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #202c33;
+    border-radius: 10px;
+    padding: 10px 12px;
+    width: 260px;
+    border: 1px solid #2a3942;
+}
+
+.mi-doc-icon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    background: #e53935;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: white;
+}
+
+.mi-doc-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+    flex: 1;
+}
+
+.mi-doc-name {
+    color: #e9edef;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-decoration: none;
+    display: block;
+}
+
+.mi-doc-name:hover {
+    text-decoration: underline;
+}
+
+.mi-doc-meta {
+    font-size: 11px;
+    color: #8696a0;
+}
+
+.mi-doc-download {
+    color: #8696a0;
+    font-size: 18px;
+    text-decoration: none;
+    margin-left: auto;
+    padding-left: 6px;
+}
+
+.mi-doc-download:hover {
+    color: #e9edef;
+}

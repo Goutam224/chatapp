@@ -1,0 +1,361 @@
+<?php
+
+use App\Http\Controllers\AuthController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProfileController;
+use App\Models\User;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ChatController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
+use Symfony\Component\HttpFoundation\Response;
+use App\Helpers\AuthHelper;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Broadcast;
+use App\Events\UserTyping;
+use App\Http\Controllers\UserProfileController;
+use App\Http\Controllers\MyProfileController;
+use App\Http\Controllers\TusController;
+use App\Http\Controllers\UploadController;
+use App\Http\Controllers\MediaDownloadController;
+use App\Http\Controllers\DownloadSessionController;
+use App\Http\Controllers\BlockController;
+use App\Http\Controllers\MediaController;
+use App\Http\Controllers\SharedMediaController;
+use App\Http\Controllers\PinMessageController;
+use App\Http\Controllers\StarredMessageController;
+use App\Http\Controllers\ClearChatController;
+
+/*
+|--------------------------------------------------------------------------
+| PUBLIC ROUTES (No authentication required)
+|--------------------------------------------------------------------------
+*/
+
+
+Route::get('/my/profile', [MyProfileController::class, 'get']);
+
+Route::post('/my/profile/update', [MyProfileController::class, 'update']);
+
+Route::post('/my/profile/photo', [MyProfileController::class, 'updatePhoto']);
+
+
+Route::get(
+    '/user/profile/{id}',
+    [UserProfileController::class, 'show']
+);
+
+Route::get('/', function () {
+
+    // If already logged in, go to dashboard
+    if (AuthHelper::check()) {
+        return redirect()->route('dashboard');
+    }
+
+    return view('auth.login');
+
+})->name('login');
+
+
+Route::post('/send-otp', [AuthController::class, 'sendOtp']);
+
+
+Route::get('/verifyphone', [AuthController::class, 'showVerifyPhone'])
+    ->middleware('phone.entered')
+    ->name('verifyphone');
+
+
+Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
+
+
+/*
+|--------------------------------------------------------------------------
+| AUTHENTICATED ROUTES (Token required)
+|--------------------------------------------------------------------------
+*/
+Route::any('/tus/upload', [TusController::class, 'server']);
+Route::any('/tus/upload/{token}', [TusController::class, 'server']);
+
+Route::middleware(['auth.session'])->group(function () {
+
+Route::post('/tus/complete', [TusController::class, 'complete']);
+Route::post(
+'/upload/start',
+[UploadController::class,'start']
+);
+
+Route::post(
+'/upload/chunk',
+[UploadController::class,'chunk']
+);
+
+Route::get(
+'/upload/status/{uuid}',
+[UploadController::class,'status']
+);
+
+Route::post(
+'/upload/finish',
+[UploadController::class,'finish']
+);
+
+Route::middleware('auth')->get(
+    '/upload/pending/{chat}',
+    [UploadController::class, 'pending']
+);
+
+Route::post('/upload/destroy/{uuid}', [UploadController::class, 'destroy']);
+
+Route::get('/media/{message}', [\App\Http\Controllers\MediaDownloadController::class, 'serve'])
+    ->middleware('auth.session');
+
+
+    Route::post('/download/start', [DownloadSessionController::class, 'start']);
+Route::post('/download/progress', [DownloadSessionController::class, 'progress']);
+Route::post('/download/complete', [DownloadSessionController::class, 'complete']);
+Route::get('/download/status/{messageId}', [DownloadSessionController::class, 'status']);
+Route::post('/download/status/batch', [DownloadSessionController::class, 'batchStatus']);
+    /*
+    |--------------------------------------------------------------------------
+    | PROFILE
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/profile', [ProfileController::class, 'create'])
+        ->middleware('otp.verified')
+        ->name('profile.setup');
+
+    Route::post('/profile', [ProfileController::class, 'store'])
+        ->middleware('otp.verified')
+        ->name('profile.store');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DASHBOARD
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CHAT SYSTEM
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/chat/{chat}', [ChatController::class, 'open']);
+
+    Route::post('/message/send', [ChatController::class, 'send']);
+
+    Route::get('/users', [ChatController::class, 'users']);
+
+    Route::post('/chat/create', [ChatController::class, 'create']);
+
+    Route::post('/typing', function (Request $request) {
+
+    $user = \App\Helpers\AuthHelper::user();
+
+    if(!$user){
+        return response()->json([], 403);
+    }
+
+    event(new \App\Events\UserTyping(
+        $request->chat_id,
+        $user->id
+    ));
+
+    return response()->json(['ok' => true]);
+});
+
+Route::post('/media/send', [App\Http\Controllers\MediaController::class, 'send']);
+
+ Route::post('/block', [BlockController::class, 'block']);
+    Route::post('/unblock', [BlockController::class, 'unblock']);
+    Route::get('/block/status/{user}', [BlockController::class, 'status']);
+
+    Route::get('/user/shared/{userId}', [SharedMediaController::class, 'index']);
+
+    Route::get('/message/info/{id}', [ChatController::class,'info']);
+
+
+Route::post('/chat/pin-message',[PinMessageController::class,'pin']);
+
+Route::post('/chat/unpin-message',[PinMessageController::class,'unpin']);
+
+Route::post('/message/star',[StarredMessageController::class,'star']);
+Route::post('/message/unstar',[StarredMessageController::class,'unstar']);
+
+Route::get('/starred-messages',[StarredMessageController::class,'list']);
+
+
+Route::post('/message/unstar-on-delete/{messageId}', [StarredMessageController::class, 'unstarOnDelete']);
+
+Route::post('/chat/clear',[ClearChatController::class,'clear']);
+
+
+});
+
+
+
+Route::post('/broadcasting/auth', function (Request $request) {
+
+    $user = AuthHelper::user();
+
+    if (!$user) {
+        return response()->json(['error' => 'User not authenticated'], 403);
+    }
+
+    // THIS IS THE CRITICAL LINE
+    Auth::login($user);
+
+    return Broadcast::auth($request);
+
+})->middleware(['web']);
+
+
+Route::post('/message/delivered/{id}', function($id){
+
+    $message = \App\Models\Message::find($id);
+
+    if($message && !$message->delivered_at){
+
+        $message->delivered_at = now();
+        $message->save();
+
+        broadcast(new \App\Events\MessageSent($message))->toOthers();
+    }
+
+    return response()->json(['success'=>true]);
+
+});
+
+Route::post('/message/seen/{id}', function($id){
+
+$message = \App\Models\Message::find($id);
+
+if($message && !$message->seen_at){
+
+$message->seen_at = now();
+$message->save();
+
+broadcast(new \App\Events\MessageSent($message))->toOthers();
+
+}
+
+return response()->json(['success'=>true]);
+
+});
+
+
+
+Route::post('/message/edit/{message}', [App\Http\Controllers\ChatController::class, 'edit']);
+
+Route::post('/message/delete/everyone/{id}', [ChatController::class, 'deleteForEveryone']);
+
+Route::post('/message/delete/me/{id}', [ChatController::class, 'deleteForMe']);
+
+
+Route::post('/user/update-last-seen', function () {
+
+    $user = \App\Helpers\AuthHelper::user();
+
+    if ($user) {
+
+        \App\Models\User::where('id', $user->id)
+            ->update([
+                'last_seen' => now()
+            ]);
+
+       Log::info("Last seen updated for user ID: " . $user->id);
+
+
+        return response()->json(['status' => true]);
+
+    }
+
+    Log::info("Last seen update failed: user not authenticated");
+
+    return response()->json(['status' => false], 401);
+
+});
+
+Route::get('/user/last-seen/{id}', function ($id) {
+
+    $authId = session('auth_user_id');
+
+    if (!$authId) {
+        return response()->json(['last_seen' => null]);
+    }
+
+    $user = \App\Models\User::find($id);
+
+    if(!$user || !$user->last_seen){
+        return response()->json([
+            'last_seen' => null
+        ]);
+    }
+
+    // 🔒 CHECK IF THEY BLOCKED ME
+    $isBlockedBy = \App\Models\UserBlock::where('blocker_id', $user->id)
+        ->where('blocked_id', $authId)
+        ->exists();
+
+    if ($isBlockedBy) {
+        return response()->json([
+            'last_seen' => null
+        ]);
+    }
+
+    $lastSeen = \Carbon\Carbon::parse($user->last_seen);
+
+    if ($lastSeen->isToday()) {
+        $formatted = 'today at ' . $lastSeen->format('g:i A');
+    } elseif ($lastSeen->isYesterday()) {
+        $formatted = 'yesterday at ' . $lastSeen->format('g:i A');
+    } else {
+        $formatted = $lastSeen->format('d/m/Y') . ' at ' . $lastSeen->format('g:i A');
+    }
+
+    return response()->json([
+        'last_seen' => $formatted
+    ]);
+
+});
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| TEST AUTH ROUTE (for debugging)
+|--------------------------------------------------------------------------
+*/
+
+
+
+Route::get('/test-auth', function () {
+
+    if (!AuthHelper::check()) {
+        return "NOT AUTHENTICATED";
+    }
+
+    $user = AuthHelper::user();
+
+    return [
+        'authenticated' => true,
+        'user_id' => $user->id,
+        'phone' => $user->phone,
+        'name' => $user->name
+    ];
+
+});
+
+Route::post(
+'/upload/cancel/{uuid}',
+[UploadController::class,'cancel']
+);
+

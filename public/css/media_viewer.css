@@ -1,0 +1,75 @@
+.media-viewer-modal {
+    position:fixed;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:rgba(0,0,0,0.4);
+    backdrop-filter: blur(20px);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.3s ease;
+    z-index:9999;
+}
+
+.media-viewer-modal.active {
+    opacity:1;
+    pointer-events:auto;
+}
+
+#media-viewer-content {
+    position:relative;
+    max-width:90%;
+    max-height:90%;
+}
+
+.mv-media {
+    max-width:100%;
+    max-height:90vh;
+    border-radius:12px;
+    transition:transform 0.2s ease;
+    cursor:grab;
+}
+
+.media-viewer-close {
+    position:absolute;
+    top:20px;
+    right:25px;
+    font-size:28px;
+    color:white;
+    cursor:pointer;
+}
+
+.media-viewer-download {
+    position:absolute;
+    top:20px;
+    left:25px;
+    font-size:20px;
+    color:white;
+    cursor:pointer;
+}
+.media-viewer-nav {
+    position:absolute;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:40px;
+    color:white;
+    cursor:pointer;
+    user-select:none;
+    padding:20px;
+    opacity:0.7;
+    transition:all 0.2s ease;
+}
+
+.media-viewer-nav:hover {
+    opacity:1;
+    transform:translateY(-50%) scale(1.1);
+}
+
+.media-viewer-nav.left {
+    left:20px;
+}
+
+.media-viewer-nav.right {
+    right:20px;
+}

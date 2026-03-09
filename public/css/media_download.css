@@ -1,0 +1,145 @@
+/* Base media box — image/video thumbnail */
+.wa-media-box {
+    position: relative;
+    width: 260px;
+    height: 180px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #111b21;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+}
+
+/* Document/audio override */
+.wa-media-box.wa-doc {
+    width: calc(100% + 18px) !important;
+    max-width: calc(100% + 18px) !important;
+    height: auto !important;
+    padding: 12px !important;
+    gap: 12px;
+    overflow: visible;
+    justify-content: flex-start;
+    box-sizing: border-box;
+    margin: 2px -30px 20px 6px !important;
+    border-radius: 12px;
+}
+.wa-media-box.wa-audio {
+    width: 260px;
+    height: auto;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #111b21;
+    border-radius: 12px;
+}
+.wa-thumb-bg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.85);
+}
+
+.wa-download-circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    cursor: pointer;
+    width: 48px;
+    height: 48px;
+}
+
+.wa-progress-ring {
+    width: 48px;
+    height: 48px;
+    transform: rotate(-90deg);
+}
+
+.wa-ring-bg {
+    fill: none;
+    stroke: #2a3942;
+    stroke-width: 4;
+}
+
+.wa-ring-progress {
+    fill: none;
+    stroke: #25D366;
+    stroke-width: 3;
+    stroke-dasharray: 126;
+    stroke-dashoffset: 126;
+    transition: stroke-dashoffset 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wa-download-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 16px;
+    color: #25D366;
+}
+
+.wa-media-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 0;
+}
+
+.wa-file-preview {
+    color: #25D366;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.wa-play-icon {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+    z-index: 2;
+}
+
+.wa-media-info {
+    position: absolute;
+    bottom: 10px;
+    left: 12px;
+    display: flex;
+    flex-direction: column;
+    font-family: "Segoe UI", Helvetica, sans-serif;
+}
+
+.wa-media-size {
+    font-size: 13px;
+    font-weight: 500;
+    color: #e9edef;
+    letter-spacing: 0.2px;
+}
+
+.wa-speed-text {
+    font-size: 12px;
+    font-weight: 400;
+    color: #aebac1;
+    margin-top: 2px;
+}
+
+.blurred {
+    filter: blur(6px) brightness(0.6);
+    transition: filter 0.3s ease;
+}

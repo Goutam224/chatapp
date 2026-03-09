@@ -1,0 +1,30 @@
+body {
+    background-color: #111b21;
+    margin: 0;
+}
+
+.auth-box {
+    width: 90%;
+    max-width: 400px;
+    background: #202c33;
+    padding: 30px;
+    border-radius: 10px;
+}
+
+.btn-whatsapp {
+    background-color: #00a884;
+    color: white;
+}
+
+.btn-whatsapp:hover {
+    background-color: #008f72;
+}
+
+.logo {
+    color: #00a884;
+    font-size: 28px;
+    font-weight: bold;
+
+}
+
+
