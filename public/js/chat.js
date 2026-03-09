@@ -59,10 +59,64 @@ function renderMessageContent(msg) {
     if(msg.media) {
         return MediaDownloader.render(msg);
     }
-if(msg.message){
-    return escapeHtml(msg.message).replace(/\n/g, '<br>');
-}
-return '';
+
+    if(msg.link_preview){
+
+        const p = msg.link_preview;
+
+return `
+<a href="${p.url}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:block;">
+<div class="link-preview"
+     data-url="${p.url}"
+     style="
+        border:1px solid #2a3942;
+        border-radius:8px;
+        overflow:hidden;
+        max-width:320px;
+        margin-top:4px;
+        cursor:pointer;
+     ">
+
+    ${p.image ? `
+    <img src="${p.image}" style="
+        width:100%;
+        height:150px;
+        object-fit:cover;
+    ">` : ''}
+
+  <div style="padding:8px">
+        <div style="font-weight:500;font-size:14px;color:white">
+            ${p.title ?? p.url}
+        </div>
+        <div style="font-size:12px;color:#8696a0;margin-top:3px;">
+            ${p.domain ?? ''}
+        </div>
+    </div>
+    <div style="padding:4px 8px 8px 8px;">
+        <a href="${p.url}" target="_blank" rel="noopener noreferrer"
+           style="font-size:13px;color:#53bdeb;word-break:break-all;text-decoration:none;">
+            ${p.url}
+        </a>
+    </div>
+
+</div>
+</a>
+`;
+    }
+
+    if(msg.message){
+
+        let text = escapeHtml(msg.message).replace(/\n/g, '<br>');
+
+        text = text.replace(
+            /((https?:\/\/|www\.)[^\s]+|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}[^\s]*)/g,
+            '<a href="$1" target="_blank" style="color:#53bdeb">$1</a>'
+        );
+
+        return text;
+    }
+
+    return '';
 }
 
 
@@ -530,7 +584,14 @@ window.sendMessage = function() {
             const el = document.querySelector(`[data-id="${editingId}"]`);
             if(!el) return;
 
-            const newContent = escapeHtml(message).replace(/\n/g, '<br>');
+         const existingPreview = el.querySelector('.link-preview');
+const linkPreviewData = existingPreview ? {
+    url: existingPreview.dataset.url,
+    title: existingPreview.querySelector('[style*="font-weight:500"]')?.textContent?.trim(),
+    image: existingPreview.querySelector('img')?.src ?? null,
+    domain: existingPreview.querySelector('[style*="color:#8696a0"]')?.textContent?.trim()
+} : null;
+const newContent = renderMessageContent({message: message, link_preview: linkPreviewData});
             const timeDiv = el.querySelector('.time');
 
             const msgContent = el.querySelector('.msg-content');
@@ -611,7 +672,7 @@ replyHtml = `
 bubble.innerHTML =
 `<div class="msg-hover-arrow"></div>` +
 replyHtml +
-`<div>${escapeHtml(message)}</div>
+`<div class="msg-content">${renderMessageContent({message:message})}</div>
 <div class="time">${timeNow} ✔</div>`;
         container.appendChild(bubble);
         container.scrollTop = container.scrollHeight;
@@ -636,6 +697,12 @@ success: function(response) {
         if(uploadingBubble) {
             uploadingBubble.removeAttribute('data-uploading');
             uploadingBubble.dataset.id = response.message.id;
+            if(response.message.link_preview){
+    const content = uploadingBubble.querySelector('.msg-content');
+    if(content){
+        content.innerHTML = renderMessageContent(response.message);
+    }
+}
             uploadingBubble.setAttribute('data-finished','1');
             const _time = formatTime(response.message.sent_at ?? response.message.created_at ?? new Date());
             const _tick = response.message.seen_at ? '<span style="color:#53bdeb">✔✔</span>' : response.message.delivered_at ? '✔✔' : '✔';
@@ -727,7 +794,9 @@ function handleMessageSent(e) {
         uploadingBubble.dataset.id = message.id;
         uploadingBubble.dataset.finished = "1";
         const _tick = message.seen_at ? '<span style="color:#53bdeb">✔✔</span>' : message.delivered_at ? '✔✔' : '✔';
-        uploadingBubble.innerHTML = renderMessageContent(message) + `<div class="time">${formatTime(message.sent_at ?? message.created_at)} ${_tick}</div>`;
+        uploadingBubble.innerHTML =
+    `<div class="msg-content">${renderMessageContent(message)}</div>` +
+    `<div class="time">${formatTime(message.sent_at ?? message.created_at)} ${_tick}</div>`;
         return;
     }
 
@@ -740,10 +809,9 @@ if(existingUpload && !existingUpload.dataset.id) {
     const tick =
         message.seen_at ? '<span style="color:#53bdeb">✔✔</span>' :
         message.delivered_at ? '✔✔' : '✔';
-
-    existingUpload.innerHTML =
-        renderMessageContent(message) +
-        `<div class="time">${formatTime(message.sent_at ?? message.created_at)} ${tick}</div>`;
+existingUpload.innerHTML =
+    `<div class="msg-content">${renderMessageContent(message)}</div>` +
+    `<div class="time">${formatTime(message.sent_at ?? message.created_at)} ${tick}</div>`;
 
     return;
 }
@@ -777,32 +845,29 @@ if(existingUpload && !existingUpload.dataset.id) {
     }
 
     // update ticks if element exists
- let existingMsg = container.querySelector(`[data-id="${message.id}"]`);
-    if(existingMsg) {
-        if(message.sender_id == window.AUTH_USER_ID) {
-            const tickDiv = existingMsg.querySelector('.time');
-            if(tickDiv) {
-                let newTick = '✔';
-                if(message.seen_at) newTick = '<span style="color:#53bdeb">✔✔</span>';
-                else if(message.delivered_at) newTick = '✔✔';
-                tickDiv.innerHTML = formatTime(message.sent_at ?? message.created_at) + ' ' + newTick;
-            }
-        }
-        // ✅ Process seen_message_ids BEFORE returning
-        if(e.seen_message_ids && e.seen_message_ids.length) {
-            const seenSet = new Set(e.seen_message_ids.map(id => parseInt(id)));
-            container.querySelectorAll('.msg-right').forEach(msg => {
-                const id = parseInt(msg.dataset.id);
-                if(!id || !seenSet.has(id)) return;
-                const tickDiv = msg.querySelector('.time');
-                if(!tickDiv) return;
-                if(!tickDiv.innerHTML.includes('#53bdeb')) {
-                    tickDiv.innerHTML = tickDiv.innerHTML.replace(/✔✔|✔/, '<span style="color:#53bdeb">✔✔</span>');
-                }
-            });
-        }
-        return;
+let existingMsg = container.querySelector(`[data-id="${message.id}"]`);
+if(existingMsg) {
+
+    // ⭐ UPDATE MESSAGE CONTENT (for link preview upgrade)
+    const content = existingMsg.querySelector('.msg-content');
+    if(content){
+        content.innerHTML = renderMessageContent(message);
     }
+
+    // existing tick update
+    if(message.sender_id == window.AUTH_USER_ID) {
+        const tickDiv = existingMsg.querySelector('.time');
+        if(tickDiv) {
+            let newTick = '✔';
+            if(message.seen_at) newTick = '<span style="color:#53bdeb">✔✔</span>';
+            else if(message.delivered_at) newTick = '✔✔';
+
+            tickDiv.innerHTML = formatTime(message.sent_at ?? message.created_at) + ' ' + newTick;
+        }
+    }
+
+    return;
+}
 
     const isMine = message.sender_id == window.AUTH_USER_ID;
 
@@ -968,7 +1033,7 @@ function handleMessageEdited(e) {
     // If message has media, server render may be required; we keep safe text replace:
 if(message.message !== undefined && message.message !== null){
     const timeDiv = el.querySelector('.time');
-    const newContent = escapeHtml(message.message).replace(/\n/g, '<br>');
+   const newContent = renderMessageContent(message);
 
     // ✅ Try .msg-content first (loadMessages after refresh)
     const msgContent = el.querySelector('.msg-content');

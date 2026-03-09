@@ -16,7 +16,7 @@ public $seenMessageIds;
 
 public function __construct(Message $message, array $seenMessageIds = [])
 {
-   $this->message = $message->load('sender','media','reply.sender','reply.media');
+ $this->message = $message->load('sender','media','reply.sender','reply.media','linkPreview');
 
     $this->seenMessageIds = $seenMessageIds;
 }
@@ -75,12 +75,14 @@ public function broadcastWith()
             'type' => $this->message->type,
 
             'media' => $this->message->media,
+            'link_preview' => $this->message->linkPreview,
                 'reply' => $this->message->reply ? [
             'id' => $this->message->reply->id,
             'message' => $this->message->reply->message,
             'sender_name' => $this->message->reply->sender->name ?? 'User',
             'type' => $this->message->reply->type,
-            'media' => $this->message->reply->media
+            'media' => $this->message->reply->media,
+            'link_preview' => $this->message->linkPreview,
         ] : null,
         'sent_at' => $this->message->sent_at,
         'delivered_at' => $this->message->delivered_at,

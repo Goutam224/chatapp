@@ -63,7 +63,7 @@ if ($type === 'audio') {
 
         // LINKS TAB
         if ($type === 'links') {
-            $query->where('type', 'text')
+            $query->where('type', 'link')
                   ->where('message', 'like', '%http%');
         }
 

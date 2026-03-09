@@ -306,7 +306,7 @@ $messages = $query
           ->orWhereJsonDoesntContain('deleted_for_users', $authId);
     })
 
-   ->with(['sender','media','reply.sender','reply.media'])
+->with(['sender','media','reply.sender','reply.media','linkPreview'])
     ->orderBy('created_at', 'asc')
     ->get();
 $downloadedIds = DownloadSession::where('user_id', $authId)
@@ -385,6 +385,7 @@ if($otherParticipant){
     $blockTime = $block?->created_at;
 }
 $messages = $messages->map(function ($msg) use ($pinnedIds, $starredIds, $authId, $blockTime) {
+    $arr['link_preview'] = $msg->linkPreview;
     $arr = $msg->toArray();
 
 $arr['is_pinned'] = in_array($msg->id, $pinnedIds);
@@ -496,20 +497,31 @@ if ($isBlocking) {
     }
 
     // ✅ NORMAL FLOW (only if no blocking at all)
-    $message = Message::create([
-        'chat_id' => $request->chat_id,
-        'sender_id' => $authId,
-        'message' => $request->message,
-        'reply_to' => $request->reply_to,
-        'sent_at' => now()
-    ]);
+  $type = 'text';
 
+if (preg_match('/https?:\/\/\S+/i', $request->message)) {
+    $type = 'link';
+}
+
+$message = Message::create([
+    'chat_id' => $request->chat_id,
+    'sender_id' => $authId,
+    'message' => $request->message,
+    'reply_to' => $request->reply_to,
+    'type' => $type,
+    'sent_at' => now()
+]);
+
+\App\Services\LinkPreviewService::generate($message);
+
+// reload message WITH preview
+$message = Message::with('sender','linkPreview')->find($message->id);
     // broadcast only for normal messages
-    broadcast(new \App\Events\MessageSent($message))->toOthers();
+broadcast(new \App\Events\MessageSent($message->load('linkPreview')))->toOthers();
 
     return response()->json([
         'success' => true,
-        'message' => $message->load('sender')
+        'message' => $message->load('sender','linkPreview')
     ]);
 }
 

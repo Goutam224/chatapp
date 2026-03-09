@@ -19,14 +19,18 @@ window.startEditMessage = function(messageId){
 
     // ✅ Try .msg-content first (loadMessages after refresh)
     // ✅ Fallback: walk childNodes for realtime-built bubbles
-    let text = '';
+  let text = '';
 
-    const msgContent = msg.querySelector('.msg-content');
-
-    if(msgContent){
+const msgContent = msg.querySelector('.msg-content');
+// ⭐ if link preview exists → extract original URL and stop, no further parsing needed
+const preview = msg.querySelector('.link-preview');
+if(preview && preview.dataset.url){
+    text = preview.dataset.url;
+} else if(msgContent){
         // built by loadMessages — always has .msg-content wrapper
-        text = msgContent.innerHTML
-            .replace(/<br\s*\/?>/gi, '\n')
+      text = msgContent.innerHTML
+    .replace(/<a[^>]*>(.*?)<\/a>/gi, '$1')   // remove link tags
+    .replace(/<br\s*\/?>/gi, '\n')
             .replace(/&amp;/g, '&')
             .replace(/&lt;/g, '<')
             .replace(/&gt;/g, '>')
@@ -45,8 +49,9 @@ window.startEditMessage = function(messageId){
             if(node === replyQuote) continue;
             if(node.nodeType === 3) continue; // skip whitespace
             // found the content element
-            text = node.innerHTML
-                .replace(/<br\s*\/?>/gi, '\n')
+          text = node.innerHTML
+    .replace(/<a[^>]*>(.*?)<\/a>/gi, '$1')   // remove link tags
+    .replace(/<br\s*\/?>/gi, '\n')
                 .replace(/&amp;/g, '&')
                 .replace(/&lt;/g, '<')
                 .replace(/&gt;/g, '>')

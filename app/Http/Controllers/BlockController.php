@@ -45,7 +45,7 @@ $authId = session('auth_user_id');
             'sender_id' => $authId,
             'message' => 'You blocked this contact.',
             'visible_to' => [$authId], 
-            'type' => 'text',
+            'type' => 'system',
             'sent_at' => now()
         ]);
     }
@@ -87,7 +87,7 @@ return response()->json(['status' => 'blocked']);
             'chat_id' => $chat->id,
             'sender_id' => $authId,
             'message' => 'You unblocked this contact.',
-            'type' => 'text',
+            'type' => 'system',
             'visible_to' => [$authId],
             'sent_at' => now()
         ]);

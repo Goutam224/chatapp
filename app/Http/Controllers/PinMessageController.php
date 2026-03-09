@@ -59,7 +59,7 @@ if($pinCount >= 3){
     'chat_id'   => $message->chat_id,
     'sender_id' => $authId,
     'message'   => 'You pinned a message',
-    'type'      => 'text',
+    'type'      => 'system',
     'visible_to'=> [$authId], 
     'sent_at'   => now()
 ]);

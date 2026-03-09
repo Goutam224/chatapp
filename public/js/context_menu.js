@@ -117,7 +117,7 @@ Go to message
 </div>
 `}
 
-${isMine && !msg.querySelector('img, video, audio, .document') ? `
+${isMine && !msg.querySelector('img, video, audio, .document') && canEditMessage(msg) ? `
 <div class="context-item" onclick="startEditMessage(${messageId})">
 <span class="context-icon">✏</span>
 Edit
@@ -318,4 +318,11 @@ function canDeleteForEveryone(msg){
 
     return diffMinutes <= 15;
 
+}
+
+function canEditMessage(msg){
+    const createdAt = msg.dataset.createdAt;
+    if(!createdAt) return false;
+    const diffMinutes = (Date.now() - new Date(createdAt).getTime()) / (1000 * 60);
+    return diffMinutes <= 15;
 }

@@ -6,6 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Message extends Model
 {
+
+  public const TYPE_TEXT = 'text';
+    public const TYPE_LINK = 'link';
+    public const TYPE_SYSTEM = 'system';
+
+
    protected $fillable = [
         'chat_id',
         'sender_id',
@@ -50,6 +56,11 @@ public function reply()
 public function repliedMessages()
 {
     return $this->hasMany(Message::class,'reply_to');
+}
+
+public function linkPreview()
+{
+    return $this->hasOne(\App\Models\LinkPreview::class);
 }
 
 }

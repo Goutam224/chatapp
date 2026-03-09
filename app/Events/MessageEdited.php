@@ -12,7 +12,7 @@ class MessageEdited implements ShouldBroadcastNow
 
     public function __construct(Message $message)
     {
-        $this->message = $message;
+       $this->message = $message->load('linkPreview');
     }
 
     public function broadcastOn()
@@ -39,6 +39,7 @@ public function broadcastWith()
             // FIX: do NOT use ->format()
             'delivered_at' => $this->message->delivered_at,
             'seen_at' => $this->message->seen_at,
+            'link_preview' => $this->message->linkPreview,
         ]
     ];
 }
