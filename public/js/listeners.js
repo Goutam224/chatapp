@@ -108,7 +108,9 @@ if (lastMsg) {
             const chatList = document.querySelector('.chat-list');
             if (chatList) {
                 if (chatList.firstElementChild !== chatItem) {
-                    chatList.prepend(chatItem);
+                 if(!PinChat.isPinned(chatItem.dataset.chatId)){
+    chatList.prepend(chatItem);
+}
                 }
             }
         });

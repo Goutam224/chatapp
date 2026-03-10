@@ -347,9 +347,9 @@ cursor:pointer;
 }
 
 .chat-filter.active{
-background:#00a884;
+background:#56a662;
 color:white;
-border-color:#00a884;
+border-color:#56a662;
 }
 
 .chat-filter span{

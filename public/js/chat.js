@@ -809,7 +809,9 @@ if(chatItem && chatList){
 
     // keep chat on top
     if(chatList.firstElementChild !== chatItem){
-        chatList.prepend(chatItem);
+      if(!PinChat.isPinned(chatItem.dataset.chatId)){
+    chatList.prepend(chatItem);
+}
     }
 }
 updateUnreadFilterCount();

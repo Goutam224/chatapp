@@ -23,6 +23,7 @@ href="{{ asset('css/my_profile_panel.css') }}">
 <link rel="stylesheet" href="{{ asset('css/starred_messages.css') }}">
 <link rel="stylesheet" href="{{ asset('css/clear_chat.css') }}">
 <link rel="stylesheet" href="{{ asset('css/chat_search.css') }}">
+<link rel="stylesheet" href="{{ asset('css/pin_chat.css') }}">
 
 
 <link href="https://releases.transloadit.com/uppy/v3.25.0/uppy.min.css" rel="stylesheet">
@@ -125,10 +126,15 @@ $photo = $isBlockedBy
 <img src="{{ url($photo) }}" class="chat-img">
 
     <div class="chat-info">
+<div class="chat-name">
 
-        <div class="chat-name">
-            {{ $otherUser->name ?? 'Unknown User' }}
-        </div>
+<span class="chat-title">
+{{ $otherUser->name ?? 'Unknown User' }}
+</span>
+
+<span class="chat-pin-icon" >📌</span>
+
+</div>
 
       <div class="chat-last">
 @php
@@ -402,7 +408,8 @@ window.iBlockedUsers = @json(
 <script src="{{ asset('js/profile_panel.js') }}"></script>
 <script src="{{ asset('js/my_profile.js') }}"></script>
 <script src="{{ asset('js/chat_search.js') }}"></script>
-
+<script src="{{ asset('js/pin_chat.js') }}"></script>
+<script src="{{ asset('js/sidebar_context_menu.js') }}"></script>
 @include('dashboard.partials.profile_panel')
 @include('dashboard.partials.my_profile_panel')
 
