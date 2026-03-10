@@ -34,26 +34,37 @@ window.ChatSystem = {
             const otherUserId = chatItem.getAttribute('data-user-id');
             if (window.blockedUsersRealtime[otherUserId] === true) return;
 
-            const lastMsg = chatItem.querySelector('.chat-last');
-            if (lastMsg) {
-                lastMsg.innerText = message.deleted_for_everyone
-                    ? "This message was deleted"
-                    : message.message;
+          const lastMsg = chatItem.querySelector('.chat-last');
+if (lastMsg) {
 
-                lastMsg.style.color = "";
-                chatItem.dataset.originalMessage = message.message;
-            }
+    // ✅ STOP typing animation if it is running
+    if(chatItem.typingInterval){
+        clearInterval(chatItem.typingInterval);
+        chatItem.typingInterval = null;
+    }
 
-            // Update sidebar time
+    // ✅ also clear typing timeout
+    if(chatItem.sidebarTypingTimeout){
+        clearTimeout(chatItem.sidebarTypingTimeout);
+        chatItem.sidebarTypingTimeout = null;
+    }
+
+    lastMsg.innerText = message.deleted_for_everyone
+        ? "This message was deleted"
+        : message.message;
+
+    lastMsg.style.color = "";
+    chatItem.dataset.originalMessage = message.message;
+}
+
+         // Update sidebar time
             const timeEl = chatItem.querySelector('.chat-time');
             if (timeEl) {
-                let timeText = timeEl.querySelector('.time-text');
-                if (!timeText) {
-                    timeText = document.createElement('div');
-                    timeText.className = 'time-text';
-                    timeEl.prepend(timeText);
-                }
-                timeText.innerText = formatSidebarTime(message.created_at);
+                const parsedTime = message.created_at
+                    ? new Date(message.created_at.replace(' ', 'T'))
+                    : new Date();
+                timeEl.dataset.time = parsedTime.toISOString();
+                refreshSidebarTime(timeEl);
             }
 
             // Mark delivered
@@ -73,8 +84,8 @@ window.ChatSystem = {
                         badge.style.borderRadius = '50%';
                         badge.style.padding = '3px 7px';
                         badge.style.fontSize = '12px';
-                        badge.style.marginLeft = 'auto';
-                        chatItem.appendChild(badge);
+                     badge.style.marginTop = '4px';
+timeEl.appendChild(badge);
                     }
                     badge.innerText = e.unread_count;
                 } else {
@@ -82,9 +93,9 @@ window.ChatSystem = {
                 }
             }
 
-            // Move chat to top
+       // Move chat to top
             const chatList = document.querySelector('.chat-list');
-            if (chatList && chatItem.parentNode === chatList) {
+            if (chatList) {
                 if (chatList.firstElementChild !== chatItem) {
                     chatList.prepend(chatItem);
                 }

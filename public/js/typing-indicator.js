@@ -43,9 +43,11 @@ window.showSidebarTyping = function(chatId){
     const lastMsg = chatItem.querySelector('.chat-last');
     if(!lastMsg) return;
 
-    // save original message only once
-    if(!chatItem.dataset.originalMessage){
-        chatItem.dataset.originalMessage = lastMsg.innerText;
+ // ✅ Only save original if it's NOT already a typing string
+    if(!chatItem.dataset.originalMessage || lastMsg.innerText.startsWith('typing')){
+        if(!lastMsg.innerText.startsWith('typing')){
+            chatItem.dataset.originalMessage = lastMsg.innerText;
+        }
     }
 
     // clear existing animation
@@ -56,10 +58,11 @@ window.showSidebarTyping = function(chatId){
     lastMsg.innerText = "typing";
     lastMsg.style.color = "#25D366"; 
 
-    chatItem.typingInterval = setInterval(() => {
+   chatItem.typingInterval = setInterval(() => {
 
         dots = (dots + 1) % 4;
         lastMsg.innerText = "typing" + ".".repeat(dots);
+        lastMsg.style.color = "#25D366"; // ✅ keep color green on every tick
 
     }, 400);
 
@@ -76,14 +79,23 @@ window.hideSidebarTyping = function(chatId){
 
     if(!lastMsg) return;
 
+    // ✅ Stop interval immediately
     clearInterval(chatItem.typingInterval);
+    chatItem.typingInterval = null;
 
-    // restore original message safely
-    if(chatItem.dataset.originalMessage){
-        lastMsg.innerText = chatItem.dataset.originalMessage;
-    }
+    // ✅ Clear timeout too
+    clearTimeout(chatItem.sidebarTypingTimeout);
+    chatItem.sidebarTypingTimeout = null;
 
+    // ✅ Force reset color first before restoring text
     lastMsg.style.color = "";
+    lastMsg.style.cssText = lastMsg.style.cssText; // force repaint
+
+    // ✅ Restore original message
+    if(chatItem.dataset.originalMessage !== undefined){
+        lastMsg.innerText = chatItem.dataset.originalMessage;
+        delete chatItem.dataset.originalMessage;
+    }
 
 };
 
@@ -123,14 +135,15 @@ window.handleTypingEvent = function(userId, chatId){
         }, 1500);
 
     }
+// ✅ ALWAYS show sidebar typing
+showSidebarTyping(chatId);
 
-    // ✅ ALWAYS show sidebar typing
-    showSidebarTyping(chatId);
+const chatItem = document.querySelector(`.chat-item[data-chat-id="${chatId}"]`);
+if(!chatItem) return;
 
-    clearTimeout(window.sidebarTypingTimeout);
+clearTimeout(chatItem.sidebarTypingTimeout);
 
-    window.sidebarTypingTimeout = setTimeout(() => {
-        hideSidebarTyping(chatId);
-    }, 1500);
-
+chatItem.sidebarTypingTimeout = setTimeout(() => {
+    hideSidebarTyping(chatId);
+}, 1500);
 };

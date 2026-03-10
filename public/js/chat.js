@@ -1284,6 +1284,28 @@ document.addEventListener('input', function(e){
     if(e.target.id !== 'message-input') return;
     if(!window.currentChatId) return;
 
+    // ✅ If input is cleared, immediately stop typing indicator
+    if(e.target.value.trim() === '') {
+        hideSidebarTyping(window.currentChatId);
+
+        const chatItem = document.querySelector(`.chat-item[data-chat-id="${window.currentChatId}"]`);
+        if(chatItem && chatItem.sidebarTypingTimeout){
+            clearTimeout(chatItem.sidebarTypingTimeout);
+            chatItem.sidebarTypingTimeout = null;
+        }
+
+        // Also stop header typing indicator
+        stopTypingIndicator();
+        const statusEl = document.getElementById('chat-status');
+        if(statusEl && statusEl.dataset.originalStatus !== undefined){
+            statusEl.innerText = statusEl.dataset.originalStatus || "";
+            statusEl.style.color = statusEl.innerText === "online" ? "#25D366" : "#8696a0";
+            delete statusEl.dataset.originalStatus;
+        }
+        clearTimeout(typingTimeout);
+        return;
+    }
+
     const now = Date.now();
 
     // ✅ send typing event only every 800ms
