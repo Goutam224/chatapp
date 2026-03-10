@@ -73,25 +73,36 @@ if (lastMsg) {
             }
 
             // Unread count badge
-            if (message.sender_id != window.AUTH_USER_ID) {
-                let badge = chatItem.querySelector('.unread-count'); 
-                if (e.unread_count > 0) {
-                    if (!badge) {
-                        badge = document.createElement('div');
-                        badge.className = 'unread-count';
-                        badge.style.background = '#25D366';
-                        badge.style.color = 'white';
-                        badge.style.borderRadius = '50%';
-                        badge.style.padding = '3px 7px';
-                        badge.style.fontSize = '12px';
-                     badge.style.marginTop = '4px';
-timeEl.appendChild(badge);
-                    }
-                    badge.innerText = e.unread_count;
-                } else {
-                    if (badge) badge.remove();
-                }
+     if (message.sender_id != window.AUTH_USER_ID) {
+
+    // ✅ Skip incrementing unread if this chat is currently open
+    if (window.currentChatId != chatItem.dataset.chatId) {
+
+        let badge = chatItem.querySelector('.unread-count');
+
+        if (e.unread_count > 0) {
+            if (!badge) {
+                badge = document.createElement('div');
+                badge.className = 'unread-count';
+                badge.style.background = '#25D366';
+                badge.style.color = 'white';
+                badge.style.borderRadius = '50%';
+                badge.style.padding = '3px 7px';
+                badge.style.fontSize = '12px';
+                badge.style.marginTop = '4px';
+                timeEl.appendChild(badge);
             }
+            badge.innerText = e.unread_count;
+            chatItem.dataset.unread = e.unread_count;
+        } else {
+            if (badge) badge.remove();
+            chatItem.dataset.unread = 0;
+        }
+
+        // ✅ Now update the filter counter instantly
+        updateUnreadFilterCount();
+    }
+}
 
        // Move chat to top
             const chatList = document.querySelector('.chat-list');

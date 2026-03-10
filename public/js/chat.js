@@ -165,6 +165,14 @@ function openChat(chatId, item) {
     localStorage.setItem('currentChatUserId', window.currentOtherUserId);
 
     loadMessages(chatId, item);
+    // ✅ Reset unread when opening chat
+item.dataset.unread = 0;
+
+const badge = item.querySelector('.unread-count');
+if(badge){
+    badge.remove();
+}
+    updateUnreadFilterCount(); 
 }
 
 /*
@@ -471,6 +479,63 @@ scrollBtn.onclick = function(){
     });
 };
             if(msgContainer) msgContainer.scrollTop = msgContainer.scrollHeight;
+            // ⭐ Scroll to searched message (from search results)
+if(window.searchTargetMessage){
+
+    const target =
+    msgContainer.querySelector(`[data-id="${window.searchTargetMessage}"]`);
+
+    if(target){
+
+        scrollToFoundMessage(target);
+
+    }else{
+
+        // message not loaded → fetch it
+        fetch('/chat/load-around/' + window.searchTargetMessage)
+        .then(res => res.json())
+        .then(data => {
+
+            if(!data.messages || data.messages.length === 0){
+                return;
+            }
+
+            const container = document.getElementById('chat-messages');
+
+            data.messages.forEach(msg => {
+
+                if(container.querySelector(`[data-id="${msg.id}"]`)){
+                    return;
+                }
+
+                const isMine = msg.sender_id == window.AUTH_USER_ID;
+
+                const div = document.createElement('div');
+
+                div.className = `msg ${isMine ? 'msg-right' : 'msg-left'}`;
+                div.dataset.id = msg.id;
+
+                div.innerHTML =
+                `<div class="msg-content">${renderMessageContent(msg)}</div>
+                 <div class="time">${formatTime(msg.created_at)}</div>`;
+
+                container.prepend(div);
+
+            });
+
+            const newTarget =
+            container.querySelector(`[data-id="${window.searchTargetMessage}"]`);
+
+            if(newTarget){
+                scrollToFoundMessage(newTarget);
+            }
+
+        });
+
+    }
+
+    window.searchTargetMessage = null;
+}
 
             // -------------------------------
 // RENDER PINNED SYSTEM MESSAGES
@@ -747,6 +812,7 @@ if(chatItem && chatList){
         chatList.prepend(chatItem);
     }
 }
+updateUnreadFilterCount();
     window.replyMessage = null;
     const replyBox = document.getElementById('reply-preview');
     if(replyBox) replyBox.style.display = 'none';
@@ -1017,11 +1083,35 @@ _msg.innerHTML =
                 refreshSidebarTime(timeEl);
             }
 
-            // ✅ move to top
-            if(chatList.firstElementChild !== sidebarItem){
-                chatList.prepend(sidebarItem);
-            }
+   // move chat to top
+if(chatList.firstElementChild !== sidebarItem){
+    chatList.prepend(sidebarItem);
+}
+
+// ✅ Increase unread ONLY if chat is not open
+if(window.currentChatId != message.chat_id){
+
+    let unread = parseInt(sidebarItem.dataset.unread || 0);
+    unread++;
+
+    sidebarItem.dataset.unread = unread;
+
+    let badge = sidebarItem.querySelector('.unread-count');
+
+    if(!badge){
+        badge = document.createElement('div');
+        badge.className = 'unread-count';
+        sidebarItem.querySelector('.chat-time').appendChild(badge);
+    }
+
+    badge.innerText = unread;
+
+}
+
+
         }
+        // ✅ update filter badge
+updateUnreadFilterCount();
     }
 
 }
@@ -1643,4 +1733,20 @@ document.addEventListener('input', function(e){
         e.target.style.height = e.target.scrollHeight + 'px';
     }
 });
+
+
+function scrollToFoundMessage(target){
+
+    target.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+    });
+
+    target.style.transition = "background 0.3s";
+    target.style.background = "#2a3942";
+
+    setTimeout(()=>{
+        target.style.background = "";
+    },2000);
+}
 

@@ -26,7 +26,7 @@ use App\Http\Controllers\SharedMediaController;
 use App\Http\Controllers\PinMessageController;
 use App\Http\Controllers\StarredMessageController;
 use App\Http\Controllers\ClearChatController;
-
+use App\Http\Controllers\ChatSearchController;
 /*
 |--------------------------------------------------------------------------
 | PUBLIC ROUTES (No authentication required)
@@ -146,6 +146,8 @@ Route::post('/download/status/batch', [DownloadSessionController::class, 'batchS
     | CHAT SYSTEM
     |--------------------------------------------------------------------------
     */
+Route::get('/chat/search', [ChatSearchController::class, 'search']);
+Route::get('/chat/load-around/{messageId}', [ChatController::class,'loadAroundMessage']);
 
     Route::get('/chat/{chat}', [ChatController::class, 'open']);
 
@@ -195,6 +197,7 @@ Route::get('/starred-messages',[StarredMessageController::class,'list']);
 Route::post('/message/unstar-on-delete/{messageId}', [StarredMessageController::class, 'unstarOnDelete']);
 
 Route::post('/chat/clear',[ClearChatController::class,'clear']);
+
 
 
 });

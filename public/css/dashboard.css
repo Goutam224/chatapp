@@ -328,3 +328,30 @@ body {
         opacity: 1;
     }
 }
+
+.chat-filters{
+display:flex;
+gap:8px;
+padding:10px 12px;
+border-bottom:1px solid #2a3942;
+}
+
+.chat-filter{
+background:#202c33;
+border:1px solid #2a3942;
+color:#d1d7db;
+padding:6px 14px;
+border-radius:18px;
+font-size:13px;
+cursor:pointer;
+}
+
+.chat-filter.active{
+background:#00a884;
+color:white;
+border-color:#00a884;
+}
+
+.chat-filter span{
+opacity:0.8;
+}

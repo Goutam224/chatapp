@@ -12,6 +12,7 @@ use App\Events\MessageSent;
 use Illuminate\Support\Facades\URL;
 use App\Models\DownloadSession;
 use App\Models\PinnedMessage;
+use Illuminate\Support\Facades\DB;
 class ChatController extends Controller
 {
 public function users()
@@ -697,5 +698,44 @@ if ($message->media) {
             : null,
     ]);
 }
+
+public function loadAroundMessage($messageId)
+{
+    $authId = session('auth_user_id');
+
+    $message = Message::find($messageId);
+
+    if(!$message){
+        return response()->json([
+            'messages' => []
+        ]);
+    }
+
+    // 🚫 respect cleared chat
+    $cleared = DB::table('cleared_chats')
+        ->where('chat_id',$message->chat_id)
+        ->where('user_id',$authId)
+        ->first();
+
+    if($cleared && strtotime($message->created_at) <= strtotime($cleared->cleared_at)){
+        return response()->json([
+            'messages' => []
+        ]);
+    }
+
+    // load 20 messages before + 20 after
+    $messages = Message::where('chat_id',$message->chat_id)
+        ->where('created_at','<=',$message->created_at)
+        ->orderBy('created_at','desc')
+        ->limit(40)
+        ->get()
+        ->sortBy('created_at')
+        ->values();
+
+    return response()->json([
+        'messages' => $messages
+    ]);
+}
+
 
 }

@@ -22,6 +22,8 @@ href="{{ asset('css/my_profile_panel.css') }}">
 <link rel="stylesheet" href="{{ asset('css/message_pin.css') }}">
 <link rel="stylesheet" href="{{ asset('css/starred_messages.css') }}">
 <link rel="stylesheet" href="{{ asset('css/clear_chat.css') }}">
+<link rel="stylesheet" href="{{ asset('css/chat_search.css') }}">
+
 
 <link href="https://releases.transloadit.com/uppy/v3.25.0/uppy.min.css" rel="stylesheet">
 <link rel="stylesheet"
@@ -50,9 +52,24 @@ style="cursor:pointer;">
 
         </div>
 
-        <div class="search-box">
-            <input type="text" placeholder="Search chats">
-        </div>
+       <div class="search-box">
+    <input type="text" id="chat-search-input" placeholder="Search chats">
+</div>
+
+<div class="chat-filters">
+
+<button class="chat-filter active" data-filter="all">
+All
+</button>
+
+<button class="chat-filter" data-filter="unread">
+Unread <span id="unread-count"></span>
+</button>
+
+</div>
+
+<div id="chat-search-results"></div>
+
 <div id="new-chat-list" style="display:none;"></div>
     <div class="chat-list">
 
@@ -90,6 +107,7 @@ $unreadCount = $unreadQuery->count();
 <div class="chat-item"
      data-chat-id="{{ $chat->id }}"
      data-user-id="{{ $otherUser->id }}"
+     data-unread="{{ $unreadCount }}"
      onclick="openChat({{ $chat->id }}, this)">
 @php
 $authId = session('auth_user_id');
@@ -375,12 +393,15 @@ window.iBlockedUsers = @json(
 <script src="/js/download_speed.js"></script>
 <script src="/js/media_viewer.js"></script>
 <script src="/js/clear_chat.js"></script>
+
 <script src="/js/media_download.js"></script>
 <script src="{{ asset('js/message_reply.js') }}"></script>
 <script src="{{ asset('js/message_info.js') }}"></script>
 <script src="{{ asset('js/chat.js') }}"></script>
+<script src="/js/chat_filters.js"></script>
 <script src="{{ asset('js/profile_panel.js') }}"></script>
 <script src="{{ asset('js/my_profile.js') }}"></script>
+<script src="{{ asset('js/chat_search.js') }}"></script>
 
 @include('dashboard.partials.profile_panel')
 @include('dashboard.partials.my_profile_panel')
