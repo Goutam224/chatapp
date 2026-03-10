@@ -35,32 +35,30 @@ window.stopTypingIndicator = function(){
 
 };
 
-
 window.showSidebarTyping = function(chatId){
 
     const chatItem = document.querySelector(`.chat-item[data-chat-id="${chatId}"]`);
-
     if(!chatItem) return;
 
     const lastMsg = chatItem.querySelector('.chat-last');
-
     if(!lastMsg) return;
 
-    // save original only once
+    // save original message only once
     if(!chatItem.dataset.originalMessage){
         chatItem.dataset.originalMessage = lastMsg.innerText;
     }
 
-    lastMsg.style.color = "#25D366";
-
-    let dots = 0;
-
+    // clear existing animation
     clearInterval(chatItem.typingInterval);
+
+    // ✅ show typing immediately (prevents flicker)
+    let dots = 0;
+    lastMsg.innerText = "typing";
+    lastMsg.style.color = "#25D366"; 
 
     chatItem.typingInterval = setInterval(() => {
 
         dots = (dots + 1) % 4;
-
         lastMsg.innerText = "typing" + ".".repeat(dots);
 
     }, 400);
@@ -97,34 +95,36 @@ window.handleTypingEvent = function(userId, chatId){
     if(userId == window.AUTH_USER_ID) return;
 
     const statusEl = document.getElementById('chat-status');
-    if(!statusEl) return;
 
-    // ✅ Save original status once
-    if(!statusEl.dataset.originalStatus){
-        statusEl.dataset.originalStatus = statusEl.innerText;
+    // Only handle header typing if chat is open
+    if(statusEl){
+
+        if(!statusEl.dataset.originalStatus){
+            statusEl.dataset.originalStatus = statusEl.innerText;
+        }
+
+        statusEl.innerText = "typing...";
+        statusEl.style.color = "#25D366";
+
+        startTypingIndicator();
+
+        clearTimeout(typingTimeout);
+
+        typingTimeout = setTimeout(() => {
+
+            stopTypingIndicator();
+
+            statusEl.innerText = statusEl.dataset.originalStatus || "";
+            statusEl.style.color =
+                statusEl.innerText === "online" ? "#25D366" : "#8696a0";
+
+            delete statusEl.dataset.originalStatus;
+
+        }, 1500);
+
     }
 
-    // 🔹 Show typing
-    statusEl.innerText = "typing...";
-    statusEl.style.color = "#25D366";
-
-    startTypingIndicator();
-
-    clearTimeout(typingTimeout);
-
-    typingTimeout = setTimeout(() => {
-
-        stopTypingIndicator();
-
-        // ✅ Restore original status (online / last seen)
-        statusEl.innerText = statusEl.dataset.originalStatus || "";
-       statusEl.style.color = statusEl.innerText === "online" ? "#25D366" : "#8696a0";
-
-        delete statusEl.dataset.originalStatus;
-
-    }, 1500);
-
-
+    // ✅ ALWAYS show sidebar typing
     showSidebarTyping(chatId);
 
     clearTimeout(window.sidebarTypingTimeout);
@@ -132,4 +132,5 @@ window.handleTypingEvent = function(userId, chatId){
     window.sidebarTypingTimeout = setTimeout(() => {
         hideSidebarTyping(chatId);
     }, 1500);
+
 };

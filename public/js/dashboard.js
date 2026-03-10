@@ -162,11 +162,13 @@ function formatSidebarTime(dateString) {
     const diffDays = Math.floor((now - msg) / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) {
-        return msgDate.toLocaleTimeString([], {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-        });
+      const time = msgDate.toLocaleTimeString([], {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+});
+
+return time.replace('am','AM').replace('pm','PM');
     }
 
     if (diffDays === 1) {

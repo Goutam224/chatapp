@@ -17,12 +17,17 @@ window.currentOtherUserId = localStorage.getItem('currentChatUserId');
 |--------------------------------------------------------------------------
 */
 function formatTime(date) {
+
     if(!date) date = new Date();
-    return new Date(date).toLocaleTimeString([], {
+
+    const time = new Date(date).toLocaleTimeString([], {
         hour: 'numeric',
         minute: '2-digit',
         hour12: true
     });
+
+    // ✅ force AM/PM uppercase
+    return time.replace('am','AM').replace('pm','PM');
 }
 
 /*
@@ -1272,19 +1277,30 @@ function handleTyping(e) {
 | SEND TYPING EVENT
 |--------------------------------------------------------------------------
 */
+let lastTypingSent = 0;
+
 document.addEventListener('input', function(e){
-    if(e.target.id === 'message-input') {
-        if(!window.currentChatId) return;
-        $.ajax({
-            url: '/typing',
-            method: 'POST',
-            headers: {
-                'Content-Type':'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            },
-            data: JSON.stringify({ chat_id: window.currentChatId })
-        });
-    }
+
+    if(e.target.id !== 'message-input') return;
+    if(!window.currentChatId) return;
+
+    const now = Date.now();
+
+    // ✅ send typing event only every 800ms
+    if(now - lastTypingSent < 800) return;
+
+    lastTypingSent = now;
+
+    $.ajax({
+        url: '/typing',
+        method: 'POST',
+        headers: {
+            'Content-Type':'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        data: JSON.stringify({ chat_id: window.currentChatId })
+    });
+
 });
 
 /*
