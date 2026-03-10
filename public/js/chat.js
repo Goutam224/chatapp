@@ -356,7 +356,7 @@ messagesHtml += `
 <div id="pinned-bar" class="pinned-bar" style="display:none;"></div>
 
 <div id="chat-messages" class="chat-messages">
-     ${messagesHtml}
+     ${messagesHtml.length === 0 ? '<div class="msg-date">Today</div>' : messagesHtml}
 </div>
   <button id="scroll-to-bottom" class="scroll-bottom-btn">
     <svg viewBox="0 0 24 24" width="20" height="20">
@@ -673,8 +673,15 @@ replyHtml = `
 <div class="reply-text">${escapeHtml(window.replyMessage.text)}</div>
 </div>`;
 }
+// ✅ Add Today separator if no messages exist yet
+        if(!container.querySelector('.msg-date')){
+            const dateDiv = document.createElement('div');
+            dateDiv.className = 'msg-date';
+            dateDiv.innerText = 'Today';
+            container.appendChild(dateDiv);
+        }
 
-bubble.innerHTML =
+        bubble.innerHTML =
 `<div class="msg-hover-arrow"></div>` +
 replyHtml +
 `<div class="msg-content">${renderMessageContent({message:message})}</div>
@@ -970,9 +977,52 @@ _msg.innerHTML =
 + replyHtml
 + `<div class="msg-content">${renderMessageContent(message)}</div>`
 + `<div class="time">${time}</div>`;
-    container.appendChild(_msg);
+
+    // ✅ Add Today separator if no messages exist yet
+    if(!container.querySelector('.msg-date')){
+        const dateDiv = document.createElement('div');
+        dateDiv.className = 'msg-date';
+        dateDiv.innerText = 'Today';
+        container.appendChild(dateDiv);
+    }
+
+ container.appendChild(_msg);
 
     container.scrollTop = container.scrollHeight;
+
+    // ✅ FIX: update sidebar for receiver when chat is already open
+    if(!isMine){
+        const sidebarItem = document.querySelector(`.chat-item[data-chat-id="${message.chat_id}"]`);
+        const chatList = document.querySelector('.chat-list');
+
+        if(sidebarItem && chatList){
+
+            // ✅ update last message text
+            const preview = sidebarItem.querySelector('.chat-last');
+            if(preview){
+                preview.innerText = message.deleted_for_everyone
+                    ? "This message was deleted"
+                    : message.message ?? '';
+                preview.style.color = "";
+                sidebarItem.dataset.originalMessage = message.message ?? '';
+            }
+
+            // ✅ update time
+            const timeEl = sidebarItem.querySelector('.chat-time');
+            if(timeEl){
+                const parsedTime = message.created_at
+                    ? new Date(message.created_at.replace(' ', 'T'))
+                    : new Date();
+                timeEl.dataset.time = parsedTime.toISOString();
+                refreshSidebarTime(timeEl);
+            }
+
+            // ✅ move to top
+            if(chatList.firstElementChild !== sidebarItem){
+                chatList.prepend(sidebarItem);
+            }
+        }
+    }
 
 }
 
