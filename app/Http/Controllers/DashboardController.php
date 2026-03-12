@@ -27,8 +27,22 @@ public function index()
                       ->orWhereRaw("JSON_CONTAINS(deleted_for_users, '\"$userId\"') = 0");
             });
         }], 'created_at')
-        ->orderByDesc('last_message_time')
-        ->get();
+ ->orderByDesc('last_message_time')
+->get();
+
+$pinnedChatIds = \App\Models\PinnedChat::where('user_id', $userId)
+    ->orderBy('pinned_at', 'desc')
+    ->pluck('chat_id')
+    ->toArray();
+
+$pinned = $chats->filter(fn($c) => in_array($c->id, $pinnedChatIds))
+    ->sortBy(fn($c) => array_search($c->id, $pinnedChatIds))
+    ->values();
+
+$unpinned = $chats->filter(fn($c) => !in_array($c->id, $pinnedChatIds))
+    ->values();
+
+$chats = $pinned->concat($unpinned);
 
 
     // ✅ ADD THIS BLOCK (BLOCK FIX)
@@ -46,7 +60,8 @@ public function index()
         'user',
         'chats',
         'iBlockedUsers',      // ✅ PASS
-        'blockedByUsers'      // ✅ PASS
+        'blockedByUsers',    // ✅ PASS
+        'pinnedChatIds'
     ));
 }
 }

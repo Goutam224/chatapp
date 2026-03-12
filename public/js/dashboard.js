@@ -14,19 +14,15 @@ joinPresenceChannel(chatId);
 
 document.addEventListener('click', e => {
 
-    const item =
-        e.target.closest('.chat-item');
-
+    const item = e.target.closest('.chat-item');
     if(!item) return;
 
-    const chatId =
-        item.dataset.chatId;
-const badge =
-item.querySelector('.unread-count');
+    const chatId = item.dataset.chatId;
 
-if(badge)
-    badge.remove();
+    const badge = item.querySelector('.unread-count');
+    if(badge) badge.remove();
 
+    // open chat only — do NOT reorder sidebar
     openChat(chatId, item);
 
 });

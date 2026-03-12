@@ -33,3 +33,58 @@
 .chat-item[data-pinned="1"] .chat-pin-icon{
     display:inline;
 }
+
+.pin-limit-modal{
+position:fixed;
+top:0;
+left:0;
+right:0;
+bottom:0;
+background:rgba(0,0,0,0.5);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:99999;
+}
+
+.pin-limit-box{
+background:#202c33;
+padding:20px;
+border-radius:10px;
+width:260px;
+text-align:center;
+}
+
+.pin-limit-title{
+font-size:16px;
+font-weight:600;
+margin-bottom:6px;
+}
+
+.pin-limit-text{
+font-size:13px;
+color:#8696a0;
+margin-bottom:14px;
+}
+
+.pin-limit-box button{
+background:#25D366;
+border:none;
+padding:6px 14px;
+border-radius:6px;
+cursor:pointer;
+}
+
+.pin-limit-box{
+background:#202c33;
+padding:20px;
+border-radius:10px;
+width:260px;
+text-align:center;
+animation:scaleIn 0.2s ease;
+}
+
+@keyframes scaleIn{
+from{transform:scale(0.9);opacity:0;}
+to{transform:scale(1);opacity:1;}
+}

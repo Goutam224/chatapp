@@ -65,9 +65,9 @@ if(!$alreadyPinned && $count >= 3){
 
         $userId = session('auth_user_id');
 
-        $pinned = PinnedChat::where('user_id',$userId)
-            ->orderBy('pinned_at')
-            ->pluck('chat_id');
+      $pinned = PinnedChat::where('user_id',$userId)
+    ->orderBy('pinned_at', 'desc')
+    ->pluck('chat_id');
 
         return response()->json($pinned);
 

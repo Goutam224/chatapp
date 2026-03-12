@@ -107,11 +107,9 @@ if (lastMsg) {
        // Move chat to top
             const chatList = document.querySelector('.chat-list');
             if (chatList) {
-                if (chatList.firstElementChild !== chatItem) {
-                 if(!PinChat.isPinned(chatItem.dataset.chatId)){
-    chatList.prepend(chatItem);
+    if (chatList.firstElementChild !== chatItem) {
+    PinChat.moveToTopIfNotPinned(chatItem);
 }
-                }
             }
         });
 

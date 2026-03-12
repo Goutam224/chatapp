@@ -156,6 +156,14 @@ function markSeen(messageId) {
 |--------------------------------------------------------------------------
 */
 function openChat(chatId, item) {
+
+    // remove highlight from all chats
+    document.querySelectorAll('.chat-item.active')
+        .forEach(el => el.classList.remove('active'));
+
+    // highlight selected chat
+    if(item) item.classList.add('active');
+
     window.currentChatId = chatId;
     window.currentOtherUserId = item.getAttribute('data-user-id');
     const chatUserName = document.getElementById('chat-user-name');
@@ -807,12 +815,11 @@ if(chatItem && chatList){
         refreshSidebarTime(timeEl);
     }
 
-    // keep chat on top
-    if(chatList.firstElementChild !== chatItem){
-      if(!PinChat.isPinned(chatItem.dataset.chatId)){
-    chatList.prepend(chatItem);
+// always reposition below pinned chats
+if(chatItem){
+    chatItem.remove();
+    PinChat.moveToTopIfNotPinned(chatItem);
 }
-    }
 }
 updateUnreadFilterCount();
     window.replyMessage = null;
@@ -1086,10 +1093,8 @@ _msg.innerHTML =
             }
 
    // move chat to top
-if(chatList.firstElementChild !== sidebarItem){
-    chatList.prepend(sidebarItem);
-}
-
+sidebarItem.remove();
+PinChat.moveToTopIfNotPinned(sidebarItem);
 // ✅ Increase unread ONLY if chat is not open
 if(window.currentChatId != message.chat_id){
 

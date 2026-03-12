@@ -109,7 +109,7 @@ $unreadCount = $unreadQuery->count();
      data-chat-id="{{ $chat->id }}"
      data-user-id="{{ $otherUser->id }}"
      data-unread="{{ $unreadCount }}"
-     onclick="openChat({{ $chat->id }}, this)">
+     data-pinned="{{ in_array($chat->id, $pinnedChatIds) ? '1' : '0' }}">
 @php
 $authId = session('auth_user_id');
 
@@ -412,6 +412,16 @@ window.iBlockedUsers = @json(
 <script src="{{ asset('js/sidebar_context_menu.js') }}"></script>
 @include('dashboard.partials.profile_panel')
 @include('dashboard.partials.my_profile_panel')
+
+<div id="pin-limit-modal" class="pin-limit-modal">
+    <div class="pin-limit-box">
+        <div class="pin-limit-title">Pin limit reached</div>
+        <div class="pin-limit-text">
+            You can only pin up to 3 chats
+        </div>
+        <button onclick="PinChat.closeLimitModal()">OK</button>
+    </div>
+</div>
 
 </body>
 </html>
