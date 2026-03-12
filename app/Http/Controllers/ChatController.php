@@ -282,17 +282,30 @@ if ($latestMessage) {
     }
 }
 
+// ✅ Get deleted_at BEFORE removing the record
+$deletedAt = \App\Models\DeletedChat::where('chat_id', $chat->id)
+    ->where('user_id', $authId)
+    ->value('deleted_at');
+
+// ✅ Now remove it so chat stays visible after this open
+\App\Models\DeletedChat::where('chat_id', $chat->id)
+    ->where('user_id', $authId)
+    ->delete();
+
 $clear = \App\Models\ClearedChat::where('chat_id',$chat->id)
     ->where('user_id',$authId)
     ->value('cleared_at');
 
-  // $authId already set at top — remove the duplicate line below
-$query = Message::where('chat_id',$chat->id);
+ $query = Message::where('chat_id',$chat->id);
 
 if($clear){
-$query->where('created_at','>',$clear);
+    $query->where('created_at','>', $clear);
 }
 
+// ✅ Only show messages sent AFTER the chat was deleted
+if($deletedAt){
+    $query->where('created_at','>', $deletedAt);
+}
 $messages = $query
 
     // ✅ Only show messages visible to me
@@ -496,8 +509,12 @@ if ($isBlocking) {
     ]);
 }
     }
+// ✅ Restore chat for other user if they had deleted it
+\App\Models\DeletedChat::where('chat_id', $request->chat_id)
+    ->where('user_id', '!=', $authId)
+    ->delete();
 
-    // ✅ NORMAL FLOW (only if no blocking at all)
+// ✅ NORMAL FLOW (only if no blocking at all)
   $type = 'text';
 
 if (preg_match('/https?:\/\/\S+/i', $request->message)) {

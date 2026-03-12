@@ -28,6 +28,7 @@ use App\Http\Controllers\StarredMessageController;
 use App\Http\Controllers\ClearChatController;
 use App\Http\Controllers\ChatSearchController;
 use App\Http\Controllers\PinChatController;
+use App\Http\Controllers\DeleteChatController;
 /*
 |--------------------------------------------------------------------------
 | PUBLIC ROUTES (No authentication required)
@@ -206,6 +207,8 @@ Route::post('/message/unstar-on-delete/{messageId}', [StarredMessageController::
 
 Route::post('/chat/clear',[ClearChatController::class,'clear']);
 
+
+Route::post('/chat/delete', [DeleteChatController::class,'delete']);
 
 });
 

@@ -55,3 +55,8 @@ Broadcast::channel('global.presence', function ($user) {
     ];
 
 });
+
+Broadcast::channel('user.messages.{userId}', function ($user, $userId) {
+    $sessionId = session('auth_user_id');
+    return (int) $sessionId === (int) $userId;
+});

@@ -40,9 +40,9 @@ public function broadcastOn()
     }
 
     return [
-        new PrivateChannel('chat.' . $this->message->chat_id),
-        new PrivateChannel('dashboard.' . $this->message->chat_id)
-    ];
+    new PrivateChannel('chat.' . $this->message->chat_id),
+    new PrivateChannel('user.messages.' . $receiverId),
+];
 }
 
 
@@ -58,11 +58,15 @@ public function broadcastWith()
         ->where('user_id', '!=', $this->message->sender_id)
         ->value('user_id');
 
-    // calculate unread count for receiver
-    $unreadCount = \App\Models\Message::where('chat_id', $this->message->chat_id)
-        ->where('sender_id', '!=', $receiverId)
-        ->whereNull('seen_at')
-        ->count();
+ // calculate unread count for receiver — exclude messages not visible to receiver
+$unreadCount = \App\Models\Message::where('chat_id', $this->message->chat_id)
+    ->where('sender_id', '!=', $receiverId)
+    ->whereNull('seen_at')
+    ->where(function($q) use ($receiverId) {
+        $q->whereNull('visible_to')
+          ->orWhereJsonContains('visible_to', (string) $receiverId);
+    })
+    ->count();
 
    return [
     'message' => [
@@ -70,6 +74,7 @@ public function broadcastWith()
         'chat_id' => $this->message->chat_id,
         'sender_id' => $this->message->sender_id,
         'sender_name' => $this->message->sender->name ?? 'User',
+'sender_photo' => $this->message->sender->profile_photo ?? '/default.png',
         'message' => $this->message->message,
         
             'type' => $this->message->type,

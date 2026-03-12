@@ -23,7 +23,56 @@ window.ChatSystem = {
         channel.listen('.message.sent', (e) => {
 
             const message = e.message;
+let existingItem = document.querySelector(`.chat-item[data-chat-id="${message.chat_id}"]`);
 
+if(!existingItem){
+    // ✅ Only rebuild if I am the RECEIVER (not sender)
+    // This handles the case where receiver had deleted this chat
+    if(message.sender_id == window.AUTH_USER_ID) return;
+
+    const newItem = document.createElement('div');
+    newItem.className = 'chat-item';
+    newItem.setAttribute('data-chat-id', message.chat_id);
+    newItem.setAttribute('data-user-id', message.sender_id);
+    newItem.setAttribute('data-unread', '1');
+    newItem.setAttribute('data-pinned', '0');
+    newItem.setAttribute('data-original-message', message.message ?? '');
+    newItem.innerHTML = `
+        <img src="${message.sender_photo ?? '/default.png'}" class="chat-img">
+        <div class="chat-info">
+            <div class="chat-name">
+                <span class="chat-title">${escapeHtml(message.sender_name ?? 'User')}</span>
+                <span class="chat-pin-icon" style="display:none;">📌</span>
+            </div>
+            <div class="chat-last">${escapeHtml(message.message ?? '')}</div>
+        </div>
+        <div class="chat-time" data-time="${message.created_at ?? ''}">
+        </div>
+    `;
+
+    // Set time
+    const timeEl = newItem.querySelector('.chat-time');
+    if(timeEl){
+        timeEl.dataset.time = message.created_at
+            ? new Date(message.created_at.replace(' ','T')).toISOString()
+            : new Date().toISOString();
+        refreshSidebarTime(timeEl);
+
+        // Add unread badge
+        const badge = document.createElement('div');
+        badge.className = 'unread-count';
+        badge.innerText = '1';
+        timeEl.appendChild(badge);
+    }
+
+    const chatList = document.querySelector('.chat-list');
+    if(chatList) chatList.prepend(newItem);
+
+    // ✅ Register sidebar listener for this rebuilt item
+    ChatSystem.listenSidebar(message.chat_id, newItem);
+    updateUnreadFilterCount();
+    return;
+}
             // Ignore if message not visible to me
             if (message.visible_to &&
                 !message.visible_to.includes(window.AUTH_USER_ID)) {
@@ -104,13 +153,15 @@ if (lastMsg) {
     }
 }
 
-       // Move chat to top
+    // ✅ Only move to top for receiver — sender side handled in chat.js
+        if(message.sender_id != window.AUTH_USER_ID){
             const chatList = document.querySelector('.chat-list');
-            if (chatList) {
-    if (chatList.firstElementChild !== chatItem) {
-    PinChat.moveToTopIfNotPinned(chatItem);
-}
+            if(chatList){
+                if(chatList.firstElementChild !== chatItem){
+                    PinChat.moveToTopIfNotPinned(chatItem);
+                }
             }
+        }
         });
 
         /*
@@ -288,6 +339,60 @@ if (lastMsg) {
                         }
                     }
                 }
+            });
+
+
+    // ✅ Listen for messages in deleted chats via personal channel
+        window.EchoInstance.private('user.messages.' + authUserId)
+            .listen('.message.sent', (e) => {
+
+                const message = e.message;
+                if(!message) return;
+
+                const existingItem = document.querySelector(
+                    `.chat-item[data-chat-id="${message.chat_id}"]`
+                );
+                if(existingItem) return;
+
+                const newItem = document.createElement('div');
+                newItem.className = 'chat-item';
+                newItem.setAttribute('data-chat-id', message.chat_id);
+                newItem.setAttribute('data-user-id', message.sender_id);
+                newItem.setAttribute('data-unread', '1');
+                newItem.setAttribute('data-pinned', '0');
+                newItem.setAttribute('data-original-message', message.message ?? '');
+                newItem.innerHTML = `
+                    <img src="${message.sender_photo ?? '/default.png'}" class="chat-img">
+                    <div class="chat-info">
+                        <div class="chat-name">
+                            <span class="chat-title">${escapeHtml(message.sender_name ?? 'User')}</span>
+                            <span class="chat-pin-icon" style="display:none;">📌</span>
+                        </div>
+                        <div class="chat-last">${escapeHtml(message.message ?? '')}</div>
+                    </div>
+                    <div class="chat-time" data-time="">
+                    </div>
+                `;
+
+                const timeEl = newItem.querySelector('.chat-time');
+                if(timeEl){
+                    timeEl.dataset.time = message.sent_at
+                        ? new Date(message.sent_at.replace(' ', 'T')).toISOString()
+                        : new Date().toISOString();
+                    refreshSidebarTime(timeEl);
+
+                    const badge = document.createElement('div');
+                    badge.className = 'unread-count';
+                    badge.innerText = '1';
+                    timeEl.appendChild(badge);
+                }
+
+                const chatList = document.querySelector('.chat-list');
+                if(chatList) chatList.prepend(newItem);
+
+                ChatSystem.listenSidebar(message.chat_id, newItem);
+                markDelivered(message.id);
+                updateUnreadFilterCount();
             });
     },
 

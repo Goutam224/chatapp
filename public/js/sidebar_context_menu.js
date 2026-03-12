@@ -23,21 +23,26 @@ document.addEventListener('contextmenu', function(e){
         menu.id = 'chat-context-menu';
         menu.className = 'chat-context-menu';
 
-       menu.innerHTML = `
-    <div class="cc-item" data-action="pin">
-        <span class="cc-icon">📌</span>
-        ${isPinned ? 'Unpin Chat' : 'Pin Chat'}
-    </div>
+    menu.innerHTML = `
+<div class="cc-item" data-action="pin">
+<span class="cc-icon">📌</span>
+${isPinned ? 'Unpin Chat' : 'Pin Chat'}
+</div>
 
-    <div class="cc-item" data-action="clear">
-        <span class="cc-icon">🗑</span>
-        Clear Chat
-    </div>
+<div class="cc-item" data-action="clear">
+<span class="cc-icon">🗑</span>
+Clear Chat
+</div>
 
-    <div class="cc-item" data-action="block">
-        <span class="cc-icon">${isBlocked ? '🔓' : '🚫'}</span>
-        ${isBlocked ? 'Unblock Contact' : 'Block Contact'}
-    </div>
+<div class="cc-item" data-action="delete">
+<span class="cc-icon">❌</span>
+Delete Chat
+</div>
+
+<div class="cc-item" data-action="block">
+<span class="cc-icon">${isBlocked ? '🔓' : '🚫'}</span>
+${isBlocked ? 'Unblock Contact' : 'Block Contact'}
+</div>
 `;
 
         document.body.appendChild(menu);
@@ -61,6 +66,50 @@ document.addEventListener('contextmenu', function(e){
                 window.currentChatId = chatId;
                 clearChatConfirm();
             }
+
+ if(action === 'delete'){
+
+fetch('/chat/delete',{
+method:'POST',
+headers:{
+'Content-Type':'application/json',
+'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+},
+body: JSON.stringify({
+chat_id: chatId
+})
+})
+.then(res=>res.json())
+.then(()=>{
+
+chat.remove();
+
+// ✅ Reset chat screen if this chat is currently open
+if(String(window.currentChatId) === String(chatId)){
+    window.currentChatId = null;
+    window.currentOtherUserId = null;
+    localStorage.removeItem('currentChatId');
+    localStorage.removeItem('currentChatUserId');
+    const container = document.getElementById('chat-container');
+    if(container){
+        container.innerHTML = `
+            <div style="
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                height:100%;
+                font-size:20px;
+                color:#8696a0;
+            ">
+                Select a chat to start messaging
+            </div>
+        `;
+    }
+}
+
+});
+
+}
 
       if(action === 'block'){
 

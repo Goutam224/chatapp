@@ -801,7 +801,6 @@ success: function(response) {
 const chatList = document.querySelector('.chat-list');
 
 if(chatItem && chatList){
-
     // ✅ update sidebar last message instantly
     const preview = chatItem.querySelector('.chat-last');
     const timeEl = chatItem.querySelector('.chat-time');
@@ -815,11 +814,8 @@ if(chatItem && chatList){
         refreshSidebarTime(timeEl);
     }
 
-// always reposition below pinned chats
-if(chatItem){
-    chatItem.remove();
+    // ✅ reposition without removing
     PinChat.moveToTopIfNotPinned(chatItem);
-}
 }
 updateUnreadFilterCount();
     window.replyMessage = null;

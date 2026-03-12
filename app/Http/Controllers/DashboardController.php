@@ -8,7 +8,7 @@ use App\Models\ChatParticipant;
 use App\Models\Chat;
 use App\Models\Message;
 use App\Models\UserBlock; // ✅ ADD THIS
-
+use Illuminate\Support\Facades\DB;
 class DashboardController extends Controller
 {
 public function index()
@@ -16,10 +16,17 @@ public function index()
     $userId = session('auth_user_id');
 
     $user = User::find($userId);
+$chats = Chat::whereHas('participants', function($q) use ($userId) {
+        $q->where('user_id', $userId);
+    })
+    ->whereNotExists(function($q) use ($userId){
 
-    $chats = Chat::whereHas('participants', function($q) use ($userId) {
-            $q->where('user_id', $userId);
-        })
+        $q->select(DB::raw(1))
+          ->from('deleted_chats')
+          ->whereColumn('deleted_chats.chat_id','chats.id')
+          ->where('deleted_chats.user_id',$userId);
+
+    })
         ->with(['participants.user'])
         ->withMax(['messages as last_message_time' => function($q) use ($userId) {
             $q->where(function($query) use ($userId) {
