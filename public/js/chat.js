@@ -355,12 +355,24 @@ messagesHtml += `
             
 
             container.innerHTML = `
-
 <div class="chat-header" style="display:flex;align-items:center;gap:10px;padding:10px;">
-   <img src="${
-    window.blockedUsersRealtime[window.currentOtherUserId]
-        ? '/default.png'
-        : item.querySelector('.chat-img').src
+
+<button id="chat-back-btn"
+style="
+background:none;
+border:none;
+color:white;
+font-size:22px;
+cursor:pointer;
+padding:0 5px;
+">
+←
+</button>
+
+<img src="${
+window.blockedUsersRealtime[window.currentOtherUserId]
+? '/default.png'
+: item.querySelector('.chat-img').src
 }" onclick="ProfilePanel.open()" style="width:40px;height:40px;border-radius:50%;cursor:pointer;">
     <div style="display:flex;flex-direction:column;">
         <span id="chat-user-name" onclick="ProfilePanel.open()" style="cursor:pointer;font-weight:500;" data-user-id="${window.currentOtherUserId}">
@@ -441,6 +453,41 @@ overflow-y:auto;"></textarea>
     </button>
 </div>
 `;
+
+// ✅ Back button — go to dashboard
+            const backBtn = document.getElementById('chat-back-btn');
+            if (backBtn) {
+                backBtn.addEventListener('click', function () {
+                    window.pendingChatUser    = null;
+                    window.currentChatId      = null;
+                    window.currentOtherUserId = null;
+
+                    localStorage.removeItem('currentChatId');
+                    localStorage.removeItem('currentChatUserId');
+
+                    document.querySelectorAll('.chat-item.active')
+                        .forEach(el => el.classList.remove('active'));
+
+                    document.getElementById('new-chat-list').style.display = 'none';
+                    document.querySelector('.chat-list').style.display = 'block';
+
+                    const container = document.getElementById('chat-container');
+                    if (container) {
+                        container.innerHTML = `
+                            <div style="
+                                display:flex;
+                                align-items:center;
+                                justify-content:center;
+                                height:100%;
+                                font-size:20px;
+                                color:#8696a0;
+                            ">
+                                Select a chat to start messaging
+                            </div>
+                        `;
+                    }
+                });
+            }
 
             // use global var
          const otherUserId = window.currentOtherUserId;
@@ -657,6 +704,72 @@ window.sendMessage = function() {
     const input = document.getElementById('message-input');
     const message = input.value.trim();
     if(!message) return;
+
+    // ── PENDING CHAT: create chat first, then send ──────────────────────────
+    if (window.pendingChatUser && !window.currentChatId) {
+        const user = window.pendingChatUser;
+
+        fetch('/chat/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ user_id: user.id })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) return;
+
+            const chatId = data.id;
+
+            // Persist chat ID — pending mode ends here
+            window.currentChatId      = chatId;
+            window.pendingChatUser    = null;
+
+            localStorage.setItem('currentChatId',     chatId);
+            localStorage.setItem('currentChatUserId', user.id);
+
+            // Add sidebar item if it doesn't exist yet
+            let sidebarItem = document.querySelector(`.chat-item[data-chat-id="${chatId}"]`);
+            if (!sidebarItem) {
+                const div = document.createElement('div');
+                div.className = 'chat-item active';
+                div.setAttribute('data-chat-id',   chatId);
+                div.setAttribute('data-user-id',   user.id);
+                div.setAttribute('data-unread',    '0');
+                div.setAttribute('data-pinned',    '0');
+                div.innerHTML = `
+                    <img src="${user.profile_photo ?? '/default.png'}" class="chat-img">
+                    <div class="chat-info">
+                        <div class="chat-name">
+                            <span class="chat-title">${escapeHtml(user.name)}</span>
+                            <span class="chat-pin-icon" style="display:none;">📌</span>
+                        </div>
+                        <div class="chat-last"></div>
+                    </div>
+                    <div class="chat-time"></div>
+                `;
+                div.onclick = function () { openChat(chatId, div); };
+                document.querySelector('.chat-list').prepend(div);
+                window.applyGlobalDotIfOnline(div, user.id);
+                ChatSystem.listenSidebar(chatId, div);
+                joinPresenceChannel(chatId);
+                sidebarItem = div;
+            }
+
+            // Start listening on the chat channel
+            ChatSystem.listenChat(chatId);
+
+            // Now send the message normally
+            window.sendMessage();
+        });
+
+        return; // wait for chat creation
+    }
+    // ── END PENDING ──────────────────────────────────────────────────────────
+
+    // ... rest of your existing sendMessage code unchanged from here ...
 
   if(window.editingMessageId) {
     const editingId = window.editingMessageId;
@@ -1582,7 +1695,64 @@ function removeMediaPreview() {
 function handleSendAction() {
     const mediaInput = document.getElementById('media-input');
     const file = mediaInput.files[0];
-    if(file) sendMedia();
+
+    // If pending chat + media — create chat first, then trigger media send
+    if (file && window.pendingChatUser && !window.currentChatId) {
+        const user = window.pendingChatUser;
+
+        fetch('/chat/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ user_id: user.id })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) return;
+
+            const chatId = data.id;
+            window.currentChatId   = chatId;
+            window.pendingChatUser = null;
+
+            localStorage.setItem('currentChatId',     chatId);
+            localStorage.setItem('currentChatUserId', user.id);
+
+            let sidebarItem = document.querySelector(`.chat-item[data-chat-id="${chatId}"]`);
+            if (!sidebarItem) {
+                const div = document.createElement('div');
+                div.className = 'chat-item active';
+                div.setAttribute('data-chat-id', chatId);
+                div.setAttribute('data-user-id', user.id);
+                div.setAttribute('data-unread',  '0');
+                div.setAttribute('data-pinned',  '0');
+                div.innerHTML = `
+                    <img src="${user.profile_photo ?? '/default.png'}" class="chat-img">
+                    <div class="chat-info">
+                        <div class="chat-name">
+                            <span class="chat-title">${escapeHtml(user.name)}</span>
+                            <span class="chat-pin-icon" style="display:none;">📌</span>
+                        </div>
+                        <div class="chat-last"></div>
+                    </div>
+                    <div class="chat-time"></div>
+                `;
+                div.onclick = function () { openChat(chatId, div); };
+                document.querySelector('.chat-list').prepend(div);
+                window.applyGlobalDotIfOnline(div, user.id);
+                ChatSystem.listenSidebar(chatId, div);
+                joinPresenceChannel(chatId);
+            }
+
+            ChatSystem.listenChat(chatId);
+            sendMedia();
+        });
+
+        return;
+    }
+
+    if (file) sendMedia();
     else sendMessage();
 }
 

@@ -75,7 +75,9 @@ Unread <span id="unread-count"></span>
     <div class="chat-list">
 
 @foreach($chats as $chat)
-
+@if(!$chat->messages->count())
+@continue
+@endif
 @php
 $otherUser = $chat->participants
     ->where('user_id', '!=', session('auth_user_id'))

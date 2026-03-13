@@ -35,6 +35,7 @@ window.ChatSystem = {
 
             // Always query fresh from DOM — do not rely on stale chatItem reference
             let existingItem = document.querySelector(`.chat-item[data-chat-id="${message.chat_id}"]`);
+            
 
             if (!existingItem) {
                 // Only rebuild if I am the RECEIVER (not sender)
