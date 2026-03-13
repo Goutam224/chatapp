@@ -706,7 +706,9 @@ window.sendMessage = function() {
     if(!message) return;
 
     // ── PENDING CHAT: create chat first, then send ──────────────────────────
-    if (window.pendingChatUser && !window.currentChatId) {
+ if (window.pendingChatUser && !window.currentChatId) {
+        if (window._creatingChat) return;
+        window._creatingChat = true;
         const user = window.pendingChatUser;
 
         fetch('/chat/create', {
@@ -719,11 +721,11 @@ window.sendMessage = function() {
         })
         .then(res => res.json())
         .then(data => {
+           window._creatingChat = false;
             if (!data.success) return;
 
             const chatId = data.id;
 
-            // Persist chat ID — pending mode ends here
             window.currentChatId      = chatId;
             window.pendingChatUser    = null;
 
@@ -763,13 +765,12 @@ window.sendMessage = function() {
 
             // Now send the message normally
             window.sendMessage();
-        });
+})
+        .catch(() => { window._creatingChat = false; });
 
         return; // wait for chat creation
     }
-    // ── END PENDING ──────────────────────────────────────────────────────────
-
-    // ... rest of your existing sendMessage code unchanged from here ...
+    // ── END PENDING ──
 
   if(window.editingMessageId) {
     const editingId = window.editingMessageId;
