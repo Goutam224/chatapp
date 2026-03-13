@@ -252,6 +252,22 @@ function joinGlobalPresence() {
 
         .here((users) => {
             users.forEach(user => setGlobalOnline(user.id));
+
+            // ✅ Refresh open chat header on reconnect
+            if (window.currentOtherUserId) {
+                const isOnline = users.some(
+                    u => Number(u.id) === Number(window.currentOtherUserId)
+                );
+                const headerStatus = document.getElementById('chat-status');
+                if (headerStatus) {
+                    if (isOnline) {
+                        headerStatus.innerText = 'online';
+                        headerStatus.style.color = '#25D366';
+                    } else {
+                        fetchLastSeen(window.currentOtherUserId, headerStatus);
+                    }
+                }
+            }
         })
 
         .joining((user) => {

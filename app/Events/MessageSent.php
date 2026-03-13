@@ -74,8 +74,8 @@ $unreadQuery = \App\Models\Message::where('chat_id', $this->message->chat_id)
         $q->whereNull('visible_to')
           ->orWhereJsonContains('visible_to', (string) $receiverId);
     });
-
-$boundary = max(array_filter([$deletedAt, $clearedAt]));
+$values = array_filter([$deletedAt, $clearedAt]);
+$boundary = !empty($values) ? max($values) : null;
 
 if ($boundary) {
     $unreadQuery->where('created_at', '>', $boundary);

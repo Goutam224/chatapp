@@ -773,4 +773,52 @@ public function loadAroundMessage($messageId)
 }
 
 
+public function markAllDelivered()
+{
+    $authId = session('auth_user_id');
+    if (!$authId) return response()->json([], 401);
+
+    $chatIds = \App\Models\ChatParticipant::where('user_id', $authId)
+        ->pluck('chat_id');
+
+    $messages = Message::whereIn('chat_id', $chatIds)
+        ->where('sender_id', '!=', $authId)
+        ->whereNull('delivered_at')
+        ->where(function($q) use ($authId) {
+            $q->whereNull('visible_to')
+              ->orWhereJsonContains('visible_to', (string) $authId);
+        })
+        ->get();
+
+    foreach ($messages as $msg) {
+
+        // ✅ Skip if THEY blocked ME — they should not see double tick
+        $theyBlockedMe = \App\Models\UserBlock::where('blocker_id', $msg->sender_id)
+            ->where('blocked_id', $authId)
+            ->exists();
+
+        if ($theyBlockedMe) continue;
+
+        // ✅ Skip if I blocked THEM — message has visible_to restricted, no tick update needed
+        $iBlockedThem = \App\Models\UserBlock::where('blocker_id', $authId)
+            ->where('blocked_id', $msg->sender_id)
+            ->exists();
+
+        if ($iBlockedThem) continue;
+
+        // ✅ Skip if message is before clear/delete boundary
+        $boundary = \App\Models\ClearedChat::where('chat_id', $msg->chat_id)
+            ->where('user_id', $authId)
+            ->value('cleared_at');
+
+        if ($boundary && $msg->created_at <= $boundary) continue;
+
+        $msg->delivered_at = now();
+        $msg->save();
+        broadcast(new \App\Events\MessageSent($msg))->toOthers();
+    }
+
+    return response()->json(['success' => true]);
+}
+
 }

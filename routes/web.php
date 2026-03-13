@@ -210,6 +210,8 @@ Route::post('/chat/clear',[ClearChatController::class,'clear']);
 
 Route::post('/chat/delete', [DeleteChatController::class,'delete']);
 
+Route::post('/messages/mark-all-delivered', [ChatController::class, 'markAllDelivered']);
+
 });
 
 

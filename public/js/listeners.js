@@ -1,5 +1,14 @@
 window.blockedUsersRealtime = {};
 
+// ✅ Mark all undelivered messages as delivered on page load
+fetch('/messages/mark-all-delivered', {
+    method: 'POST',
+    headers: {
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+        'Content-Type': 'application/json'
+    }
+});
+
 window.ChatSystem = {
 
     activeChatId: null,
