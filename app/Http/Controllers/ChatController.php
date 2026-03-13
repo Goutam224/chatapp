@@ -237,30 +237,46 @@ if ($otherParticipant) {
 // ONLY mark delivered & seen if they did NOT block me
 if (!$theyBlockedMe && request()->has('mark_seen')) {
 
- // DELIVERED — skip messages sent while block was active (visible_to restricted)
-$undelivered = Message::where('chat_id', $chat->id)
-    ->where('sender_id', '!=', $authId)
-    ->whereNull('delivered_at')
-    ->where(function($q) use ($authId) {
-        $q->whereNull('visible_to')
-          ->orWhereJsonContains('visible_to', $authId);
-    })
-    ->get();
+    // ✅ Fetch boundary once — covers both clear-chat and delete-chat
+    $clearBoundary = \App\Models\ClearedChat::where('chat_id', $chat->id)
+        ->where('user_id', $authId)
+        ->value('cleared_at');
+
+    // DELIVERED
+    $undeliveredQuery = Message::where('chat_id', $chat->id)
+        ->where('sender_id', '!=', $authId)
+        ->whereNull('delivered_at')
+        ->where(function($q) use ($authId) {
+            $q->whereNull('visible_to')
+              ->orWhereJsonContains('visible_to', $authId);
+        });
+
+    if ($clearBoundary) {
+        $undeliveredQuery->where('created_at', '>', $clearBoundary);
+    }
+
+    $undelivered = $undeliveredQuery->get();
 
     foreach ($undelivered as $msg) {
         $msg->delivered_at = now();
         $msg->save();
         broadcast(new \App\Events\MessageSent($msg))->toOthers();
     }
-// SEEN — skip messages sent while block was active (visible_to restricted)
-$unseen = Message::where('chat_id', $chat->id)
-    ->where('sender_id', '!=', $authId)
-    ->whereNull('seen_at')
-    ->where(function($q) use ($authId) {
-        $q->whereNull('visible_to')
-          ->orWhereJsonContains('visible_to', $authId);
-    })
-    ->get();
+
+    // SEEN
+    $unseenQuery = Message::where('chat_id', $chat->id)
+        ->where('sender_id', '!=', $authId)
+        ->whereNull('seen_at')
+        ->where(function($q) use ($authId) {
+            $q->whereNull('visible_to')
+              ->orWhereJsonContains('visible_to', $authId);
+        });
+
+    if ($clearBoundary) {
+        $unseenQuery->where('created_at', '>', $clearBoundary);
+    }
+
+    $unseen = $unseenQuery->get();
 
     if ($unseen->isNotEmpty()) {
 
@@ -272,14 +288,16 @@ $unseen = Message::where('chat_id', $chat->id)
             $msg->save();
             $seenIds[] = $msg->id;
         }
-$latestMessage = Message::where('chat_id', $chat->id)
-    ->orderBy('created_at', 'desc')
-    ->first();
 
-if ($latestMessage) {
-    broadcast(new \App\Events\MessageSent($latestMessage, $seenIds))->toOthers();
-}
+        $latestMessage = Message::where('chat_id', $chat->id)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if ($latestMessage) {
+            broadcast(new \App\Events\MessageSent($latestMessage, $seenIds))->toOthers();
+        }
     }
+
 }
 
 // ✅ Get deleted_at BEFORE removing the record

@@ -62,7 +62,6 @@ window.joinPresenceChannel = function(chatId) {
 
     // Join fresh presence channel
     const channel = window.EchoInstance.join('chat.presence.' + chatId)
-
         .here((users) => {
 
             const headerStatus = document.getElementById('chat-status');
@@ -78,12 +77,23 @@ window.joinPresenceChannel = function(chatId) {
                 headerStatus.innerText = "online";
                 headerStatus.style.color = "#25D366";
             } else {
-                // Wait and retry once in case other user joins slightly late
+                // Wait for global presence dot before showing last seen
                 setTimeout(() => {
                     if (String(window.currentChatId) !== String(chatId)) return;
                     const hs = document.getElementById('chat-status');
                     if (!hs) return;
                     if (hs.innerText === 'online') return;
+
+                    // Check global presence dot first
+                    const sidebarItem = document.querySelector(
+                        `.chat-item[data-user-id="${currentOtherUserId}"]`
+                    );
+                    if (sidebarItem && sidebarItem.querySelector('.online-dot')) {
+                        hs.innerText = "online";
+                        hs.style.color = "#25D366";
+                        return;
+                    }
+
                     if (window.chatPresenceChannels[chatId] &&
                         window.chatPresenceChannels[chatId]._joined) {
                         return;
@@ -104,7 +114,16 @@ window.joinPresenceChannel = function(chatId) {
 
         .leaving((user) => {
             if (user.id != window.AUTH_USER_ID) {
-                setUserOffline(chatId, user.id);
+                // Re-check after short delay — user may have just switched chats
+                setTimeout(() => {
+                    // Only show offline if user is actually offline in global presence
+                    const isStillOnline = document.querySelector(
+                        `.chat-item[data-user-id="${user.id}"] .online-dot`
+                    );
+                    if (!isStillOnline) {
+                        setUserOffline(chatId, user.id);
+                    }
+                }, 3000);
             }
         });
 
@@ -120,6 +139,26 @@ function fetchLastSeen(userId, headerStatus) {
 
     if (window.theyBlockedMe) {
         headerStatus.innerText = "";
+        return;
+    }
+
+    // If global presence dot exists — user is online, skip last seen
+    const sidebarItem = document.querySelector(
+        `.chat-item[data-user-id="${userId}"]`
+    );
+    if (sidebarItem && sidebarItem.querySelector('.online-dot')) {
+        headerStatus.innerText = "online";
+        headerStatus.style.color = "#25D366";
+        return;
+    }
+
+    // Check global presence first — if online dot exists, show online
+    const chatItem = document.querySelector(
+        `.chat-item[data-user-id="${userId}"]`
+    );
+    if (chatItem && chatItem.querySelector('.online-dot')) {
+        headerStatus.innerText = "online";
+        headerStatus.style.color = "#25D366";
         return;
     }
 
@@ -269,6 +308,52 @@ function setGlobalOffline(userId) {
         if (dot) dot.remove();
     }
 }
+
+/*
+|--------------------------------------------------------------------------
+| APPLY GLOBAL ONLINE DOT TO A NEWLY CREATED CHAT ITEM
+| Call this immediately after prepending a new .chat-item to the sidebar.
+| Reads live presence members synchronously — no setTimeout, no race condition.
+|--------------------------------------------------------------------------
+*/
+window.applyGlobalDotIfOnline = function(chatItem, userId) {
+
+    userId = Number(userId);
+
+    if (!userId) return;
+    if (userId === Number(window.AUTH_USER_ID)) return;
+    if (window.iBlockedUsers  && window.iBlockedUsers.includes(userId)) return;
+    if (window.blockedByUsers && window.blockedByUsers.includes(userId)) return;
+
+    // Read members directly from the live global presence channel
+    const members = window.globalPresenceChannel
+        && window.globalPresenceChannel.subscription
+        && window.globalPresenceChannel.subscription.members
+        && window.globalPresenceChannel.subscription.members.members;
+
+    if (!members) return;
+
+    const isOnline = Object.values(members)
+        .some(u => Number(u.id) === userId);
+
+    if (!isOnline) return;
+
+    // Apply dot synchronously — element is already in the DOM at this point
+    let dot = chatItem.querySelector('.online-dot');
+    if (!dot) {
+        dot = document.createElement('span');
+        dot.className        = 'online-dot';
+        dot.style.width      = '10px';
+        dot.style.height     = '10px';
+        dot.style.background = '#25D366';
+        dot.style.borderRadius = '50%';
+        dot.style.display    = 'inline-block';
+        dot.style.marginLeft = '6px';
+
+        const nameEl = chatItem.querySelector('.chat-name');
+        if (nameEl) nameEl.appendChild(dot);
+    }
+};
 
 /*
 |--------------------------------------------------------------------------

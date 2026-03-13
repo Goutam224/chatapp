@@ -59,14 +59,29 @@ public function broadcastWith()
         ->value('user_id');
 
  // calculate unread count for receiver — exclude messages not visible to receiver
-$unreadCount = \App\Models\Message::where('chat_id', $this->message->chat_id)
+$deletedAt = \App\Models\DeletedChat::where('chat_id', $this->message->chat_id)
+    ->where('user_id', $receiverId)
+    ->value('deleted_at');
+
+$clearedAt = \App\Models\ClearedChat::where('chat_id', $this->message->chat_id)
+    ->where('user_id', $receiverId)
+    ->value('cleared_at');
+
+$unreadQuery = \App\Models\Message::where('chat_id', $this->message->chat_id)
     ->where('sender_id', '!=', $receiverId)
     ->whereNull('seen_at')
     ->where(function($q) use ($receiverId) {
         $q->whereNull('visible_to')
           ->orWhereJsonContains('visible_to', (string) $receiverId);
-    })
-    ->count();
+    });
+
+$boundary = max(array_filter([$deletedAt, $clearedAt]));
+
+if ($boundary) {
+    $unreadQuery->where('created_at', '>', $boundary);
+}
+
+$unreadCount = $unreadQuery->count();
 
    return [
     'message' => [

@@ -457,9 +457,20 @@ if(otherUserId){
             success: function(response){
                 const headerStatus = document.getElementById('chat-status');
                 if(!headerStatus) return;
-                if(headerStatus.innerText === 'online') return;
-                if(response.last_seen) headerStatus.innerText = "last seen " + response.last_seen;
-                else headerStatus.innerText = "";
+             if(headerStatus.innerText === 'online') return;
+
+// ✅ Check global presence dot before setting last seen
+const sidebarItem = document.querySelector(
+    `.chat-item[data-user-id="${otherUserId}"]`
+);
+if(sidebarItem && sidebarItem.querySelector('.online-dot')){
+    headerStatus.innerText = "online";
+    headerStatus.style.color = "#25D366";
+    return;
+}
+
+if(response.last_seen) headerStatus.innerText = "last seen " + response.last_seen;
+else headerStatus.innerText = "";
             }
         });
     }

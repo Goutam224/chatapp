@@ -84,8 +84,13 @@ chat_id: chatId
 
 chat.remove();
 
+// ✅ Update unread filter count instantly after chat removed
+updateUnreadFilterCount();
+
 // ✅ Reset chat screen if this chat is currently open
 if(String(window.currentChatId) === String(chatId)){
+ 
+
     window.currentChatId = null;
     window.currentOtherUserId = null;
     localStorage.removeItem('currentChatId');
