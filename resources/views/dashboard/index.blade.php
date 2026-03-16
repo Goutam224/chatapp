@@ -366,6 +366,9 @@ if($visibleMessage) {
     </div>
 
 </div>
+
+<div id="wa-toast"></div>
+
 <script>
 window.AUTH_USER_ID = {{ session('auth_user_id') }};
 window.APP_PAGE = "{{ $page ?? 'chat' }}";   // ⭐ ADD THIS

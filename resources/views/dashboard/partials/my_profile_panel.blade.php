@@ -1,57 +1,48 @@
-<div id="my-profile-panel" class="profile-panel">
+<div id="my-profile-panel" class="wa-profile-panel">
 
-    <div class="profile-header">
+<div class="wa-profile-sidebar">
 
-        <button onclick="MyProfile.close()">←</button>
-
-        Profile
-
+    <div class="wa-profile-header">
+        <button class="wa-back-btn" onclick="MyProfile.close()">←</button>
+        <span>Profile</span>
     </div>
 
+    <div class="wa-profile-body">
 
-    <div class="profile-body">
+        <input type="file" id="my-photo-input" hidden>
 
-        <input type="file"
-               id="my-photo-input"
-               hidden>
+        <div class="wa-photo-container">
+            <img id="my-profile-photo"
+                 class="wa-profile-photo"
+                 onclick="MyProfile.choosePhoto()">
 
-        <img id="my-profile-photo"
-             class="profile-photo"
-             onclick="MyProfile.choosePhoto()">
+            <div class="wa-photo-overlay"
+                 onclick="MyProfile.choosePhoto()">
+                 Change Photo
+            </div>
+        </div>
 
-
-        <div class="profile-field">
-
+        <div class="wa-field">
             <label>Name</label>
-
             <input id="my-name">
-
         </div>
 
-
-        <div class="profile-field">
-
+        <div class="wa-field">
             <label>About</label>
-
             <input id="my-about">
-
         </div>
 
-
-        <div class="profile-field">
-
+        <div class="wa-field">
             <label>Phone</label>
-
-            <input id="my-phone"
-                   readonly>
-
+            <input id="my-phone" readonly>
         </div>
-
-
-        <button onclick="MyProfile.save()">
-            Save
-        </button>
+<button class="wa-save-btn" onclick="MyProfile.save()">
+    Save Changes
+</button>
 
     </div>
+
+</div>
+
 
 </div>

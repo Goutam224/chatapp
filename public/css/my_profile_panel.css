@@ -1,148 +1,166 @@
 .wa-profile-panel{
-
     position:absolute;
-
     top:0;
-
     left:0;
-
-    width:100%;
-
+    width:420px;   /* same width as your chat sidebar */
     height:100%;
-
     background:#111b21;
-
     display:none;
-
     flex-direction:column;
-
-    z-index:20;
-
+    z-index:1000;
 }
 
 .wa-profile-panel.open{
-
-    display:flex;
-
+display:flex;
 }
+
 
 
 .wa-profile-header{
-
-    height:60px;
-
-    display:flex;
-
-    align-items:center;
-
-    gap:15px;
-
-    padding:0 15px;
-
-    background:#202c33;
-
-    color:white;
-
-    font-size:18px;
-
+height:60px;
+display:flex;
+align-items:center;
+gap:15px;
+padding:0 15px;
+background:#202c33;
+color:white;
+font-size:18px;
 }
-
 
 .wa-back-btn{
-
-    background:none;
-
-    border:none;
-
-    color:white;
-
-    font-size:20px;
-
-    cursor:pointer;
-
+background:none;
+border:none;
+color:white;
+font-size:20px;
+cursor:pointer;
 }
 
+/* BODY */
 
 .wa-profile-body{
-
-    padding:20px;
-
-    color:white;
-
+padding:25px;
+color:white;
 }
-
 
 .wa-photo-container{
-
-    position:relative;
-
-    width:200px;
-
-    height:200px;
-
-    margin:20px auto;
-
+position:relative;
+width:200px;
+height:200px;
+margin:20px auto;
 }
-
 
 .wa-profile-photo{
-
-    width:200px;
-
-    height:200px;
-
-    border-radius:50%;
-
+width:200px;
+height:200px;
+border-radius:50%;
+object-fit:cover;
+cursor:pointer;
 }
-
 
 .wa-photo-overlay{
-
-    position:absolute;
-
-    bottom:0;
-
-    width:100%;
-
-    background:rgba(0,0,0,0.6);
-
-    text-align:center;
-
-    padding:8px;
-
-    cursor:pointer;
-
+position:absolute;
+bottom:0;
+width:100%;
+background:rgba(0,0,0,0.6);
+text-align:center;
+padding:8px;
+cursor:pointer;
+font-size:13px;
 }
-
 
 .wa-field{
-
-    margin-top:25px;
-
+margin-top:25px;
 }
-
 
 .wa-field label{
-
-    color:#8696a0;
-
-    font-size:13px;
-
+color:#8696a0;
+font-size:13px;
 }
 
-
 .wa-field input{
+width:100%;
+padding:10px;
+margin-top:5px;
+background:#202c33;
+border:none;
+color:white;
+}
 
+/* RIGHT SIDE PLACEHOLDER */
+
+.wa-profile-right{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#0b141a;
+}
+.wa-profile-placeholder{
+font-size:22px;
+}
+
+.wa-profile-placeholder{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:20px;
+    color:#8696a0;
+}
+
+.wa-profile-placeholder img{
+    width:140px;
+    height:140px;
+    border-radius:50%;
+    object-fit:cover;
+}
+
+.wa-profile-placeholder span{
+    font-size:22px;
+}
+
+/* hide center placeholder inside sidebar */
+.wa-profile-sidebar .wa-profile-placeholder{
+    display:none;
+}
+
+.wa-save-btn{
+    margin-top:25px;
     width:100%;
-
-    padding:10px;
-
-    margin-top:5px;
-
-    background:#202c33;
-
+    padding:12px;
+    background:#25D366;
     border:none;
+    border-radius:8px;
+    color:#111;
+    font-weight:600;
+    cursor:pointer;
+    transition:all .15s ease;
+}
 
+.wa-save-btn:hover{
+    background:#1ebe5d;
+}
+
+.wa-save-btn:active{
+    transform:scale(.97);
+}
+
+#wa-toast{
+    position:fixed;
+    bottom:30px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#202c33;
     color:white;
+    padding:12px 20px;
+    border-radius:6px;
+    font-size:14px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .25s ease, transform .25s ease;
+    z-index:9999;
+}
 
+#wa-toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(-10px);
 }
