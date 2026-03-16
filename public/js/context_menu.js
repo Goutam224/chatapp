@@ -3,11 +3,13 @@ document.addEventListener('contextmenu', function(e){
     // 🔥 remove old menu first
     const oldMenu = document.getElementById('custom-context-menu');
     if(oldMenu) oldMenu.remove();
+const msg = e.target.closest('.msg');
+if(!msg) return;
 
-    const msg = e.target.closest('.msg');
-    if(!msg) return;
+e.preventDefault();
 
-    e.preventDefault();
+// 🔍 detect deleted message
+const isDeletedMessage = msg.innerText.includes('This message was deleted');
 
     const isPausedUpload =
         msg.dataset.uploading === "1" &&
@@ -71,6 +73,32 @@ else if(isFinishedMessage){
     const isMine = msg.classList.contains('msg-right');
 const isPinned = msg.dataset.pinned == "1";
 const isStarred = msg.dataset.starred == "1";
+
+// 🚫 WhatsApp-style deleted message menu
+if(isDeletedMessage){
+
+    menu.style.minWidth='160px';
+    menu.style.boxShadow='0 4px 20px rgba(0,0,0,0.4)';
+    menu.style.fontSize='14px';
+
+    menu.innerHTML = `
+    ${isMine ? `
+    <div class="context-item" onclick="MessageInfo.open(${messageId})">
+    <span class="context-icon">ⓘ</span>
+    Message info
+    </div>
+    ` : ''}
+
+    <div class="context-divider"></div>
+
+    <div class="context-item" onclick="deleteForMe(${messageId})">
+    <span class="context-icon">🗑</span>
+    Delete for Me
+    </div>
+    `;
+
+}
+else{
     // menu style improvements
     menu.style.minWidth='160px';
     menu.style.boxShadow='0 4px 20px rgba(0,0,0,0.4)';
@@ -152,6 +180,7 @@ Delete for Everyone
 ` : ''}
 
 `;
+}
 }
     else{
         return; // uploading state without pause → no menu
