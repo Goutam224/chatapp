@@ -267,3 +267,336 @@
     padding-left: 4px;
     letter-spacing: 0.3px;
 }
+
+/* ============================================
+   MODERN UI ENHANCEMENTS — Add to bottom of
+   your existing profile panel CSS file
+   ============================================ */
+
+/* ── Panel & Header ── */
+.profile-panel {
+    box-shadow: -6px 0 32px rgba(0, 0, 0, 0.45);
+    border-left: 1px solid #1f2c33;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px;
+    background: #202c33;
+    border-bottom: 1px solid #1a2530;
+}
+
+.profile-header button {
+    background: none;
+    border: none;
+    color: #8696a0;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 50%;
+    transition: color 0.2s ease, background 0.2s ease;
+    line-height: 1;
+}
+
+.profile-header button:hover {
+    color: #e9edef;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Profile Photo ── */
+.profile-photo {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid #2a3942;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    object-fit: cover;
+    margin-top: 8px;
+}
+
+/* ── Info Blocks ── */
+.profile-block {
+    background: #182229;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-top: 10px;
+}
+
+.profile-block .label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: #25D366;
+    margin-bottom: 4px;
+}
+
+.profile-block .value {
+    font-size: 15px;
+    color: #e9edef;
+    line-height: 1.5;
+}
+
+/* ── Clickable rows (Media / Starred / Clear chat) ── */
+.profile-block.clickable {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+    user-select: none;
+}
+
+.profile-block.clickable:hover {
+    background: #1e2d35;
+    transform: translateX(-2px);
+}
+
+.profile-block.clickable:hover .arrow,
+.profile-block.clickable:hover span[style*="8696a0"] {
+    color: #25D366 !important;
+}
+
+.profile-block.clickable span:first-child {
+    font-size: 15px;
+    color: #e9edef;
+    font-weight: 400;
+}
+
+/* ── Clear Chat row — red hover ── */
+.profile-block.clickable.clear-chat-row:hover {
+    background: rgba(217, 48, 37, 0.1);
+}
+
+.profile-block.clickable.clear-chat-row:hover span:first-child {
+    color: #d93025;
+}
+
+.profile-block.clickable.clear-chat-row:hover .arrow {
+    color: #d93025 !important;
+}
+
+/* ── Block Button ── */
+.block-btn {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid rgba(217, 48, 37, 0.3);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    background: rgba(217, 48, 37, 0.08);
+    color: #d93025;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+    letter-spacing: 0.3px;
+}
+
+.block-btn:hover {
+    background: rgba(217, 48, 37, 0.18);
+    border-color: rgba(217, 48, 37, 0.55);
+    transform: scale(1.01);
+}
+
+.block-btn:active {
+    transform: scale(0.99);
+}
+
+/* ── Shared Overview counter badge ── */
+#shared-count {
+    font-size: 13px;
+    color: #8696a0;
+    background: #2a3942;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+/* ── Shared Screen ── */
+.shared-screen .profile-header {
+    border-bottom: 1px solid #1a2530;
+}
+
+/* ── Tabs ── */
+.profile-tabs {
+    display: flex;
+    gap: 0;
+    margin-top: 0;
+    border-bottom: 1px solid #1f2c33;
+    padding: 0 16px;
+    background: #111b21;
+}
+
+.tab {
+    padding: 12px 16px;
+    cursor: pointer;
+    color: #8696a0;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.4px;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s ease, border-color 0.2s ease;
+    position: relative;
+}
+
+.tab:hover {
+    color: #c8d0d5;
+}
+
+.tab.active {
+    color: #25D366;
+    border-bottom: 2px solid #25D366;
+}
+
+/* ── Shared Container ── */
+.shared-container {
+    height: calc(100% - 110px);
+    overflow-y: auto;
+    margin-top: 0;
+    padding: 12px;
+    scrollbar-width: thin;
+    scrollbar-color: #2a3942 transparent;
+}
+
+.shared-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.shared-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.shared-container::-webkit-scrollbar-thumb {
+    background: #2a3942;
+    border-radius: 4px;
+}
+
+/* ── Media Grid ── */
+.media-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+}
+
+.media-thumb {
+    aspect-ratio: 1/1;
+    overflow: hidden;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.media-thumb:hover {
+    transform: scale(1.03);
+    opacity: 0.9;
+}
+
+/* ── Docs & Audio items ── */
+#shared-container > div {
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    background: #182229;
+    font-size: 14px;
+    color: #e9edef;
+    transition: background 0.2s ease;
+}
+
+#shared-container > div:hover {
+    background: #1e2d35;
+}
+
+/* ── Audio Item ── */
+.audio-item {
+    background: #182229 !important;
+    border-radius: 10px !important;
+    padding: 10px 12px !important;
+    margin-bottom: 6px;
+}
+
+.audio-item.playing {
+    background: rgba(37, 211, 102, 0.1) !important;
+    box-shadow: 0 0 0 1px rgba(37, 211, 102, 0.2);
+}
+
+.audio-item:hover {
+    background: #1e2d35 !important;
+}
+
+/* ── Clear Chat Modal — refined ── */
+.cc-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    backdrop-filter: blur(3px);
+}
+
+.cc-modal.active {
+    display: flex;
+}
+
+.cc-box {
+    background: #202c33;
+    border-radius: 14px;
+    padding: 24px;
+    width: 320px;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.55);
+    border: 1px solid #2a3942;
+}
+
+.cc-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #e9edef;
+    margin-bottom: 10px;
+}
+
+.cc-text {
+    font-size: 14px;
+    color: #8696a0;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.cc-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.cc-btn {
+    padding: 9px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.cc-btn.cancel {
+    background: #2a3942;
+    color: #e9edef;
+}
+
+.cc-btn.cancel:hover {
+    background: #344955;
+}
+
+.cc-btn.danger {
+    background: #d93025;
+    color: white;
+}
+
+.cc-btn.danger:hover {
+    background: #c0281e;
+}
+
+.cc-btn:active {
+    transform: scale(0.97);
+}

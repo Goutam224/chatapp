@@ -108,9 +108,9 @@ data.items.forEach(msg => {
     const div = document.createElement('div');
     div.className = 'media-thumb';
 
-    const thumb = msg.media.thumbnail_path
-        ? `/storage/${msg.media.thumbnail_path}`
-        : '';
+  const thumb = msg.media.thumbnail_path
+    ? `/media/thumb/${msg.id}`
+    : '';
 
     const isMine = msg.sender_id == window.AUTH_USER_ID;
 
@@ -121,7 +121,7 @@ data.items.forEach(msg => {
              data-type="${msg.type}"
              data-sender="${msg.sender_id}"
              data-file-size="${msg.media.file_size}"
-             data-thumb="${msg.media.thumbnail_path}">
+           data-thumb="${msg.id}">
 
             <img src="${thumb}" class="grid-thumb loading="lazy">
             ${!isMine ? `<div class="grid-download-overlay">⬇</div>` : ``}
