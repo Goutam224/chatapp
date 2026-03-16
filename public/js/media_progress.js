@@ -638,6 +638,28 @@ finish(id, message)
     bubble.dataset.id = message.id;
 
   bubble.setAttribute('data-id', message.id);
+  // ✅ Update sender sidebar preview for media
+const chatItem = document.querySelector(`.chat-item[data-chat-id="${window.currentChatId}"]`);
+if(chatItem){
+    const preview = chatItem.querySelector('.chat-last');
+    if(preview){
+        if(message.message){
+            preview.innerText = message.message;
+        } else if(message.media){
+            const mime = message.media.mime_type ?? '';
+            preview.innerText = mime.startsWith('image') ? '📷 Photo'
+                : mime.startsWith('video') ? '🎥 Video'
+                : mime.startsWith('audio') ? '🎵 Audio'
+                : '📄 ' + (message.media.file_name ?? 'Document');
+        }
+    }
+    const timeEl = chatItem.querySelector('.chat-time');
+    if(timeEl){
+        timeEl.dataset.time = new Date().toISOString();
+        refreshSidebarTime(timeEl);
+    }
+    PinChat.moveToTopIfNotPinned(chatItem);
+}
 bubble.setAttribute('data-upload-uuid', message.upload_uuid ?? id); // optional but safe
 
     let tick = '✔';

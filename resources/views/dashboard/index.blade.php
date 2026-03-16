@@ -198,19 +198,31 @@ if($visibleMessage && $otherUser){
 }
 @endphp
 
-{{ $visibleMessage
-    ? ($visibleMessage->deleted_for_everyone
-        ? 'This message was deleted'
-        : (
-            $sidebarBlockTime &&
-            $visibleMessage->edited_at &&
-            $visibleMessage->sender_id != $authId &&
-            $visibleMessage->edited_at > $sidebarBlockTime &&
-            !is_null($visibleMessage->original_message)
-                ? $visibleMessage->original_message
-                : $visibleMessage->message
-          ))
-    : '' }}</div>
+@php
+$sidebarText = '';
+if($visibleMessage) {
+    if($visibleMessage->deleted_for_everyone) {
+        $sidebarText = 'This message was deleted';
+    } elseif(
+        $sidebarBlockTime &&
+        $visibleMessage->edited_at &&
+        $visibleMessage->sender_id != $authId &&
+        $visibleMessage->edited_at > $sidebarBlockTime &&
+        !is_null($visibleMessage->original_message)
+    ) {
+        $sidebarText = $visibleMessage->original_message;
+    } elseif($visibleMessage->message) {
+        $sidebarText = $visibleMessage->message;
+    } elseif($visibleMessage->media) {
+        $mime = $visibleMessage->media->mime_type ?? '';
+        if(str_starts_with($mime, 'image')) $sidebarText = '📷 Photo';
+        elseif(str_starts_with($mime, 'video')) $sidebarText = '🎥 Video';
+        elseif(str_starts_with($mime, 'audio')) $sidebarText = '🎵 Audio';
+        else $sidebarText = '📄 ' . ($visibleMessage->media->file_name ?? 'Document');
+    }
+}
+@endphp
+{{ $sidebarText }}</div>
 
 
     </div>
