@@ -112,7 +112,10 @@ Route::post('/upload/destroy/{uuid}', [UploadController::class, 'destroy']);
 Route::get('/media/{message}', [\App\Http\Controllers\MediaDownloadController::class, 'serve'])
     ->middleware('auth.session');
 
+Route::get('/media/thumb/{message}', [MediaDownloadController::class, 'thumbnail'])
+    ->middleware('auth.session');
 
+    
     Route::post('/download/start', [DownloadSessionController::class, 'start']);
 Route::post('/download/progress', [DownloadSessionController::class, 'progress']);
 Route::post('/download/complete', [DownloadSessionController::class, 'complete']);

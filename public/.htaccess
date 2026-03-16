@@ -4,7 +4,8 @@
     </IfModule>
 
     RewriteEngine On
-
+# 🔒 Block direct access to chat media
+RewriteRule ^storage/chat/ - [F,L]
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

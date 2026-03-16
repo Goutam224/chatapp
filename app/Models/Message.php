@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Support\Facades\Crypt;
 class Message extends Model
 {
 
@@ -31,6 +31,55 @@ class Message extends Model
         'deleted_for_users' => 'array',
         'visible_to' => 'array',
     ];
+
+
+    public function getMessageAttribute($value)
+{
+    if (!$value) {
+        return $value;
+    }
+
+    try {
+        return Crypt::decryptString($value);
+    } catch (\Throwable $e) {
+        // old plaintext messages
+        return $value;
+    }
+}
+
+public function setMessageAttribute($value)
+{
+    if (!$value) {
+        $this->attributes['message'] = $value;
+        return;
+    }
+
+    $this->attributes['message'] = Crypt::encryptString($value);
+}
+
+
+public function getOriginalMessageAttribute($value)
+{
+    if (!$value) {
+        return $value;
+    }
+
+    try {
+        return Crypt::decryptString($value);
+    } catch (\Throwable $e) {
+        return $value;
+    }
+}
+
+public function setOriginalMessageAttribute($value)
+{
+    if (!$value) {
+        $this->attributes['original_message'] = $value;
+        return;
+    }
+
+    $this->attributes['original_message'] = Crypt::encryptString($value);
+}
 
 
     public function chat()

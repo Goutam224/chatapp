@@ -3,7 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\URL;
 class Media extends Model
 {
 
@@ -32,9 +33,38 @@ class Media extends Model
         return $this->belongsTo(Message::class);
     }
 
-    public function getUrlAttribute()
-    {
-        return asset('storage/'.$this->file_path);
+
+    public function getFileNameAttribute($value)
+{
+    if (!$value) {
+        return $value;
     }
+
+    try {
+        return Crypt::decryptString($value);
+    } catch (\Throwable $e) {
+        return $value;
+    }
+}
+
+
+public function setFileNameAttribute($value)
+{
+    if (!$value) {
+        $this->attributes['file_name'] = $value;
+        return;
+    }
+
+    $this->attributes['file_name'] = Crypt::encryptString($value);
+}
+
+ public function getUrlAttribute()
+{
+    return URL::temporarySignedRoute(
+        'media.serve',
+        now()->addMinutes(5),
+        ['message' => $this->message_id]
+    );
+}
 
 }

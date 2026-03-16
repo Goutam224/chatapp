@@ -25,21 +25,33 @@ class MediaDownloadController extends Controller
     if (!$isParticipant) {
         abort(403);
     }
+$media = $message->media;
 
-    $media = $message->media;
+if (!$media || empty($media->file_path)) {
+    abort(404);
+}
 
-    if (!$media) {
-        abort(404);
-    }
+ $path = $media->file_path;
 
-    $path = $media->file_path;
+/*
+|--------------------------------------------------------------------------
+| SUPPORT BOTH OLD (public) AND NEW (private) MEDIA
+|--------------------------------------------------------------------------
+*/
 
-    if (!Storage::disk('public')->exists($path)) {
-        abort(404);
-    }
+if (Storage::disk('private')->exists($path)) {
 
-    /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
- $fullPath = Storage::disk('public')->path($path);
+    $fullPath = Storage::disk('private')->path($path);
+
+} elseif (Storage::disk('public')->exists($path)) {
+
+    $fullPath = Storage::disk('public')->path($path);
+
+} else {
+
+    abort(404);
+
+}
 $size = filesize($fullPath);
 $mime = $media->mime_type;
 
@@ -89,6 +101,57 @@ return response()->stream(function () use ($fullPath) {
     'Content-Type' => $mime,
     'Content-Length' => $size,
     'Accept-Ranges' => 'bytes',
+    'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+'Pragma' => 'no-cache',
+'Expires' => '0',
+]);
+}
+
+public function thumbnail(Message $message)
+{
+    $user = AuthHelper::user();
+
+    if (!$user) {
+        abort(403);
+    }
+
+    // verify chat participant
+    $isParticipant = $message->chat
+        ->participants()
+        ->where('user_id', $user->id)
+        ->exists();
+
+    if (!$isParticipant) {
+        abort(403);
+    }
+
+    $media = $message->media;
+
+    if (!$media || !$media->thumbnail_path) {
+        abort(404);
+    }
+
+    $path = $media->thumbnail_path;
+
+    // support private + old public
+    if (Storage::disk('private')->exists($path)) {
+
+        $fullPath = Storage::disk('private')->path($path);
+
+    } elseif (Storage::disk('public')->exists($path)) {
+
+        $fullPath = Storage::disk('public')->path($path);
+
+    } else {
+
+        abort(404);
+
+    }
+
+  return response()->file($fullPath, [
+    'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+    'Pragma' => 'no-cache',
+    'Expires' => '0',
 ]);
 }
 }

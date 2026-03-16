@@ -237,16 +237,16 @@ $finalPath =
     'chat/'.$folder.'/'.
     $session->upload_uuid.'.'.$ext;
 
-Storage::disk('public')->put(
+Storage::disk('private')->put(
     $finalPath,
     file_get_contents($tempPath)
 );
 
 // CRITICAL: validate written file matches expected size
-$writtenSize = Storage::disk('public')->size($finalPath);
+$writtenSize = Storage::disk('private')->size($finalPath);
 if($writtenSize !== (int)$session->file_size)
 {
-    Storage::disk('public')->delete($finalPath);
+    Storage::disk('private')->delete($finalPath);
     unlink($tempPath);
     return response()->json([
         'success' => false,
@@ -299,12 +299,12 @@ unlink($tempPath);
 |--------------------------------------------------------------------------
 */
 Log::info('Final Path: ' . $finalPath);
-Log::info('Absolute Path: ' . Storage::disk('public')->path($finalPath));
-Log::info('File Exists: ' . (file_exists(Storage::disk('public')->path($finalPath)) ? 'YES' : 'NO'));
+Log::info('Absolute Path: ' . Storage::disk('private')->path($finalPath));
+Log::info('File Exists: ' . (file_exists(Storage::disk('private')->path($finalPath)) ? 'YES' : 'NO'));
 $thumbnailPath = null;
 
-$fullFilePath = Storage::disk('public')->path($finalPath);
-$thumbnailDir = Storage::disk('public')->path('chat/thumbnails');
+$fullFilePath = Storage::disk('private')->path($finalPath);
+$thumbnailDir = Storage::disk('private')->path('chat/thumbnails');
 
 if (!file_exists($thumbnailDir)) {
     mkdir($thumbnailDir, 0755, true);

@@ -40,7 +40,7 @@ if (msg.media.file_size < 1024 * 1024) {
     sizeText = (msg.media.file_size / (1024*1024)).toFixed(1) + " MB";
 }
     const thumb = msg.media.thumbnail_path
-    ? `/storage/${msg.media.thumbnail_path}`
+    ? '/media/thumb/' + msg.id
     : null;
 
 // ✅ Document/file type — WhatsApp row style
