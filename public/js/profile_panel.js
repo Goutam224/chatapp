@@ -5,11 +5,6 @@ loading: false,
 hasMore: true,
 open: function()
 {
-
-    if(window.innerWidth <= 768){
-    return;
-}
-
     const userId =
         document.getElementById('chat-user-name')
             .getAttribute('data-user-id');
@@ -562,18 +557,3 @@ container.onscroll = () => {
     }
 });
 
-/* Auto close profile panel on mobile resize */
-
-window.addEventListener('resize', function(){
-
-    if(window.innerWidth <= 768){
-
-        const panel = document.getElementById('profile-panel');
-
-        if(panel && panel.classList.contains('open')){
-            ProfilePanel.close();
-        }
-
-    }
-
-});
