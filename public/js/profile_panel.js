@@ -288,7 +288,8 @@ if(!img) return;
 
         if(isMine || msg.downloaded){
 
-            div.className = 'audio-item';
+     div.className = 'audio-item';
+div.dataset.id = msg.id;
 const savedDuration = div.dataset?.duration ?? "0:00";
 
 div.innerHTML = `
@@ -610,10 +611,53 @@ ProfilePanel.currentType = type;
 
 const cached = ProfilePanel.cache[type];
 
-// do not use cache for audio (audio players lose JS bindings)
-if(type !== 'audio' && cached){
+if(cached){
+
     const container = document.getElementById('shared-container');
     container.innerHTML = cached;
+
+    // rebind audio players after restoring cache
+    if(type === 'audio'){
+
+        container.querySelectorAll('.audio-item').forEach(div=>{
+
+            const playBtn = div.querySelector('.audio-play');
+            const bar = div.querySelector('.audio-progress-bar');
+            const timeEl = div.querySelector('.audio-time');
+
+            const id = div.dataset.id;
+            if(!id) return;
+
+            const audio = new Audio(`/media/${id}`);
+
+            playBtn.onclick = function(){
+
+                if(window.profileAudio && window.profileAudio !== audio){
+                    window.profileAudio.pause();
+                }
+
+                if(audio.paused){
+                    audio.play();
+                    playBtn.innerText = '⏸';
+                    window.profileAudio = audio;
+                }else{
+                    audio.pause();
+                    playBtn.innerText = '▶';
+                }
+            };
+
+            audio.addEventListener('timeupdate', ()=>{
+                const percent = (audio.currentTime / audio.duration) * 100;
+                bar.style.width = percent + '%';
+                timeEl.innerText =
+                    Math.floor(audio.currentTime/60)+":"+
+                    ("0"+Math.floor(audio.currentTime%60)).slice(-2);
+            });
+
+        });
+
+    }
+
     return;
 }
 

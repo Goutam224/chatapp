@@ -99,17 +99,31 @@ else if(file.type.startsWith('video'))
 }
 else if(file.type.startsWith('audio'))
 {
+    // --------------------------------------------------------
+    // AUDIO: inline right-side circle (stop icon + progress arc)
+    // Same pattern as doc — NO floating center overlay
+    // --------------------------------------------------------
     const _cap = window.currentMediaCaption || '';
     mediaHtml = `
         <div style="width:260px;">
             <div class="wa-media-box"
-     style="width:260px;height:68px;display:flex;align-items:center;gap:12px;padding:12px;box-sizing:border-box;background:#111b21;border-radius:${_cap ? '10px 10px 0 0' : '10px'};">
+                 style="width:260px;height:68px;display:flex;align-items:center;gap:12px;padding:12px;box-sizing:border-box;background:#111b21;border-radius:${_cap ? '10px 10px 0 0' : '10px'};">
                 <div style="width:44px;height:44px;background:#1d282f;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#25D366;font-size:18px;flex-shrink:0;">
                     🎵
                 </div>
                 <div style="flex:1;">
-                    <div style="height:4px;background:#2a3942;border-radius:4px;margin-bottom:6px;"></div>
-                    <div style="font-size:12px;color:#8696a0;">${sizeMB} MB</div>
+                    <div class="upload-eta" style="font-size:11px;color:#8696a0;margin-bottom:4px;white-space:nowrap;">${sizeMB} MB</div>
+                    <div style="height:4px;background:#2a3942;border-radius:4px;"></div>
+                </div>
+                <div class="audio-upload-circle" id="${id}_audio_overlay" style="flex-shrink:0;width:48px;height:48px;position:relative;cursor:pointer;">
+                    <svg width="48" height="48" viewBox="0 0 48 48">
+                        <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.15)" stroke-width="3" fill="rgba(0,0,0,0.35)"/>
+                        <circle cx="24" cy="24" r="20" stroke="white" stroke-width="3"
+                            fill="none" stroke-dasharray="126" stroke-dashoffset="126"
+                            stroke-linecap="round" transform="rotate(-90 24 24)"
+                            id="${id}_progress"/>
+                        <rect x="19" y="19" width="10" height="10" fill="white" rx="2"/>
+                    </svg>
                 </div>
             </div>
             ${_cap ? `<div class="wa-caption">${escapeHtml(_cap)}</div>` : ''}
@@ -152,7 +166,7 @@ else
 
     /*
     |--------------------------------------------------------------------------
-    | PROGRESS CIRCLE (WHATSAPP STYLE)
+    | PROGRESS CIRCLE (WHATSAPP STYLE) — only for image/video
     |--------------------------------------------------------------------------
     */
     const overlay =
@@ -228,7 +242,7 @@ getClockIcon();
 
   /*
 |---------------------------------------
-| Cancel button (WhatsApp style)
+| Cancel button (WhatsApp style) — image/video only
 |---------------------------------------
 */
 const cancelBtn = document.createElement('div');
@@ -251,6 +265,7 @@ cancelBtn.style.fontSize = '14px';
 
 const mediaBox = bubble.querySelector('.wa-media-box');
 const isDoc = !file.type.startsWith('image') && !file.type.startsWith('video') && !file.type.startsWith('audio');
+const isAudio = file.type.startsWith('audio');
 
 if(isDoc) {
     // For docs: use inline circle, no floating overlay, no cancel X button
@@ -272,8 +287,31 @@ if(isDoc) {
             }, 100);
         };
     }
+} else if(isAudio) {
+    // --------------------------------------------------------
+    // AUDIO: inline right-side circle — same cancel pattern as doc
+    // No floating overlay, no cancel X button
+    // --------------------------------------------------------
+    const audioOverlay = bubble.querySelector(`#${id}_audio_overlay`);
+    if(audioOverlay) {
+        audioOverlay.onclick = (e) => {
+            e.stopPropagation();
+            const upload = this.activeUploads[id];
+            if(!upload) return;
+            if(upload.cancelled || upload.locked) return;
+            upload.cancelled = true;
+            upload.locked = true;
+            const bubbleRef = upload.bubble;
+            const fileRef = upload.file;
+            const uuidRef = upload.bubble.dataset.uploadUuid ?? null;
+            if(upload.xhr) upload.xhr.abort();
+            setTimeout(() => {
+                this.showCancelled(bubbleRef, fileRef, uuidRef);
+            }, 100);
+        };
+    }
 } else {
-    // For image/video/audio: floating center overlay + cancel X
+    // For image/video: floating center overlay + cancel X
     bubble.appendChild(cancelBtn);
     if (mediaBox) {
         mediaBox.style.position = 'relative';
@@ -310,6 +348,9 @@ this.activeUploads[id] =
 {
     bubble: bubble,
 
+    // For audio: point to the inline progress arc inside audio-upload-circle
+    // For image/video: point to the floating overlay progress arc
+    // For doc: point to the inline progress arc inside doc-upload-circle
     progressCircle:
         bubble.querySelector('#'+id+'_progress'),
 
@@ -319,14 +360,14 @@ this.activeUploads[id] =
 
     cancelled: false,
 
-    locked: false, // ✅ CRITICAL FIX
+    locked: false,
 
     xhr: null
 };
 
 /*
 |---------------------------------------
-| Click circle to cancel upload
+| Click cancel X to cancel upload (image/video only)
 |---------------------------------------
 */
 this.activeUploads[id].cancelBtn.onclick = () =>
@@ -377,6 +418,10 @@ else if(bubble.dataset.mimeType)
 
 if(isAudio)
 {
+    // --------------------------------------------------------
+    // AUDIO paused: inline right-side upload arrow — consistent
+    // with uploading state (inline right-side circle)
+    // --------------------------------------------------------
     const _cap = bubble.dataset.caption || '';
     bubble.innerHTML = `
     <div style="width:260px;display:block;">
@@ -387,8 +432,8 @@ if(isAudio)
                 🎵
             </div>
             <div style="flex:1;">
-                <div style="height:4px;background:#2a3942;border-radius:4px;margin-bottom:6px;"></div>
-                <div style="font-size:12px;color:#8696a0;">${sizeMB} MB</div>
+                <div style="font-size:11px;color:#8696a0;margin-bottom:4px;">${sizeMB} MB</div>
+                <div style="height:4px;background:#2a3942;border-radius:4px;"></div>
             </div>
             <div style="flex-shrink:0;width:48px;height:48px;position:relative;cursor:pointer;" class="audio-resume-circle">
                 <svg width="48" height="48" viewBox="0 0 48 48">
@@ -497,6 +542,27 @@ bubble.dataset.uploading = "1";
 bubble.dataset.finished = null;
     // CRITICAL FIX — prevent auto resume
     bubble.onclick = null;
+
+// --------------------------------------------------------
+// AUDIO resume: wire the audio-resume-circle click
+// --------------------------------------------------------
+if(isAudio) {
+    const audioResumeCircle = bubble.querySelector('.audio-resume-circle');
+    if(audioResumeCircle) {
+        audioResumeCircle.onclick = (e) => {
+            e.stopPropagation();
+            audioResumeCircle.onclick = null;
+            const uuid = upload_uuid || bubble.dataset.uploadUuid;
+            if(!uuid) return;
+            delete window.pausedUploadUUIDs[uuid];
+            delete window.uploadLocks[uuid];
+            delete window.finishLocks[uuid];
+            MediaUpload.resumeUpload(uuid, file, bubble, bubble.dataset.tempId);
+        };
+    }
+    return;
+}
+
 const resumeBox =
 bubble.querySelector('.wa-media-box') ||
 bubble.querySelector('.resume-upload');

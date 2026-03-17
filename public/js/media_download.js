@@ -98,19 +98,27 @@ return `
                 <div style="width:44px;height:44px;background:#1d282f;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#25D366;font-size:18px;flex-shrink:0;">
                     🎵
                 </div>
-                <div style="flex:1;">
-                    <div style="height:4px;background:#2a3942;border-radius:4px;margin-bottom:6px;"></div>
-                    <div style="font-size:12px;color:#8696a0;">${sizeText}</div>
-                </div>
-                <div class="wa-download-circle"
-                     onclick="MediaDownloader.download(${msg.id}, 'audio', this)"
-                     style="position:relative;transform:none;top:auto;left:auto;flex-shrink:0;">
-                    <svg viewBox="0 0 36 36" class="wa-progress-ring">
-                        <circle class="wa-ring-bg" cx="18" cy="18" r="16"/>
-                        <circle class="wa-ring-progress" cx="18" cy="18" r="16"/>
-                    </svg>
-                    <div class="wa-download-icon">⬇</div>
-                </div>
+            <div style="flex:1;">
+    <div style="height:4px;background:#2a3942;border-radius:4px;margin-bottom:6px;"></div>
+    <div style="font-size:12px;color:#8696a0;">${sizeText}</div>
+    <div class="wa-speed-text" style="font-size:11px;color:#8696a0;margin-top:3px;display:none;white-space:nowrap;"></div>
+</div>
+             <div class="wa-download-circle"
+     onclick="MediaDownloader.download(${msg.id}, 'audio', this)"
+     style="position:relative;transform:none;top:auto;left:auto;flex-shrink:0;width:48px;height:48px;">
+    <svg viewBox="0 0 48 48" width="48" height="48" style="cursor:pointer;">
+        <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.15)" stroke-width="3" fill="rgba(0,0,0,0.35)"/>
+        <circle cx="24" cy="24" r="20" stroke="#25D366" stroke-width="3"
+            fill="none"
+            stroke-dasharray="126"
+            stroke-dashoffset="126"
+            stroke-linecap="round"
+            transform="rotate(-90 24 24)"
+            class="wa-ring-progress"/>
+        <polyline points="24,16 24,30" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        <polyline points="17,24 24,31 31,24" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+</div>
             </div>
             ${msg.message ? `<div class="wa-caption" style="line-height:1.45;background:#005c4b;border-radius:0 0 10px 10px;padding:6px 10px 4px 10px;">${escapeHtml(msg.message)}</div>` : ''}
         </div>
@@ -472,7 +480,7 @@ if(type === 'document' || type === 'file') {
                         ${ext} • ${sizeLabel}
                     </div>
                 </div>
-                <span style="color:#25D366;font-size:18px;flex-shrink:0;">↗</span>
+          <span style="color:#25D366;font-size:16px;flex-shrink:0;width:20px;text-align:center;">↗</span>
             </div>
             ${caption ? `<div class="wa-caption" style="line-height:1.45;background:#005c4b;border-radius:0 0 10px 10px;padding:6px 10px 4px 10px;">${escapeHtml(caption)}</div>` : ''}
         </div>

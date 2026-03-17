@@ -653,37 +653,97 @@ dbReq.onsuccess = function(ev) {
     const tx2 = db.transaction(['files'], 'readonly');
     const capGet = tx2.objectStore('files').get(capKey);
 
-    capGet.onsuccess = function() {
-        const savedCaption = capGet.result || '';
-        bubble.dataset.caption = savedCaption;
+ capGet.onsuccess = function() {
+    const savedCaption = capGet.result || '';
+    bubble.dataset.caption = savedCaption;
 
+    const sizeMB = (upload.file_size / (1024*1024)).toFixed(1);
+    const mime = upload.mime_type || '';
+    const fileName = upload.file_name || 'File';
+    const fileExt = fileName.split('.').pop().toUpperCase();
+    const capRadius = savedCaption ? '10px 10px 0 0' : '10px';
+    const capHtml = savedCaption
+        ? `<div class="wa-caption" style="line-height:1.45;background:#005c4b;border-radius:0 0 10px 10px;padding:6px 10px 4px 10px;">${escapeHtml(savedCaption)}</div>`
+        : '';
+
+    const resumeArrow = `
+        <svg width="48" height="48" viewBox="0 0 48 48" style="cursor:pointer;">
+            <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.25)" stroke-width="3" fill="rgba(0,0,0,0.35)"/>
+            <polyline points="24,15 24,33" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+            <polyline points="16,22 24,14 32,22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>`;
+
+    if(mime.startsWith('audio')) {
+        // ── AUDIO: compact row with inline right-side resume arrow ──
         bubble.innerHTML = `
-            <div class="wa-media-box resume-upload"
-                 style="width:260px;height:180px;padding:0;overflow:hidden;border-radius:${savedCaption ? '10px 10px 0 0' : '10px'};position:relative;cursor:pointer;">
-                ${thumbSrc
-                    ? `<img src="${thumbSrc}" style="width:100%;height:100%;object-fit:cover;display:block;">`
-                    : `<div style="width:100%;height:100%;background:#1d282f;"></div>`
-                }
-                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;">
-                    <svg width="48" height="48" viewBox="0 0 48 48" style="cursor:pointer;">
-                        <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.25)" stroke-width="3" fill="rgba(0,0,0,0.35)"/>
-                        <polyline points="24,15 24,33" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-                        <polyline points="16,22 24,14 32,22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                    </svg>
-                    <div style="font-size:11px;color:white;font-weight:500;background:rgba(0,0,0,0.4);padding:2px 8px;border-radius:8px;">${(upload.file_size / (1024*1024)).toFixed(1)} MB</div>
+            <div style="width:260px;display:block;">
+                <div class="wa-media-box audio-resume-pending"
+                     style="width:260px;height:68px;display:flex;align-items:center;gap:12px;padding:12px;box-sizing:border-box;background:#111b21;border-radius:${capRadius};">
+                    <div style="width:44px;height:44px;background:#1d282f;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#25D366;font-size:18px;flex-shrink:0;">
+                        🎵
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-size:11px;color:#8696a0;margin-bottom:4px;">${sizeMB} MB</div>
+                        <div style="height:4px;background:#2a3942;border-radius:4px;"></div>
+                    </div>
+                    <div style="flex-shrink:0;width:48px;height:48px;cursor:pointer;" class="audio-resume-circle">
+                        ${resumeArrow}
+                    </div>
                 </div>
-            </div>
-            ${savedCaption ? `<div class="wa-caption" style="line-height:1.45;background:#005c4b;border-radius:0 0 10px 10px;padding:6px 10px 4px 10px;">${escapeHtml(savedCaption)}</div>` : ''}
-        `;
-        bubble.querySelector('.resume-upload').onclick = () => {
-            MediaUpload.resumeUpload(
-                upload.upload_uuid,
-                null,
-                bubble,
-                null
-            );
+                ${capHtml}
+            </div>`;
+        bubble.querySelector('.audio-resume-circle').onclick = () => {
+            MediaUpload.resumeUpload(upload.upload_uuid, null, bubble, null);
         };
-    };
+
+    } else if(mime.startsWith('image') || mime.startsWith('video')) {
+        // ── IMAGE / VIDEO: big box with centered resume arrow ──
+        bubble.innerHTML = `
+            <div style="width:260px;display:block;line-height:0;">
+                <div class="wa-media-box resume-upload"
+                     style="width:260px;height:180px;padding:0;overflow:hidden;border-radius:${capRadius};position:relative;cursor:pointer;">
+                    ${thumbSrc
+                        ? `<img src="${thumbSrc}" style="width:100%;height:100%;object-fit:cover;display:block;">`
+                        : `<div style="width:100%;height:100%;background:#1d282f;"></div>`
+                    }
+                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;">
+                        ${resumeArrow}
+                        <div style="font-size:11px;color:white;font-weight:500;background:rgba(0,0,0,0.4);padding:2px 8px;border-radius:8px;">${sizeMB} MB</div>
+                    </div>
+                </div>
+                ${capHtml}
+            </div>`;
+        bubble.querySelector('.resume-upload').onclick = () => {
+            MediaUpload.resumeUpload(upload.upload_uuid, null, bubble, null);
+        };
+
+    } else {
+        // ── DOCUMENT: doc row with inline right-side resume arrow ──
+        bubble.innerHTML = `
+            <div style="width:260px;display:block;">
+                <div class="wa-media-box wa-doc" style="border-radius:${capRadius};">
+                    <div style="width:40px;height:48px;background:#1d282f;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:bold;color:#25D366;">
+                        ${fileExt}
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:14px;color:#e9edef;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                            ${escapeHtml(fileName)}
+                        </div>
+                        <div style="font-size:12px;color:#8696a0;margin-top:3px;">
+                            ${fileExt} • ${sizeMB} MB
+                        </div>
+                    </div>
+                    <div style="flex-shrink:0;width:48px;height:48px;cursor:pointer;" class="doc-resume-circle">
+                        ${resumeArrow}
+                    </div>
+                </div>
+                ${capHtml}
+            </div>`;
+        bubble.querySelector('.doc-resume-circle').onclick = () => {
+            MediaUpload.resumeUpload(upload.upload_uuid, null, bubble, null);
+        };
+    }
+};
 };
 };
         });
