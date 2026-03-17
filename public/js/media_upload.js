@@ -1,4 +1,4 @@
-
+window.currentMediaCaption = null;
 
 window.pausedUploadUUIDs = window.pausedUploadUUIDs || {};
 // window.pausedUploads was historically used but is no longer needed
@@ -134,8 +134,20 @@ UploadETA.start(bubbleId, file.size);
                 const upload_uuid = session.upload_uuid;
                 // ✅ Save file in IndexedDB using uuid
 storeFileInDB(upload_uuid, file);
-                // link bubble to upload_uuid
+             // link bubble to upload_uuid
                 MediaProgress.setUploadUuid(bubbleId, upload_uuid);
+
+                // ✅ Save caption to IndexedDB so it survives refresh
+                const captionVal = MediaProgress.activeUploads[bubbleId]?.bubble?.dataset?.caption || '';
+                if(captionVal) {
+                    const capReq = indexedDB.open('UploadDB', 1);
+                    capReq.onsuccess = function(ev) {
+                        const db = ev.target.result;
+                        const tx = db.transaction(['files'], 'readwrite');
+                        tx.objectStore('files').put(captionVal, upload_uuid + '_caption');
+                    };
+                }
+
                 // start uploading chunks
                 this.uploadChunks(file, upload_uuid, bubbleId, session.uploaded_bytes || 0);
             }).catch(e => {
@@ -360,25 +372,44 @@ if(!etaDiv)
             if (!file) {
                 const request = indexedDB.open('UploadDB', 1);
 
-                request.onsuccess = function(e) {
-                    const db = e.target.result;
-                    const tx = db.transaction(['files'], 'readonly');
-                    const store = tx.objectStore('files');
+            request.onsuccess = function(e) {
+    const db = e.target.result;
+    const tx = db.transaction(['files'], 'readonly');
+    const store = tx.objectStore('files');
 
-                    const getReq = store.get(upload_uuid);
+    const getReq = store.get(upload_uuid);
 
-                    getReq.onsuccess = function() {
-                        const storedFile = getReq.result;
-                        if (!storedFile) return;
+    getReq.onsuccess = function() {
+        const storedFile = getReq.result;
+        if (!storedFile) return;
 
-                        MediaUpload.resumeUpload(
-                            upload_uuid,
-                            storedFile,
-                            bubble,
-                            oldTempId
-                        );
-                    };
-                };
+        // ✅ Restore caption on bubble before resuming
+        const capReq = db.transaction(['files'], 'readonly')
+            .objectStore('files')
+            .get(upload_uuid + '_caption');
+
+        capReq.onsuccess = function() {
+            if (capReq.result) {
+                bubble.dataset.caption = capReq.result;
+            }
+            MediaUpload.resumeUpload(
+                upload_uuid,
+                storedFile,
+                bubble,
+                oldTempId
+            );
+        };
+
+        capReq.onerror = function() {
+            MediaUpload.resumeUpload(
+                upload_uuid,
+                storedFile,
+                bubble,
+                oldTempId
+            );
+        };
+    };
+};
 
                 return;
             }
@@ -424,107 +455,72 @@ let mediaHtml = '';
 const fileName = file.name;
 const fileExt = fileName.split('.').pop().toUpperCase();
 const sizeMB = (file.size / (1024*1024)).toFixed(1);
+const _cap = bubble.dataset.caption || '';
 
 if(file.type.startsWith('image'))
 {
     mediaHtml = `
-    <div class="wa-media-box" style="width:260px;height:180px;padding:0;overflow:hidden;border-radius:8px;margin:-4px;">
-        <img src="${url}"
-             style="width:100%;height:100%;object-fit:cover;display:block;border-radius:0;">
+    <div style="width:260px;display:block;line-height:0;">
+        <div class="wa-media-box" style="width:260px;height:180px;padding:0;overflow:hidden;border-radius:${_cap ? '10px 10px 0 0' : '10px'};position:relative;display:block;">
+            <img src="${url}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:0;">
+        </div>
+        ${_cap ? `<div class="wa-caption" style="line-height:1.45;background:#005c4b;border-radius:0 0 10px 10px;padding:6px 10px 4px 10px;">${escapeHtml(_cap)}</div>` : ''}
     </div>`;
 }
 else if(file.type.startsWith('video'))
 {
     mediaHtml = `
-    <div class="wa-media-box" style="width:260px;height:180px;padding:0;overflow:hidden;border-radius:8px;margin:-4px;">
-        <video src="${url}"
-               style="width:100%;height:100%;object-fit:cover;display:block;border-radius:0;"
-               muted></video>
+    <div style="width:260px;display:block;line-height:0;">
+        <div class="wa-media-box" style="width:260px;height:180px;padding:0;overflow:hidden;border-radius:${_cap ? '10px 10px 0 0' : '10px'};position:relative;display:block;">
+            <video src="${url}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:0;" muted></video>
+        </div>
+        ${_cap ? `<div class="wa-caption" style="line-height:1.45;background:#005c4b;border-radius:0 0 10px 10px;padding:6px 10px 4px 10px;">${escapeHtml(_cap)}</div>` : ''}
     </div>`;
 }
 else if(file.type.startsWith('audio'))
 {
     mediaHtml = `
-    <div class="wa-media-box"
-         style="
-            width:260px;
-            height:80px;
-            display:flex;
-            align-items:center;
-            gap:12px;
-            padding:12px;
-            box-sizing:border-box;
-            background:#111b21;
-            border-radius:12px;
-         ">
-
-        <div style="
-            width:44px;
-            height:44px;
-            background:#1d282f;
-            border-radius:50%;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            color:#25D366;
-            font-size:18px;
-            flex-shrink:0;">
-            🎵
-        </div>
-
-        <div style="flex:1;">
-            <div style="height:4px;background:#2a3942;border-radius:4px;margin-bottom:6px;"></div>
-            <div style="font-size:12px;color:#8696a0;">
-                ${sizeMB} MB
+    <div style="width:260px;display:block;">
+        <div class="wa-media-box" style="width:260px;height:68px;display:flex;align-items:center;gap:12px;padding:12px;box-sizing:border-box;background:#111b21;border-radius:${_cap ? '10px 10px 0 0' : '10px'};">
+            <div style="width:44px;height:44px;background:#1d282f;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#25D366;font-size:18px;flex-shrink:0;">
+                🎵
+            </div>
+            <div style="flex:1;">
+                <div style="height:4px;background:#2a3942;border-radius:4px;margin-bottom:6px;"></div>
+                <div style="font-size:12px;color:#8696a0;">${sizeMB} MB</div>
             </div>
         </div>
+        ${_cap ? `<div class="wa-caption" style="line-height:1.45;background:#005c4b;border-radius:0 0 10px 10px;padding:6px 10px 4px 10px;">${escapeHtml(_cap)}</div>` : ''}
     </div>`;
 }
 else
 {
     mediaHtml = `
-    <div class="wa-media-box wa-doc" style="position:relative;">
-        <div style="
-            width:40px;
-            height:48px;
-            background:#1d282f;
-            border-radius:6px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            flex-shrink:0;
-            font-size:11px;
-            font-weight:bold;
-            color:#25D366;">
-            ${fileExt}
-        </div>
-        <div style="flex:1;min-width:0;">
-            <div style="
-                font-size:14px;
-                color:#e9edef;
-                font-weight:500;
-                white-space:nowrap;
-                overflow:hidden;
-                text-overflow:ellipsis;">
-                ${fileName}
+    <div style="width:260px;display:block;">
+        <div class="wa-media-box wa-doc" style="border-radius:${_cap ? '10px 10px 0 0' : '10px'};">
+            <div style="width:40px;height:48px;background:#1d282f;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:bold;color:#25D366;">
+                ${fileExt}
             </div>
-            <div style="font-size:12px;color:#8696a0;margin-top:3px;">
-                ${fileExt} • ${sizeMB} MB
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:14px;color:#e9edef;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    ${fileName}
+                </div>
+                <div style="font-size:12px;color:#8696a0;margin-top:3px;">
+                    ${fileExt} • ${sizeMB} MB
+                </div>
+            </div>
+            <div class="doc-upload-circle" id="${newBubbleId}_doc_overlay" style="flex-shrink:0;width:48px;height:48px;position:relative;cursor:pointer;">
+                <svg width="48" height="48" viewBox="0 0 48 48">
+                    <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.15)" stroke-width="3" fill="rgba(0,0,0,0.35)"/>
+                    <circle cx="24" cy="24" r="20" stroke="white" stroke-width="3"
+                        fill="none" stroke-dasharray="126" stroke-dashoffset="126"
+                        stroke-linecap="round" transform="rotate(-90 24 24)"
+                        id="${newBubbleId}_progress"/>
+                    <rect x="19" y="19" width="10" height="10" fill="white" rx="2"/>
+                </svg>
             </div>
         </div>
-        <div class="doc-upload-circle" id="${newBubbleId}_doc_overlay" style="flex-shrink:0;width:48px;height:48px;position:relative;cursor:pointer;">
-            <svg width="48" height="48" viewBox="0 0 48 48">
-                <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.15)" stroke-width="3" fill="rgba(0,0,0,0.35)"/>
-                <circle cx="24" cy="24" r="20" stroke="white" stroke-width="3"
-                    fill="none"
-                    stroke-dasharray="126"
-                    stroke-dashoffset="126"
-                    stroke-linecap="round"
-                    transform="rotate(-90 24 24)"
-                    id="${newBubbleId}_progress"/>
-                <rect x="19" y="19" width="10" height="10" fill="white" rx="2"/>
-            </svg>
-        </div>
+        ${_cap ? `<div class="wa-caption" style="line-height:1.45;background:#005c4b;border-radius:0 0 10px 10px;padding:6px 10px 4px 10px;">${escapeHtml(_cap)}</div>` : ''}
     </div>`;
 }
 
@@ -646,25 +642,43 @@ UploadETA.update(newBubbleId, offset);
         | Finish upload
         |------------------------------------------------------------------
         */
-        finishUpload(upload_uuid, bubbleId) {
-            if (window.finishLocks[upload_uuid]) {
-                console.log('FINISH BLOCKED duplicate:', upload_uuid);
-                return;
-            }
-            window.finishLocks[upload_uuid] = true;
+     finishUpload(upload_uuid, bubbleId) {
+    if (window.finishLocks[upload_uuid]) {
+        console.log('FINISH BLOCKED duplicate:', upload_uuid);
+        return;
+    }
+    window.finishLocks[upload_uuid] = true;
 
-            jsonFetch('/upload/finish', {
+    // ✅ If bubbleId not in activeUploads, find bubble by upload_uuid
+    if (!MediaProgress.activeUploads[bubbleId]) {
+        const fallbackBubble = document.querySelector(`[data-upload-uuid="${upload_uuid}"]`);
+        if (fallbackBubble) {
+            const fallbackId = 'fallback_' + Date.now();
+            fallbackBubble.dataset.tempId = fallbackId;
+            MediaProgress.activeUploads[fallbackId] = {
+                bubble: fallbackBubble,
+                progressCircle: null,
+                cancelBtn: null,
+                file: null,
+                cancelled: false,
+                locked: false,
+                xhr: null
+            };
+            bubbleId = fallbackId;
+        }
+    }
+
+    jsonFetch('/upload/finish', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': safe('meta[name="csrf-token"]').content
                 },
-                body: JSON.stringify({
-                    upload_uuid: upload_uuid,
-                    chat_id: window.currentChatId,
-                    caption: document.getElementById('media-caption-input')?.value || null
-                })
-            }).then(data => {
+body: JSON.stringify({
+    upload_uuid: upload_uuid,
+    chat_id: window.currentChatId,
+    caption: MediaProgress.activeUploads[bubbleId]?.bubble?.dataset?.caption || window.currentMediaCaption || null
+})            }).then(data => {
                 // remove locks even if not successful so user can try again/cancel
                 delete window.finishLocks[upload_uuid];
                 clearLock(upload_uuid);
@@ -687,6 +701,7 @@ request.onsuccess = function(e) {
     const tx = db.transaction(['files'], 'readwrite');
     const store = tx.objectStore('files');
     store.delete(upload_uuid);
+    store.delete(upload_uuid + '_caption');
 };
         
             }).catch(err => {

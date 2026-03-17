@@ -13,18 +13,20 @@
     margin: 0;
 }
 
-/* Document/audio override */
 .wa-media-box.wa-doc {
-    width: calc(100% + 18px) !important;
-    max-width: calc(100% + 18px) !important;
+    width: 260px !important;
+    max-width: 260px !important;
     height: auto !important;
-    padding: 12px !important;
-    gap: 12px;
+    min-height: 64px;
+    padding: 10px 12px !important;
+    gap: 10px;
     overflow: visible;
     justify-content: flex-start;
     box-sizing: border-box;
-    margin: 2px -30px 20px 6px !important;
-    border-radius: 12px;
+    margin: 0 !important;
+    border-radius: 10px;
+    display: flex !important;
+    align-items: center;
 }
 .wa-media-box.wa-audio {
     width: 260px;
@@ -142,4 +144,18 @@
 .blurred {
     filter: blur(6px) brightness(0.6);
     transition: filter 0.3s ease;
+}
+
+/* Audio box must not use 180px height */
+.wa-media-box.wa-audio{
+    width: 260px !important;
+    height: 68px !important;
+    overflow: visible !important;
+    border-radius: inherit;
+    display: flex !important;
+    align-items: center;
+    background: #111b21;
+    padding: 12px;
+    box-sizing: border-box;
+    gap: 12px;
 }

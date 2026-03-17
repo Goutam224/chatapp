@@ -3,6 +3,14 @@ currentType: 'media',
 offset: 0,
 loading: false,
 hasMore: true,
+requestController: null,
+cache: {
+    media: null,
+    docs: null,
+    audio: null,
+    links: null
+},
+
 open: function()
 {
     const userId =
@@ -55,6 +63,18 @@ if(countEl){
             }
 
         });
+        // reset cache when opening new profile
+if(this.lastUserId !== user.id){
+
+    this.cache = {
+        media: null,
+        docs: null,
+        audio: null,
+        links: null
+    };
+
+    this.lastUserId = user.id;
+}
 // Reset shared section but do NOT load yet
 this.currentType = 'media';
 this.offset = 0;
@@ -85,11 +105,27 @@ if(container){
     }
 
    if(!document.getElementById('shared-container')) return;
+// instant render from cache
+if(!reset && this.cache[this.currentType]){
+    document.getElementById('shared-container').innerHTML =
+        this.cache[this.currentType];
+    return;
+}
+
 this.loading = true;
 
-    fetch(`/user/shared/${userId}?type=${this.currentType}&offset=${this.offset}`)
-    .then(res => res.json())
-    .then(data => {
+// cancel previous request
+if(this.requestController){
+    this.requestController.abort();
+}
+
+this.requestController = new AbortController();
+fetch(`/user/shared/${userId}?type=${this.currentType}&offset=${this.offset}`,{
+    signal: this.requestController.signal
+})
+.then(res => res.json())
+.then(data => {
+if(!data || !data.items) return;
 
         const container = document.getElementById('shared-container');
 
@@ -122,8 +158,7 @@ data.items.forEach(msg => {
              data-sender="${msg.sender_id}"
              data-file-size="${msg.media.file_size}"
            data-thumb="${msg.id}">
-
-            <img src="${thumb}" class="grid-thumb loading="lazy">
+<img src="${thumb}" class="grid-thumb" loading="lazy">
             ${!isMine ? `<div class="grid-download-overlay">⬇</div>` : ``}
         </div>
     `;
@@ -160,7 +195,8 @@ if(receiverIds.length > 0){
                 const div = divMap[id];
                 if(!div) return;
                 const img = div.querySelector('.grid-thumb');
-                const overlay = div.querySelector('.grid-download-overlay');
+const overlay = div.querySelector('.grid-download-overlay');
+if(!img) return;
                 const status = statuses[id];
                 if(status && status.completed == 1){
                     if(img) img.classList.remove('blurred');
@@ -253,12 +289,13 @@ if(receiverIds.length > 0){
         if(isMine || msg.downloaded){
 
             div.className = 'audio-item';
+const savedDuration = div.dataset?.duration ?? "0:00";
 
-            div.innerHTML = `
-                <div class="audio-play">▶</div>
-                <div class="audio-info">
-                    <div class="audio-name">${msg.media.file_name}</div>
-                    <div class="audio-time">0:00</div>
+div.innerHTML = `
+    <div class="audio-play">▶</div>
+    <div class="audio-info">
+        <div class="audio-name">${msg.media.file_name}</div>
+        <div class="audio-time">${savedDuration}</div>
                     <div class="audio-progress">
                         <div class="audio-progress-bar"></div>
                     </div>
@@ -287,12 +324,25 @@ progressContainer.onclick = function(e){
         audio.play();
     }
 };
+if(window.profileAudio){
+    window.profileAudio.pause();
+}
             const audio = new Audio(`/media/${msg.id}`);
 
-            // Load duration
-            audio.addEventListener('loadedmetadata', ()=>{
-                timeEl.innerText = formatTime(audio.duration);
-            });
+audio.addEventListener('loadedmetadata', ()=>{
+
+    const duration = formatTime(audio.duration);
+    timeEl.innerText = duration;
+
+    // update cached HTML so next tab switch keeps duration
+    if(window.ProfilePanel){
+        const container = document.getElementById('shared-container');
+        if(container){
+            ProfilePanel.cache['audio'] = container.innerHTML;
+        }
+    }
+
+});
 
             playBtn.onclick = function(){
 
@@ -395,10 +445,27 @@ progressContainer.onclick = function(e){
             });
         }
 
-        this.offset += data.items.length;
-        this.hasMore = data.has_more;
-        this.loading = false;
-    });
+ this.cache[this.currentType] =
+    document.getElementById('shared-container').innerHTML || '';
+    this.cacheAudioDurations = this.cacheAudioDurations || {};
+this.offset += data.items.length;
+this.hasMore = data.has_more;
+this.loading = false;
+
+})
+.catch(err => {
+
+    // ignore abort error (normal when switching tabs)
+    if(err.name === "AbortError"){
+        return;
+    }
+
+    console.error("ProfilePanel load error:", err);
+
+    this.loading = false;
+
+});
+    
 },
 openSharedOverview: function()
 {
@@ -427,14 +494,17 @@ openSharedOverview: function()
 
     this.loadShared(userId, true);
 
-    container.onscroll = () => {
-        if (
-            container.scrollTop + container.clientHeight >=
-            container.scrollHeight - 50
-        ) {
-            this.loadShared(userId);
-        }
-    };
+  container.onscroll = () => {
+if(ProfilePanel.loading || !ProfilePanel.hasMore) return;
+
+    if (
+        container.scrollTop + container.clientHeight >=
+        container.scrollHeight - 50
+    ) {
+        ProfilePanel.loadShared(userId);
+    }
+
+};
 },
 
 closeShared: function()
@@ -534,9 +604,19 @@ document.addEventListener('click', function(e){
         e.target.classList.add('active');
 
         const type = e.target.dataset.type;
+        if(ProfilePanel.currentType === type) return;
         const userId = document.getElementById('blockBtn').dataset.userId;
+ProfilePanel.currentType = type;
 
-       ProfilePanel.currentType = type;
+const cached = ProfilePanel.cache[type];
+
+// do not use cache for audio (audio players lose JS bindings)
+if(type !== 'audio' && cached){
+    const container = document.getElementById('shared-container');
+    container.innerHTML = cached;
+    return;
+}
+
 ProfilePanel.offset = 0;
 ProfilePanel.hasMore = true;
 ProfilePanel.loading = false;
@@ -545,8 +625,12 @@ ProfilePanel.loadShared(userId, true);
 
 // Bind lazy scroll only after first click
 const container = document.getElementById('shared-container');
+container.onscroll = null;
 
 container.onscroll = () => {
+
+    if(ProfilePanel.loading) return;
+
     if (
         container.scrollTop + container.clientHeight >=
         container.scrollHeight - 50

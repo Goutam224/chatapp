@@ -13,7 +13,8 @@ render(msg) {
             msg.type,
             msg.media.file_size,
             msg.sender_id,
-            msg.media.file_name
+            msg.media.file_name,
+            msg.message ?? null          // ← caption
         );
     }
 
@@ -48,9 +49,11 @@ if(msg.type === 'document' || msg.type === 'file') {
     const fileName = msg.media.file_name ?? ('File • ' + sizeText);
     const ext = fileName.split('.').pop().toUpperCase();
     return `
+       <div style="width:260px;">
        <div class="wa-media-box wa-doc"
              data-id="${msg.id}"
-             data-size="${msg.media.file_size}">
+             data-size="${msg.media.file_size}"
+             data-caption="${msg.message ? msg.message.replace(/"/g,'&quot;') : ''}">
           <div style="width:40px;height:48px;background:#1d282f;border-radius:6px;
             display:flex;align-items:center;justify-content:center;
             flex-shrink:0;font-size:10px;font-weight:700;color:#25D366;">
@@ -78,88 +81,87 @@ if(msg.type === 'document' || msg.type === 'file') {
     <i class="fa fa-arrow-circle-o-down" aria-hidden="true"></i>
 </div>
             </div>
-        </div>
+    </div>
+        ${msg.message ? `<div class="wa-caption">${escapeHtml(msg.message)}</div>` : ''}
+       </div>
     `;
 }
 
 if(msg.type === 'audio') {
-
-    return `
-        <div class="wa-media-box"
-             data-id="${msg.id}"
-             data-size="${msg.media.file_size}"
-             style="width:260px;height:80px;display:flex;align-items:center;gap:12px;padding:12px;box-sizing:border-box;">
-
-            <div style="
-                width:44px;
-                height:44px;
-                background:#1d282f;
-                border-radius:50%;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                color:#25D366;
-                font-size:18px;
-                flex-shrink:0;">
-                🎵
-            </div>
-
-            <div style="flex:1;">
-                <div style="height:4px;background:#2a3942;border-radius:4px;margin-bottom:6px;"></div>
-                <div style="font-size:12px;color:#8696a0;">
-                    ${sizeText}
+return `
+        <div style="width:260px;display:block;"
+             data-caption="${msg.message ? msg.message.replace(/"/g,'&quot;') : ''}">
+            <div class="wa-audio-box"
+                 data-id="${msg.id}"
+                 data-size="${msg.media.file_size}"
+                 style="width:260px;height:68px;display:flex;align-items:center;gap:12px;padding:12px;box-sizing:border-box;background:#111b21;border-radius:${msg.message ? '10px 10px 0 0' : '10px'};">
+                <div style="width:44px;height:44px;background:#1d282f;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#25D366;font-size:18px;flex-shrink:0;">
+                    🎵
+                </div>
+                <div style="flex:1;">
+                    <div style="height:4px;background:#2a3942;border-radius:4px;margin-bottom:6px;"></div>
+                    <div style="font-size:12px;color:#8696a0;">${sizeText}</div>
+                </div>
+                <div class="wa-download-circle"
+                     onclick="MediaDownloader.download(${msg.id}, 'audio', this)"
+                     style="position:relative;transform:none;top:auto;left:auto;flex-shrink:0;">
+                    <svg viewBox="0 0 36 36" class="wa-progress-ring">
+                        <circle class="wa-ring-bg" cx="18" cy="18" r="16"/>
+                        <circle class="wa-ring-progress" cx="18" cy="18" r="16"/>
+                    </svg>
+                    <div class="wa-download-icon">⬇</div>
                 </div>
             </div>
-
-            <div class="wa-download-circle"
-                 onclick="MediaDownloader.download(${msg.id}, 'audio', this)"
-                 style="flex-shrink:0;">
-                <svg viewBox="0 0 36 36" class="wa-progress-ring">
-                    <circle class="wa-ring-bg" cx="18" cy="18" r="16"/>
-                    <circle class="wa-ring-progress" cx="18" cy="18" r="16"/>
-                </svg>
-                <div class="wa-download-icon">⬇</div>
-            </div>
-
+            ${msg.message ? `<div class="wa-caption" style="line-height:1.45;background:#005c4b;border-radius:0 0 10px 10px;padding:6px 10px 4px 10px;">${escapeHtml(msg.message)}</div>` : ''}
         </div>
     `;
 }
 
 return `
-        <div class="wa-media-box"
-             data-id="${msg.id}"
-             data-size="${msg.media.file_size}"
-             style="position:relative;">
-            
-            ${ thumb ? `<img src="${thumb}" class="wa-thumb-bg blurred">` : '<div style="width:100%;height:100%;background:#1d282f;"></div>' }
+        <div style="width:260px;display:block;line-height:0;">
+            <div class="wa-media-box"
+                 data-id="${msg.id}"
+                 data-size="${msg.media.file_size}"
+                 data-caption="${msg.message ? msg.message.replace(/"/g,'&quot;') : ''}"
+                 style="width:260px;height:180px;position:relative;border-radius:${msg.message ? '10px 10px 0 0' : '10px'};overflow:hidden;">
+                
+                ${ thumb ? `<img src="${thumb}" class="wa-thumb-bg blurred">` : '<div style="width:100%;height:100%;background:#1d282f;"></div>' }
 
-            <div class="wa-download-circle"
-                 onclick="MediaDownloader.download(${msg.id}, '${msg.type}', this)">
-                <svg viewBox="0 0 48 48" width="48" height="48" style="cursor:pointer;">
-                    <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.25)" stroke-width="3" fill="rgba(0,0,0,0.35)"/>
-                    <circle cx="24" cy="24" r="20" stroke="#25D366" stroke-width="3"
-                        fill="none"
-                        stroke-dasharray="126"
-                        stroke-dashoffset="126"
-                        stroke-linecap="round"
-                        transform="rotate(-90 24 24)"
-                        class="wa-ring-progress"/>
-                    <polyline points="24,16 24,30" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-                    <polyline points="17,24 24,31 31,24" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                </svg>
+                <div class="wa-download-circle"
+                     onclick="MediaDownloader.download(${msg.id}, '${msg.type}', this)">
+                    <svg viewBox="0 0 48 48" width="48" height="48" style="cursor:pointer;">
+                        <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.25)" stroke-width="3" fill="rgba(0,0,0,0.35)"/>
+                        <circle cx="24" cy="24" r="20" stroke="#25D366" stroke-width="3"
+                            fill="none"
+                            stroke-dasharray="126"
+                            stroke-dashoffset="126"
+                            stroke-linecap="round"
+                            transform="rotate(-90 24 24)"
+                            class="wa-ring-progress"/>
+                        <polyline points="24,16 24,30" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                        <polyline points="17,24 24,31 31,24" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    </svg>
+                </div>
+
+                <div style="position:absolute;bottom:8px;left:8px;display:flex;flex-direction:column;gap:3px;">
+                    <span class="wa-size-text" style="font-size:11px;color:white;font-weight:500;background:rgba(0,0,0,0.55);padding:2px 7px;border-radius:6px;backdrop-filter:blur(4px);">${sizeText}</span>
+                    <span class="wa-speed-text" style="font-size:11px;color:white;background:rgba(0,0,0,0.55);padding:2px 7px;border-radius:6px;backdrop-filter:blur(4px);display:none;"></span>
+                </div>
+
             </div>
-
-            <div style="position:absolute;bottom:8px;left:8px;display:flex;flex-direction:column;gap:3px;">
-                <span class="wa-size-text" style="font-size:11px;color:white;font-weight:500;background:rgba(0,0,0,0.55);padding:2px 7px;border-radius:6px;backdrop-filter:blur(4px);">${sizeText}</span>
-                <span class="wa-speed-text" style="font-size:11px;color:white;background:rgba(0,0,0,0.55);padding:2px 7px;border-radius:6px;backdrop-filter:blur(4px);display:none;"></span>
-            </div>
-
+            ${msg.message ? `<div class="wa-caption" style="line-height:1.45;background:#005c4b;border-radius:0 0 10px 10px;padding:6px 10px 4px 10px;">${escapeHtml(msg.message)}</div>` : ''}
         </div>
     `;
 },
 download(messageId, type, element) {
-
- const box = element.closest('.wa-media-box');
+const box = element.closest('.wa-media-box') ?? element.closest('.wa-audio-box');
+const captionText = box.dataset.caption
+    ?? box.closest('[data-caption]')?.dataset.caption
+    ?? null;
+const outerWrapper = (
+    box.parentElement?.style?.width === '260px' ||
+    box.parentElement?.dataset?.caption !== undefined
+) ? box.parentElement : box;
     const progressCircle = box.querySelector('.wa-ring-progress');
     const circle = element.closest('.wa-download-circle');
     const totalBytes = parseInt(box.dataset.size);
@@ -229,16 +231,18 @@ download(messageId, type, element) {
             total_bytes: totalBytes
         }),
         success: (session) => {
-
-            if (session.completed == 1) {
-box.innerHTML =
+if (session.completed == 1) {
+outerWrapper.outerHTML =
     MediaDownloader.renderPreviewFromURL(
         '/media/' + messageId,
         type,
-        totalBytes
+        totalBytes,
+        window.AUTH_USER_ID,
+        null,
+        captionText
     );
                     return;
-            }
+        }
 
             let downloaded = session.downloaded_bytes || 0;
             DownloadSpeed.start(messageId, downloaded);
@@ -321,9 +325,16 @@ if (stats) {
                                 message_id: messageId
                             })
                         });
- DownloadSpeed.stop(messageId);
-box.outerHTML =
-    MediaDownloader.renderPreviewFromURL('/media/' + messageId, type, totalBytes, window.AUTH_USER_ID);
+DownloadSpeed.stop(messageId);
+outerWrapper.outerHTML =
+    MediaDownloader.renderPreviewFromURL(
+        '/media/' + messageId,
+        type,
+        totalBytes,
+        window.AUTH_USER_ID,
+        null,
+        captionText
+    );
 
 // ✅ Update media grid item instantly
 const gridItem = document.querySelector(
@@ -336,15 +347,7 @@ if(gridItem){
     if(gridOverlay) gridOverlay.remove();
 }
 
-// ✅ Update chat bubble instantly
-const chatBubble = document.querySelector(
-    `#chat-messages .msg[data-id="${messageId}"] .wa-media-box`
-);
-if(chatBubble){
-    chatBubble.outerHTML = MediaDownloader.renderPreviewFromURL(
-        '/media/' + messageId, type
-    );
-}
+
                     }
 
                 });
@@ -359,7 +362,7 @@ if(chatBubble){
         return this.renderPreviewFromURL('/media/' + msg.id, msg.type);
     },
 
-renderPreviewFromURL(url, type, fileSizeBytes = null, senderId = null, fileName = null) {
+renderPreviewFromURL(url, type, fileSizeBytes = null, senderId = null, fileName = null, caption = null) {
 
     let sizeHtml = '';
 
@@ -384,78 +387,63 @@ renderPreviewFromURL(url, type, fileSizeBytes = null, senderId = null, fileName 
             </div>
         `;
     }
-
- if(type === 'image') {
+if(type === 'image') {
     return `
-        <div class="wa-media-box"
-             data-media-view
-             data-url="${url}"
-             data-type="image"
-             data-sender="${senderId ?? window.AUTH_USER_ID}"
-             style="width:260px;height:180px;cursor:pointer;padding:0;">
-            <img src="${url}"
-                 class="wa-media-preview"
-                 loading="lazy"
-                 decoding="async"
-                 style="width:100%;height:100%;object-fit:cover;">
-            ${sizeHtml}
+        <div style="width:260px;display:block;line-height:0;">
+            <div class="wa-media-box"
+                 data-media-view
+                 data-url="${url}"
+                 data-type="image"
+                 data-sender="${senderId ?? window.AUTH_USER_ID}"
+                 style="width:260px;height:180px;cursor:pointer;padding:0;display:block;border-radius:${caption ? '10px 10px 0 0' : '10px'};overflow:hidden;">
+                <img src="${url}"
+                     class="wa-media-preview"
+                     loading="lazy"
+                     decoding="async"
+                     style="width:100%;height:100%;object-fit:cover;display:block;">
+                ${sizeHtml}
+            </div>
+            ${caption ? `<div class="wa-caption" style="line-height:1.45;background:#005c4b;border-radius:0 0 10px 10px;padding:6px 10px 4px 10px;">${escapeHtml(caption)}</div>` : ''}
         </div>
     `;
 }
 
 if(type === 'video') {
     return `
-        <div class="wa-media-box"
-             data-media-view
-             data-url="${url}"
-             data-type="video"
-             data-sender="${senderId ?? window.AUTH_USER_ID}"
-             style="width:260px;height:180px;cursor:pointer;padding:0;">
-            <video class="wa-media-preview" style="width:100%;height:100%;object-fit:cover;">
-                <source src="${url}">
-            </video>
-            <div class="wa-play-icon">▶</div>
-            ${sizeHtml}
+        <div style="width:260px;display:block;line-height:0;">
+            <div class="wa-media-box"
+                 data-media-view
+                 data-url="${url}"
+                 data-type="video"
+                 data-sender="${senderId ?? window.AUTH_USER_ID}"
+                 style="width:260px;height:180px;cursor:pointer;padding:0;display:block;border-radius:${caption ? '10px 10px 0 0' : '10px'};overflow:hidden;">
+                <video class="wa-media-preview" style="width:100%;height:100%;object-fit:cover;display:block;">
+                    <source src="${url}">
+                </video>
+                <div class="wa-play-icon">▶</div>
+                ${sizeHtml}
+            </div>
+            ${caption ? `<div class="wa-caption" style="line-height:1.45;background:#005c4b;border-radius:0 0 10px 10px;padding:6px 10px 4px 10px;">${escapeHtml(caption)}</div>` : ''}
         </div>
     `;
 }
 if(type === 'audio') {
-
     return `
-        <div class="wa-media-box"
-             style="width:260px;height:80px;display:flex;align-items:center;gap:12px;padding:12px;box-sizing:border-box;">
-
-            <div style="
-                width:44px;
-                height:44px;
-                background:#1d282f;
-                border-radius:50%;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                color:#25D366;
-                font-size:18px;
-                cursor:pointer;"
-                onclick="this.nextElementSibling.querySelector('audio').play()">
-                ▶
-            </div>
-
-            <div style="flex:1;min-width:0;">
-                <audio style="display:none;">
-                    <source src="${url}">
-                </audio>
-
-                <div style="height:4px;background:#2a3942;border-radius:4px;margin-bottom:6px;"></div>
-
-                <div style="font-size:12px;color:#8696a0;">
-                    ${fileSizeBytes
-                        ? (fileSizeBytes < 1024*1024
-                            ? (fileSizeBytes/1024).toFixed(1)+' KB'
-                            : (fileSizeBytes/(1024*1024)).toFixed(1)+' MB')
-                        : ''}
+        <div style="width:260px;display:block;">
+            <div style="display:flex;align-items:center;gap:12px;padding:12px;height:68px;box-sizing:border-box;background:#111b21;border-radius:${caption ? '10px 10px 0 0' : '10px'};">
+                <div style="width:44px;height:44px;background:#1d282f;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#25D366;font-size:18px;cursor:pointer;flex-shrink:0;"
+                     onclick="(function(el){const a=el.closest('div[style]').querySelector('audio');if(a)a.paused?a.play():a.pause();})(this)">
+                    ▶
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <audio style="display:none;"><source src="${url}"></audio>
+                    <div style="height:3px;background:#2a3942;border-radius:4px;margin-bottom:6px;"></div>
+                    <div style="font-size:12px;color:#8696a0;">
+                        ${fileSizeBytes ? (fileSizeBytes < 1024*1024 ? (fileSizeBytes/1024).toFixed(1)+' KB' : (fileSizeBytes/(1024*1024)).toFixed(1)+' MB') : ''}
+                    </div>
                 </div>
             </div>
-
+            ${caption ? `<div class="wa-caption" style="line-height:1.45;background:#005c4b;border-radius:0 0 10px 10px;padding:6px 10px 4px 10px;">${escapeHtml(caption)}</div>` : ''}
         </div>
     `;
 }
@@ -468,24 +456,25 @@ if(type === 'document' || type === 'file') {
             ? (fileSizeBytes/1024).toFixed(1) + ' KB'
             : (fileSizeBytes/(1024*1024)).toFixed(1) + ' MB')
         : '';
-return `
-        <div class="wa-media-box wa-doc"
-             onclick="window.open('${url}', '_blank')">
-            <div style="width:40px;height:48px;background:#1d282f;border-radius:6px;
-                        display:flex;align-items:center;justify-content:center;
-                        flex-shrink:0;font-size:10px;font-weight:700;color:#25D366;">
-                ${ext}
-            </div>
-            <div style="flex:1;min-width:0;">
-                <div style="color:#e9edef;font-size:13px;font-weight:500;
-                            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                    ${displayName}
+    return `
+        <div style="width:260px;display:block;">
+            <div class="wa-media-box wa-doc"
+                 onclick="window.open('${url}', '_blank')"
+                 style="cursor:pointer;border-radius:${caption ? '10px 10px 0 0' : '10px'};">
+                <div style="width:40px;height:48px;background:#1d282f;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:700;color:#25D366;">
+                    ${ext}
                 </div>
-                <div style="color:#8696a0;font-size:11px;margin-top:2px;">
-                    ${ext} • ${sizeLabel}
+                <div style="flex:1;min-width:0;">
+                    <div style="color:#e9edef;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        ${displayName}
+                    </div>
+                    <div style="color:#8696a0;font-size:11px;margin-top:2px;">
+                        ${ext} • ${sizeLabel}
+                    </div>
                 </div>
+                <span style="color:#25D366;font-size:18px;flex-shrink:0;">↗</span>
             </div>
-            <span style="color:#25D366;font-size:18px;">↗</span>
+            ${caption ? `<div class="wa-caption" style="line-height:1.45;background:#005c4b;border-radius:0 0 10px 10px;padding:6px 10px 4px 10px;">${escapeHtml(caption)}</div>` : ''}
         </div>
     `;
 }

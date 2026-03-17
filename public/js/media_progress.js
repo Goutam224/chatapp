@@ -53,6 +53,7 @@ Math.floor(Math.random() * 1000000);
 bubble.dataset.tempId = id;
 bubble.dataset.uploading = "1";
 bubble.dataset.mimeType = file.type;
+bubble.dataset.caption = window.currentMediaCaption || '';
 bubble.style.position = 'relative';
 
     /*
@@ -72,128 +73,78 @@ const sizeMB = (file.size / (1024*1024)).toFixed(1);
 
 if(file.type.startsWith('image'))
 {
+    const _cap = window.currentMediaCaption || '';
     mediaHtml = `
-   <div class="wa-media-box" style="width:260px;height:180px;padding:0;overflow:hidden;border-radius:8px;margin:-4px;position:relative;">
-        <img src="${url}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:0;">
-        <div class="upload-eta" style="position:absolute;bottom:6px;left:8px;font-size:11px;color:white;background:rgba(0,0,0,0.55);padding:2px 7px;border-radius:6px;white-space:nowrap;z-index:5;">${sizeMB} MB</div>
+    <div style="width:260px;">
+    <div class="wa-media-box" style="width:260px;height:180px;padding:0;overflow:hidden;border-radius:${_cap ? '10px 10px 0 0' : '10px'};position:relative;display:block;">
+            <img src="${url}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:0;">
+            <div class="upload-eta" style="position:absolute;bottom:6px;left:8px;font-size:11px;color:white;background:rgba(0,0,0,0.55);padding:2px 7px;border-radius:6px;white-space:nowrap;z-index:5;">${sizeMB} MB</div>
+        </div>
+        ${_cap ? `<div class="wa-caption">${escapeHtml(_cap)}</div>` : ''}
     </div>
     `;
 }
 else if(file.type.startsWith('video'))
 {
+    const _cap = window.currentMediaCaption || '';
     mediaHtml = `
-  <div class="wa-media-box" style="width:260px;height:180px;padding:0;overflow:hidden;border-radius:8px;margin:-4px;position:relative;">
-        <video src="${url}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:0;" muted></video>
-        <div class="upload-eta" style="position:absolute;bottom:6px;left:8px;font-size:11px;color:white;background:rgba(0,0,0,0.55);padding:2px 7px;border-radius:6px;white-space:nowrap;z-index:5;">${sizeMB} MB</div>
+    <div style="width:260px;">
+<div class="wa-media-box" style="width:260px;height:180px;padding:0;overflow:hidden;border-radius:${_cap ? '10px 10px 0 0' : '10px'};position:relative;display:block;">
+            <video src="${url}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:0;" muted></video>
+            <div class="upload-eta" style="position:absolute;bottom:6px;left:8px;font-size:11px;color:white;background:rgba(0,0,0,0.55);padding:2px 7px;border-radius:6px;white-space:nowrap;z-index:5;">${sizeMB} MB</div>
+        </div>
+        ${_cap ? `<div class="wa-caption">${escapeHtml(_cap)}</div>` : ''}
     </div>
     `;
 }
 else if(file.type.startsWith('audio'))
 {
+    const _cap = window.currentMediaCaption || '';
     mediaHtml = `
-        <div class="wa-media-box"
-             style="
-                width:260px;
-                height:80px;
-                display:flex;
-                align-items:center;
-                gap:12px;
-                padding:12px;
-                box-sizing:border-box;
-                background:#111b21;
-                border-radius:12px;
-             ">
-
-            <div style="
-                width:44px;
-                height:44px;
-                background:#1d282f;
-                border-radius:50%;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                color:#25D366;
-                font-size:18px;
-                flex-shrink:0;
-            ">
-                🎵
-            </div>
-
-            <div style="flex:1;">
-                <div style="
-                    height:4px;
-                    background:#2a3942;
-                    border-radius:4px;
-                    margin-bottom:6px;
-                "></div>
-
-                <div style="
-                    font-size:12px;
-                    color:#8696a0;
-                ">
-                    ${sizeMB} MB
+        <div style="width:260px;">
+            <div class="wa-media-box"
+     style="width:260px;height:68px;display:flex;align-items:center;gap:12px;padding:12px;box-sizing:border-box;background:#111b21;border-radius:${_cap ? '10px 10px 0 0' : '10px'};">
+                <div style="width:44px;height:44px;background:#1d282f;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#25D366;font-size:18px;flex-shrink:0;">
+                    🎵
+                </div>
+                <div style="flex:1;">
+                    <div style="height:4px;background:#2a3942;border-radius:4px;margin-bottom:6px;"></div>
+                    <div style="font-size:12px;color:#8696a0;">${sizeMB} MB</div>
                 </div>
             </div>
-
+            ${_cap ? `<div class="wa-caption">${escapeHtml(_cap)}</div>` : ''}
         </div>
     `;
 }
 else
 {
+    const _cap = window.currentMediaCaption || '';
     mediaHtml = `
-        <div class="wa-media-box wa-doc" style="position:relative;">
-
-            <div style="
-                width:40px;
-                height:48px;
-                background:#1d282f;
-                border-radius:6px;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                flex-shrink:0;
-                font-size:11px;
-                font-weight:bold;
-                color:#25D366;
-            ">
-                ${fileExt}
-            </div>
-
-            <div style="flex:1;min-width:0;">
-                <div style="
-                    font-size:14px;
-                    color:#e9edef;
-                    font-weight:500;
-                    white-space:nowrap;
-                    overflow:hidden;
-                    text-overflow:ellipsis;
-                ">
-                    ${fileName}
+        <div style="width:260px;">
+          <div class="wa-media-box wa-doc" style="border-radius:${_cap ? '10px 10px 0 0' : '10px'};">
+                <div style="width:40px;height:48px;background:#1d282f;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:bold;color:#25D366;">
+                    ${fileExt}
                 </div>
-
-                <div style="
-                    font-size:12px;
-                    color:#8696a0;
-                    margin-top:3px;
-                ">
-                    ${fileExt} • ${sizeMB} MB
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:14px;color:#e9edef;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        ${fileName}
+                    </div>
+                    <div style="font-size:12px;color:#8696a0;margin-top:3px;">
+                        ${fileExt} • ${sizeMB} MB
+                    </div>
+                </div>
+                <div class="doc-upload-circle" id="${id}_doc_overlay" style="flex-shrink:0;width:48px;height:48px;position:relative;cursor:pointer;">
+                    <svg width="48" height="48" viewBox="0 0 48 48">
+                        <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.15)" stroke-width="3" fill="rgba(0,0,0,0.35)"/>
+                        <circle cx="24" cy="24" r="20" stroke="white" stroke-width="3"
+                            fill="none" stroke-dasharray="126" stroke-dashoffset="126"
+                            stroke-linecap="round" transform="rotate(-90 24 24)"
+                            id="${id}_progress"/>
+                        <rect x="19" y="19" width="10" height="10" fill="white" rx="2"/>
+                    </svg>
                 </div>
             </div>
-
-            <div class="doc-upload-circle" id="${id}_doc_overlay" style="flex-shrink:0;width:48px;height:48px;position:relative;cursor:pointer;">
-                <svg width="48" height="48" viewBox="0 0 48 48">
-                    <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.15)" stroke-width="3" fill="rgba(0,0,0,0.35)"/>
-                    <circle cx="24" cy="24" r="20" stroke="white" stroke-width="3"
-                        fill="none"
-                        stroke-dasharray="126"
-                        stroke-dashoffset="126"
-                        stroke-linecap="round"
-                        transform="rotate(-90 24 24)"
-                        id="${id}_progress"/>
-                    <rect x="19" y="19" width="10" height="10" fill="white" rx="2"/>
-                </svg>
-            </div>
-
+            ${_cap ? `<div class="wa-caption">${escapeHtml(_cap)}</div>` : ''}
         </div>
     `;
 }
@@ -426,60 +377,28 @@ else if(bubble.dataset.mimeType)
 
 if(isAudio)
 {
+    const _cap = bubble.dataset.caption || '';
     bubble.innerHTML = `
-    <div class="wa-media-box"
-         style="
-            width:260px;
-            height:80px;
-            display:flex;
-            align-items:center;
-            gap:12px;
-            padding:12px;
-            box-sizing:border-box;
-            background:#111b21;
-            border-radius:12px;
-            cursor:pointer;
-         ">
-
-        <div style="
-            width:44px;
-            height:44px;
-            background:#1d282f;
-            border-radius:50%;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            color:#25D366;
-            font-size:18px;
-            flex-shrink:0;">
-            🎵
-        </div>
-
-        <div style="flex:1;">
-            <div style="
-                height:4px;
-                background:#2a3942;
-                border-radius:4px;
-                margin-bottom:6px;
-                position:relative;">
-                
-                <div style="
-                    position:absolute;
-                    right:0;
-                    top:-6px;
-                    font-size:10px;
-                    color:#53bdeb;">
-                    Resume
-                </div>
+    <div style="width:260px;display:block;">
+        <div class="wa-media-box wa-audio-box"
+             data-id=""
+             style="width:260px;height:68px;display:flex;align-items:center;gap:12px;padding:12px;box-sizing:border-box;background:#111b21;border-radius:${_cap ? '10px 10px 0 0' : '10px'};">
+            <div style="width:44px;height:44px;background:#1d282f;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#25D366;font-size:18px;flex-shrink:0;">
+                🎵
             </div>
-
-            <div style="
-                font-size:12px;
-                color:#8696a0;">
-                ${sizeMB} MB • Click to resume
+            <div style="flex:1;">
+                <div style="height:4px;background:#2a3942;border-radius:4px;margin-bottom:6px;"></div>
+                <div style="font-size:12px;color:#8696a0;">${sizeMB} MB</div>
+            </div>
+            <div style="flex-shrink:0;width:48px;height:48px;position:relative;cursor:pointer;" class="audio-resume-circle">
+                <svg width="48" height="48" viewBox="0 0 48 48">
+                    <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.15)" stroke-width="3" fill="rgba(0,0,0,0.35)"/>
+                    <polyline points="24,15 24,33" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                    <polyline points="16,22 24,14 32,22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                </svg>
             </div>
         </div>
-
+        ${_cap ? `<div class="wa-caption" style="line-height:1.45;background:#005c4b;border-radius:0 0 10px 10px;padding:6px 10px 4px 10px;">${escapeHtml(_cap)}</div>` : ''}
     </div>
     `;
 }
@@ -516,16 +435,17 @@ else
         return;
     }
 
-    const mediaImg = existingMediaBox ? existingMediaBox.querySelector('img, video') : null;
+   const mediaImg = existingMediaBox ? existingMediaBox.querySelector('img, video') : null;
     const mediaSrc = mediaImg ? (mediaImg.src || '') : '';
     const isVideo = mediaImg && mediaImg.tagName === 'VIDEO';
+    const _cap = bubble.dataset.caption || '';
 
     // Wipe everything first
     bubble.innerHTML = '';
 
     const wrapper = document.createElement('div');
     wrapper.className = 'wa-media-box resume-upload';
-    wrapper.style.cssText = 'width:260px;height:180px;padding:0;overflow:hidden;border-radius:8px;margin:-4px;position:relative;cursor:pointer;';
+    wrapper.style.cssText = `width:260px;height:180px;padding:0;overflow:hidden;border-radius:${_cap ? '10px 10px 0 0' : '10px'};position:relative;cursor:pointer;`;
 
     if(isVideo && mediaSrc) {
         const vid = document.createElement('video');
@@ -554,10 +474,24 @@ else
         </svg>
         <div style="font-size:11px;color:white;font-weight:500;background:rgba(0,0,0,0.4);padding:2px 8px;border-radius:8px;">${sizeMB} MB</div>
     `;
+wrapper.appendChild(overlay);
 
-    wrapper.appendChild(overlay);
-    bubble.appendChild(wrapper);
+    // Build outer container with caption
+    const outerDiv = document.createElement('div');
+    outerDiv.style.cssText = 'width:260px;display:block;line-height:0;';
+    outerDiv.appendChild(wrapper);
+
+    if(_cap) {
+        const capDiv = document.createElement('div');
+        capDiv.className = 'wa-caption';
+        capDiv.style.cssText = 'line-height:1.45;background:#005c4b;border-radius:0 0 10px 10px;padding:6px 10px 4px 10px;';
+        capDiv.textContent = _cap;
+        outerDiv.appendChild(capDiv);
+    }
+
+    bubble.appendChild(outerDiv);
 }
+
 bubble.dataset.uploading = "1"; 
 // ✅ allow resume to work
 bubble.dataset.finished = null;

@@ -62,6 +62,8 @@ function escapeHtml(unsafe) {
 function renderMessageContent(msg) {
 
     if(msg.media) {
+        // Caption is msg.message — pass it through render
+        // MediaDownloader.render() calls renderPreviewFromURL with caption
         return MediaDownloader.render(msg);
     }
 
@@ -69,25 +71,14 @@ function renderMessageContent(msg) {
 
         const p = msg.link_preview;
 
-return `
+        return `
 <a href="${p.url}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:block;">
 <div class="link-preview"
      data-url="${p.url}"
-     style="
-        border:1px solid #2a3942;
-        border-radius:8px;
-        overflow:hidden;
-        max-width:320px;
-        margin-top:4px;
-        cursor:pointer;
-     ">
+     style="border:1px solid #2a3942;border-radius:8px;overflow:hidden;max-width:320px;margin-top:4px;cursor:pointer;">
 
     ${p.image ? `
-    <img src="${p.image}" style="
-        width:100%;
-        height:150px;
-        object-fit:cover;
-    ">` : ''}
+    <img src="${p.image}" style="width:100%;height:150px;object-fit:cover;">` : ''}
 
   <div style="padding:8px">
         <div style="font-weight:500;font-size:14px;color:white">
@@ -123,7 +114,6 @@ return `
 
     return '';
 }
-
 
 /*
 |--------------------------------------------------------------------------
@@ -624,10 +614,10 @@ $.ajax({
             if(document.querySelector(`[data-upload-uuid="${upload.upload_uuid}"]`)) {
                 return;
             }
-
-            const bubble = document.createElement('div');
-            bubble.className = 'msg msg-right';
-            bubble.dataset.uploadUuid = upload.upload_uuid;
+const bubble = document.createElement('div');
+bubble.className = 'msg msg-right';
+bubble.dataset.uploadUuid = upload.upload_uuid;
+bubble.dataset.tempId = 'pending_' + upload.upload_uuid;
 
        const container = document.getElementById('chat-messages');
 
@@ -655,16 +645,26 @@ dbReq.onsuccess = function(ev) {
     const db = ev.target.result;
     const tx = db.transaction(['files'], 'readonly');
     const getThumb = tx.objectStore('files').get(thumbKey);
-    getThumb.onsuccess = function() {
-        const thumbSrc = getThumb.result || null;
+  getThumb.onsuccess = function() {
+    const thumbSrc = getThumb.result || null;
+
+    // ✅ Load caption from IndexedDB
+    const capKey = upload.upload_uuid + '_caption';
+    const tx2 = db.transaction(['files'], 'readonly');
+    const capGet = tx2.objectStore('files').get(capKey);
+
+    capGet.onsuccess = function() {
+        const savedCaption = capGet.result || '';
+        bubble.dataset.caption = savedCaption;
+
         bubble.innerHTML = `
             <div class="wa-media-box resume-upload"
-                 style="width:260px;height:180px;padding:0;overflow:hidden;border-radius:8px;margin:-4px;position:relative;cursor:pointer;">
+                 style="width:260px;height:180px;padding:0;overflow:hidden;border-radius:${savedCaption ? '10px 10px 0 0' : '10px'};position:relative;cursor:pointer;">
                 ${thumbSrc
                     ? `<img src="${thumbSrc}" style="width:100%;height:100%;object-fit:cover;display:block;">`
                     : `<div style="width:100%;height:100%;background:#1d282f;"></div>`
                 }
-            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;">
+                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;">
                     <svg width="48" height="48" viewBox="0 0 48 48" style="cursor:pointer;">
                         <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.25)" stroke-width="3" fill="rgba(0,0,0,0.35)"/>
                         <polyline points="24,15 24,33" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
@@ -673,6 +673,7 @@ dbReq.onsuccess = function(ev) {
                     <div style="font-size:11px;color:white;font-weight:500;background:rgba(0,0,0,0.4);padding:2px 8px;border-radius:8px;">${(upload.file_size / (1024*1024)).toFixed(1)} MB</div>
                 </div>
             </div>
+            ${savedCaption ? `<div class="wa-caption" style="line-height:1.45;background:#005c4b;border-radius:0 0 10px 10px;padding:6px 10px 4px 10px;">${escapeHtml(savedCaption)}</div>` : ''}
         `;
         bubble.querySelector('.resume-upload').onclick = () => {
             MediaUpload.resumeUpload(
@@ -683,6 +684,7 @@ dbReq.onsuccess = function(ev) {
             );
         };
     };
+};
 };
         });
 
@@ -1600,16 +1602,26 @@ document.addEventListener('input', function(e){
 */
 function sendMedia() {
     const input = document.getElementById('media-input');
-    const files = input.files;
-    if(!files.length) return;
+  const previewList = document.getElementById('media-preview-list');
 
-    const captionInput = document.getElementById('media-caption-input');
-    let caption = '';
-    if(captionInput && captionInput.value) caption = captionInput.value.trim();
+if(!previewList || previewList.children.length === 0) return;
 
-    for(let file of files) {
-        MediaUpload.uploadSingle(file, caption);
-    }
+const captionInput = document.getElementById('media-caption-input');
+let caption = '';
+if(captionInput && captionInput.value) caption = captionInput.value.trim();
+window.currentMediaCaption = caption;
+const files = input.files;
+
+let isFirstFile = true;
+    Array.from(previewList.children).forEach(wrapper => {
+        const index = wrapper.dataset.fileIndex;
+        const file = files[index];
+        if(file){
+            window.currentMediaCaption = isFirstFile ? caption : null;
+            MediaUpload.uploadSingle(file);
+            isFirstFile = false;
+        }
+    });
 
     removeMediaPreview();
     input.value = '';
@@ -1623,12 +1635,12 @@ function previewMedia(event) {
     previewList.innerHTML = '';
     previewBar.style.display = 'block';
 
-    Array.from(files).forEach((file) => {
+   Array.from(files).forEach((file, index) => {
         const url = URL.createObjectURL(file);
         const wrapper = document.createElement('div');
         wrapper.style.position = 'relative';
         wrapper.style.display = 'inline-block';
-
+wrapper.dataset.fileIndex = index;
         let element;
         if(file.type.startsWith('image')) {
             element = document.createElement('img');
@@ -1657,8 +1669,8 @@ function previewMedia(event) {
         const closeBtn = document.createElement('div');
         closeBtn.innerHTML = '×';
         closeBtn.style.position = 'absolute';
-        closeBtn.style.top = '-6px';
-        closeBtn.style.right = '-6px';
+        closeBtn.style.top = '4px';
+        closeBtn.style.right = '4px';
         closeBtn.style.background = '#ff3b30';
         closeBtn.style.color = 'white';
         closeBtn.style.width = '18px';
