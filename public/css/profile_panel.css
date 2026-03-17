@@ -1,23 +1,14 @@
 .profile-panel{
-
-    position: absolute;
-
+    position: fixed;
     right: -400px;
-
     top: 0;
-
     width: 400px;
-
     height: 100%;
-
     background: #111b21;
-
     color: white;
-
     transition: 0.25s;
-
     z-index: 9999;
-
+    overflow-y: auto;
 }
 
 .profile-panel.open{
