@@ -1693,7 +1693,8 @@ function previewMedia(event) {
     const previewBar = document.getElementById('media-preview-bar');
     const previewList = document.getElementById('media-preview-list');
     previewList.innerHTML = '';
-    previewBar.style.display = 'block';
+   previewBar.style.display = 'block';
+    document.getElementById('media-caption-input').focus();
 
    Array.from(files).forEach((file, index) => {
         const url = URL.createObjectURL(file);
@@ -1961,14 +1962,25 @@ document.addEventListener('DOMContentLoaded', function(){
 // ✅ ENTER TO SEND (Dynamic Safe + No Duplicate + Media Safe)
 document.addEventListener('keydown', function(e){
 
-    // Only target message input
-    if(!e.target || e.target.id !== 'message-input') return;
-
     // Only Enter key
     if(e.key !== 'Enter') return;
 
     // Allow Shift + Enter for newline
     if(e.shiftKey) return;
+
+   const isMessageInput = e.target && e.target.id === 'message-input';
+    const isMediaCaption = e.target && e.target.id === 'media-caption-input';
+    const mediaPreviewOpen = document.getElementById('media-preview-bar') &&
+        document.getElementById('media-preview-bar').style.display !== 'none';
+
+    if(!isMessageInput && !isMediaCaption) return;
+
+    // If message input focused but media preview is open, send media instead
+    if(isMessageInput && !mediaPreviewOpen) {
+        // normal text send — fall through
+    } else if(isMessageInput && mediaPreviewOpen) {
+        // media send — fall through
+    }
 
     e.preventDefault();
 

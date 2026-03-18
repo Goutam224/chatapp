@@ -97,7 +97,7 @@ return `
             <div class="wa-audio-box"
                  data-id="${msg.id}"
                  data-size="${msg.media.file_size}"
-                 style="width:260px;height:68px;display:flex;align-items:center;gap:12px;padding:12px;box-sizing:border-box;background:#111b21;border-radius:${msg.message ? '10px 10px 10px 10px' : '10px'};">
+style="width:260px;height:68px;display:flex;align-items:center;gap:12px;padding:12px;box-sizing:border-box;background:#111b21;border-radius:${msg.message ? '10px 10px 0 0' : '10px'};">
                 <div style="width:44px;height:44px;background:#1d282f;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#25D366;font-size:18px;flex-shrink:0;">
                     🎵
                 </div>
@@ -441,7 +441,7 @@ if(type === 'video') {
 if(type === 'audio') {
     return `
         <div style="width:260px;display:block;">
-            <div style="display:flex;align-items:center;gap:12px;padding:12px;height:68px;box-sizing:border-box;background:#111b21;border-radius:${caption ? '10px 10px 10px 10px' : '10px'};">
+          <div style="display:flex;align-items:center;gap:12px;padding:12px;height:68px;box-sizing:border-box;background:#111b21;border-radius:${caption ? '10px 10px 0 0' : '10px'};">
                 <div style="width:44px;height:44px;background:#1d282f;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#25D366;font-size:18px;cursor:pointer;flex-shrink:0;"
                      onclick="(function(el){const a=el.closest('div[style]').querySelector('audio');if(a)a.paused?a.play():a.pause();})(this)">
                     ▶
