@@ -155,7 +155,7 @@ return `
                 </div>
 
                 <div style="position:absolute;bottom:8px;left:8px;display:flex;flex-direction:column;gap:3px;">
-                    <span class="wa-size-text" style="font-size:11px;color:white;font-weight:500;background:rgba(0,0,0,0.55);padding:2px 7px;border-radius:6px;backdrop-filter:blur(4px);">${sizeText}</span>
+                    <span class="wa-size-text" style="font-size:11px;color:white;font-weight:500;background:rgba(0,0,0,0.0);padding:2px 7px;border-radius:6px;backdrop-filter:blur(4px);">${sizeText}</span>
                     <span class="wa-speed-text" style="font-size:11px;color:white;background:rgba(0,0,0,0.55);padding:2px 7px;border-radius:6px;backdrop-filter:blur(4px);display:none;"></span>
                 </div>
 
@@ -387,13 +387,14 @@ renderPreviewFromURL(url, type, fileSizeBytes = null, senderId = null, fileName 
             sizeText = (fileSizeBytes / (1024*1024)).toFixed(1) + " MB";
         }
 
-     sizeHtml = `
+   sizeHtml = `
             <div class="wa-media-size"
                  style="position:absolute;bottom:8px;left:8px;
-                        font-size:11px;color:white;font-weight:500;
-                        background:rgba(0,0,0,0.55);padding:2px 7px;
-                        border-radius:6px;backdrop-filter:blur(4px);
-                        -webkit-backdrop-filter:blur(4px);">
+                        font-size:11px;color:white;font-weight:600;
+                        background:rgba(0,0,0,0.65);padding:8px 8px;
+                        border-radius:6px;backdrop-filter:blur(8px);
+                        -webkit-backdrop-filter:blur(8px);
+                        text-shadow:0 1px 2px rgba(0,0,0,0.8);">
                 ${sizeText}
             </div>
         `;
