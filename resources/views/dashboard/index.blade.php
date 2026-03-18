@@ -211,14 +211,16 @@ if($visibleMessage) {
         !is_null($visibleMessage->original_message)
     ) {
         $sidebarText = $visibleMessage->original_message;
-    } elseif($visibleMessage->message) {
-        $sidebarText = $visibleMessage->message;
     } elseif($visibleMessage->media) {
         $mime = $visibleMessage->media->mime_type ?? '';
-        if(str_starts_with($mime, 'image')) $sidebarText = '📷 Photo';
-        elseif(str_starts_with($mime, 'video')) $sidebarText = '🎥 Video';
-        elseif(str_starts_with($mime, 'audio')) $sidebarText = '🎵 Audio';
-        else $sidebarText = '📄 ' . ($visibleMessage->media->file_name ?? 'Document');
+        $mediaLabel = '';
+        if(str_starts_with($mime, 'image')) $mediaLabel = '📷 Photo';
+        elseif(str_starts_with($mime, 'video')) $mediaLabel = '🎥 Video';
+        elseif(str_starts_with($mime, 'audio')) $mediaLabel = '🎵 Audio';
+        else $mediaLabel = '📄 ' . ($visibleMessage->media->file_name ?? 'Document');
+        $sidebarText = $mediaLabel . ($visibleMessage->message ? ' ' . $visibleMessage->message : '');
+    } elseif($visibleMessage->message) {
+        $sidebarText = $visibleMessage->message;
     }
 }
 @endphp

@@ -118,16 +118,15 @@ window.ChatSystem = {
                     chatItem.sidebarTypingTimeout = null;
                 }
 
-            lastMsg.innerText = message.deleted_for_everyone
+ lastMsg.innerText = message.deleted_for_everyone
     ? "This message was deleted"
-    : message.message
-        ? message.message
-        : message.media
-            ? (message.media.mime_type?.startsWith('image') ? '📷 Photo'
-             : message.media.mime_type?.startsWith('video') ? '🎥 Video'
-             : message.media.mime_type?.startsWith('audio') ? '🎵 Audio'
-             : '📄 ' + (message.media.file_name ?? 'Document'))
-            : '';
+    : message.media
+        ? (message.media.mime_type?.startsWith('image') ? '📷 Photo'
+         : message.media.mime_type?.startsWith('video') ? '🎥 Video'
+         : message.media.mime_type?.startsWith('audio') ? '🎵 Audio'
+         : '📄 ' + (message.media.file_name ?? 'Document'))
+          + (message.message ? ' ' + message.message : '')
+        : message.message ?? '';
 
                 lastMsg.style.color = "";
                 chatItem.dataset.originalMessage = message.message;
