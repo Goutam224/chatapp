@@ -217,6 +217,18 @@ function formatMessageDate(dateString) {
 | LOAD MESSAGES
 |--------------------------------------------------------------------------
 */
+// ============================================================
+// PATCH FOR chat.js — PAGINATION
+// Replace ONLY the loadMessages() function with this version
+// and add the loadMoreMessages() function right after it.
+// Everything else in chat.js stays EXACTLY the same.
+// ============================================================
+
+/*
+|--------------------------------------------------------------------------
+| LOAD MESSAGES  (replace existing loadMessages function with this)
+|--------------------------------------------------------------------------
+*/
 function loadMessages(chatId, item) {
     $.ajax({
         url: '/chat/' + chatId + '?mark_seen=1',
@@ -224,6 +236,12 @@ function loadMessages(chatId, item) {
         success: function(data) {
             window.theyBlockedMe = data.they_blocked_me ?? false;
             window.iBlocked = data.i_blocked ?? false;
+
+            // ✅ Store pagination state
+            window.currentChatHasMore  = data.has_more ?? false;
+            window.currentChatOldestId = data.oldest_id ?? null;
+            window.currentChatLoadingMore = false;
+
             const container = document.getElementById('chat-container');
             if(!container) return;
 
@@ -238,96 +256,50 @@ function loadMessages(chatId, item) {
                     messagesHtml += `<div class="msg-date">${formatMessageDate(msg.created_at)}</div>`;
                     lastDate = msgDate;
                 }
-if(
-    msg.message === 'You blocked this contact.' ||
-    msg.message === 'You unblocked this contact.' ||
-    msg.message === 'You pinned a message'
-){
 
-    let content = msg.message;
+                if(
+                    msg.message === 'You blocked this contact.' ||
+                    msg.message === 'You unblocked this contact.' ||
+                    msg.message === 'You pinned a message'
+                ){
+                    let content = msg.message;
+                    const isLastMessage = data.messages[data.messages.length - 1].id === msg.id;
+                    if(msg.message === 'You blocked this contact.' && window.iBlocked === true && isLastMessage){
+                        content = `You blocked this contact. <span onclick="unblockUser(${window.currentOtherUserId})" style="color:#25D366;cursor:pointer;margin-left:6px;">Tap to unblock</span>`;
+                    }
+                    messagesHtml += `<div class="msg-system">${content}</div>`;
+                    return;
+                }
 
-    // ✅ Show link ONLY if:
-    // 1. This is a block message
-    // 2. I am currently blocking
-    // 3. This is the LAST message in chat
-
-    const isLastMessage =
-        data.messages[data.messages.length - 1].id === msg.id;
-
-    if(
-        msg.message === 'You blocked this contact.' &&
-        window.iBlocked === true &&
-        isLastMessage
-    ){
-        content = `
-            You blocked this contact.
-            <span onclick="unblockUser(${window.currentOtherUserId})"
-                  style="color:#25D366;cursor:pointer;margin-left:6px;">
-                Tap to unblock
-            </span>
-        `;
-    }
-
-    messagesHtml += `
-        <div class="msg-system">
-            ${content}
-        </div>
-    `;
-    return;
-}
                 const isMine = msg.sender_id == window.AUTH_USER_ID;
-
                 let tick = '';
-              if(isMine) {
-    if(msg.seen_at && msg.seen_at !== null){
-        tick = '<span style="color:#53bdeb">✔✔</span>';
-    }else if(msg.delivered_at){
-        tick = '✔✔';
-    }else{
-        tick = '✔';
-    }
-}
+                if(isMine) {
+                    if(msg.seen_at && msg.seen_at !== null) tick = '<span style="color:#53bdeb">✔✔</span>';
+                    else if(msg.delivered_at) tick = '✔✔';
+                    else tick = '✔';
+                }
 
                 const time = formatTime(msg.edited_at ?? msg.sent_at ?? msg.created_at);
-// AFTER
-let replyHtml = '';
+                let replyHtml = '';
 
-if(msg.reply){
+                if(msg.reply){
+                    const isMineReply = msg.sender_id == window.AUTH_USER_ID;
+                    const replyAuthor = isMineReply ? 'You' : escapeHtml(msg.sender_name ?? 'User');
+                    const replyText = msg.reply.message ? escapeHtml(msg.reply.message) : getReplyMediaLabel(msg.reply);
+                    let thumb = '';
+                    if(msg.reply.media){
+                        thumb = `<div style="width:36px;height:36px;overflow:hidden;border-radius:4px;margin-left:8px;">${MediaDownloader.render(msg.reply)}</div>`;
+                    }
+                    replyHtml = `<div class="reply-quote" data-reply-id="${msg.reply.id}" style="display:flex;align-items:center;justify-content:space-between;"><div><div class="reply-author">${replyAuthor}</div><div class="reply-text">${replyText}</div></div>${thumb}</div>`;
+                }
 
-const isMine = msg.sender_id == window.AUTH_USER_ID;
-const replyAuthor = isMine ? 'You' : escapeHtml(msg.sender_name ?? 'User');
-const replyText = msg.reply.message
-    ? escapeHtml(msg.reply.message)
-    : getReplyMediaLabel(msg.reply);
-
-let thumb = '';
-
-if(msg.reply.media){
-thumb = `
-<div style="width:36px;height:36px;overflow:hidden;border-radius:4px;margin-left:8px;">
-${MediaDownloader.render(msg.reply)}
-</div>`;
-}
-
-replyHtml = `
-<div class="reply-quote" data-reply-id="${msg.reply.id}" style="display:flex;align-items:center;justify-content:space-between;">
-<div>
-<div class="reply-author">${replyAuthor}</div>
-<div class="reply-text">${replyText}</div>
-</div>
-${thumb}
-</div>`;
-
-}
-
-messagesHtml += `
+                messagesHtml += `
 <div class="msg ${isMine?'msg-right':'msg-left'}"
      data-id="${msg.id}"
      data-created-at="${msg.created_at}"
      data-pinned="${msg.is_pinned ? 1 : 0}"
      data-starred="${msg.is_starred ? 1 : 0}">
      <div class="msg-hover-arrow"></div>
-
      ${replyHtml}
     ${ msg.deleted_for_everyone ? '<i>This message was deleted</i>' : `<div class="msg-content">${renderMessageContent(msg)}</div>` }
 <div class="time">
@@ -337,422 +309,322 @@ messagesHtml += `
    ${msg.edited_at ? ' (edited)' : ''}
    ${isMine ? tick : ''}
 </div>
-
-</div>
-`;
+</div>`;
             });
-
-            
 
             container.innerHTML = `
 <div class="chat-header" style="display:flex;align-items:center;gap:10px;padding:10px;">
-
-<button id="chat-back-btn"
-style="
-background:none;
-border:none;
-color:white;
-font-size:22px;
-cursor:pointer;
-padding:0 5px;
-">
-←
-</button>
-
-<img src="${
-window.blockedUsersRealtime[window.currentOtherUserId]
-? '/default.png'
-: item.querySelector('.chat-img').src
-}" onclick="ProfilePanel.open()" style="width:40px;height:40px;border-radius:50%;cursor:pointer;">
+<button id="chat-back-btn" style="background:none;border:none;color:white;font-size:22px;cursor:pointer;padding:0 5px;">←</button>
+<img src="${window.blockedUsersRealtime[window.currentOtherUserId] ? '/default.png' : item.querySelector('.chat-img').src}" onclick="ProfilePanel.open()" style="width:40px;height:40px;border-radius:50%;cursor:pointer;">
     <div style="display:flex;flex-direction:column;">
-        <span id="chat-user-name" onclick="ProfilePanel.open()" style="cursor:pointer;font-weight:500;" data-user-id="${window.currentOtherUserId}">
-            ${item.querySelector('.chat-name').innerText}
-        </span>
+        <span id="chat-user-name" onclick="ProfilePanel.open()" style="cursor:pointer;font-weight:500;" data-user-id="${window.currentOtherUserId}">${item.querySelector('.chat-name').innerText}</span>
         <span id="chat-status" style="font-size:12px;color:#8696a0;"></span>
     </div>
 </div>
 <div id="pinned-bar" class="pinned-bar" style="display:none;"></div>
-
 <div id="chat-messages" class="chat-messages">
-     ${messagesHtml.length === 0 ? '<div class="msg-date">Today</div>' : messagesHtml}
+    ${data.has_more ? '<div id="load-more-trigger" style="text-align:center;padding:10px;color:#8696a0;font-size:13px;cursor:pointer;" onclick="loadMoreMessages()">Load older messages</div>' : ''}
+    ${messagesHtml.length === 0 ? '<div class="msg-date">Today</div>' : messagesHtml}
 </div>
-  <button id="scroll-to-bottom" class="scroll-bottom-btn">
-    <svg viewBox="0 0 24 24" width="20" height="20">
-        <path fill="currentColor"
-              d="M7 10l5 5 5-5z"/>
-    </svg>
+<button id="scroll-to-bottom" class="scroll-bottom-btn">
+    <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg>
 </button>
-
-    <div id="typing-indicator" style="font-size:13px;color:#53bdeb;"></div>
-
+<div id="typing-indicator" style="font-size:13px;color:#53bdeb;"></div>
 <div id="media-preview-bar" style="display:none;padding:10px;background:#111b21;border-top:1px solid #222;">
     <div id="media-preview-list" style="display:flex;gap:8px;overflow-x:auto;margin-bottom:8px;"></div>
     <input id="media-caption-input" placeholder="Add a caption..." style="width:100%;padding:8px;background:#2a3942;border:none;color:white;border-radius:6px;outline:none;">
 </div>
-<!-- REPLY PREVIEW -->
-<div id="reply-preview"
-     style="display:none;
-            padding:8px 12px;
-            background:#2a3942;
-            border-left:4px solid #25D366;
-            align-items:center;
-            justify-content:space-between;">
-
+<div id="reply-preview" style="display:none;padding:8px 12px;background:#2a3942;border-left:4px solid #25D366;align-items:center;justify-content:space-between;">
     <div style="display:flex;flex-direction:column;">
         <div id="reply-user" style="font-size:12px;color:#25D366;font-weight:500;"></div>
-        <div id="reply-text"
-             style="font-size:13px;color:#d1d7db;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+        <div id="reply-text" style="font-size:13px;color:#d1d7db;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
     </div>
-
-    <button id="reply-cancel"
-            style="background:none;border:none;color:#8696a0;font-size:18px;cursor:pointer;">
-        ✕
-    </button>
-
+    <button id="reply-cancel" style="background:none;border:none;color:#8696a0;font-size:18px;cursor:pointer;">✕</button>
 </div>
-
-<!-- INPUT BAR -->
 <div class="chat-input" style="display:flex;align-items:center;gap:10px;padding:10px;background:#202c33;">
     <input type="file" id="media-input" hidden multiple onchange="previewMedia(event)">
     <div style="position:relative;">
         <button onclick="toggleAttachMenu()" id="attach-button" style="background:none;border:none;color:#8696a0;font-size:22px;cursor:pointer;">➕</button>
-        <div id="attach-menu" style="display:none;position:absolute;bottom:50px;left:0;background:#233138;border-radius:12px;padding:8px 0;width:220px;box-shadow:0 4px 20px rgba(0,0,0,0.4);z-index:999;">
-            ${renderAttachMenu()}
-        </div>
+        <div id="attach-menu" style="display:none;position:absolute;bottom:50px;left:0;background:#233138;border-radius:12px;padding:8px 0;width:220px;box-shadow:0 4px 20px rgba(0,0,0,0.4);z-index:999;">${renderAttachMenu()}</div>
     </div>
-
-   <textarea id="message-input"
-placeholder="Type message"
-rows="1"
-style="flex:1;
-background:#2a3942;
-border:none;
-color:white;
-padding:10px;
-border-radius:8px;
-outline:none;
-resize:none;
-max-height:120px;
-overflow-y:auto;"></textarea>
-
-    <button onclick="handleSendAction()" id="send-button" style="background:#25D366;border:none;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s ease;padding:0;"
-        onmouseover="this.style.background='#20bd5a'" onmouseout="this.style.background='#25D366'" onmousedown="this.style.transform='scale(0.92)'" onmouseup="this.style.transform='scale(1)'">
-        <svg viewBox="0 0 24 24" width="18" height="18" style="display:block;fill:white;margin-left:2px;">
-            <path d="M3.4,20.4L21.85,12L3.4,3.6v6.6l13.2,1.8l-13.2,1.8V20.4z"/>
-        </svg>
+    <textarea id="message-input" placeholder="Type message" rows="1" style="flex:1;background:#2a3942;border:none;color:white;padding:10px;border-radius:8px;outline:none;resize:none;max-height:120px;overflow-y:auto;"></textarea>
+    <button onclick="handleSendAction()" id="send-button" style="background:#25D366;border:none;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s ease;padding:0;" onmouseover="this.style.background='#20bd5a'" onmouseout="this.style.background='#25D366'" onmousedown="this.style.transform='scale(0.92)'" onmouseup="this.style.transform='scale(1)'">
+        <svg viewBox="0 0 24 24" width="18" height="18" style="display:block;fill:white;margin-left:2px;"><path d="M3.4,20.4L21.85,12L3.4,3.6v6.6l13.2,1.8l-13.2,1.8V20.4z"/></svg>
     </button>
-</div>
-`;
+</div>`;
 
-// ✅ Back button — go to dashboard
+            // Back button
             const backBtn = document.getElementById('chat-back-btn');
             if (backBtn) {
                 backBtn.addEventListener('click', function () {
-                    window.pendingChatUser    = null;
-                    window.currentChatId      = null;
-                    window.currentOtherUserId = null;
-
-                    localStorage.removeItem('currentChatId');
-                    localStorage.removeItem('currentChatUserId');
-
-                    document.querySelectorAll('.chat-item.active')
-                        .forEach(el => el.classList.remove('active'));
-
+                    window.pendingChatUser = null; window.currentChatId = null; window.currentOtherUserId = null;
+                    localStorage.removeItem('currentChatId'); localStorage.removeItem('currentChatUserId');
+                    document.querySelectorAll('.chat-item.active').forEach(el => el.classList.remove('active'));
                     document.getElementById('new-chat-list').style.display = 'none';
                     document.querySelector('.chat-list').style.display = 'block';
-
                     const container = document.getElementById('chat-container');
-                    if (container) {
-                        container.innerHTML = `
-                            <div style="
-                                display:flex;
-                                align-items:center;
-                                justify-content:center;
-                                height:100%;
-                                font-size:20px;
-                                color:#8696a0;
-                            ">
-                                Select a chat to start messaging
-                            </div>
-                        `;
-                    }
+                    if (container) { container.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:20px;color:#8696a0;">Select a chat to start messaging</div>`; }
                 });
             }
 
-            // use global var
-         const otherUserId = window.currentOtherUserId;
-if(otherUserId){
-    // ✅ Do not show last seen if I blocked them or they blocked me
-    const isBlocked =
-        (window.iBlockedUsers && window.iBlockedUsers.includes(Number(otherUserId))) ||
-        (window.blockedByUsers && window.blockedByUsers.includes(Number(otherUserId)));
-
-    if(!isBlocked){
-        $.ajax({
-            url: '/user/last-seen/' + otherUserId,
-            method: 'GET',
-            success: function(response){
-                const headerStatus = document.getElementById('chat-status');
-                if(!headerStatus) return;
-             if(headerStatus.innerText === 'online') return;
-
-// ✅ Check global presence dot before setting last seen
-const sidebarItem = document.querySelector(
-    `.chat-item[data-user-id="${otherUserId}"]`
-);
-if(sidebarItem && sidebarItem.querySelector('.online-dot')){
-    headerStatus.innerText = "online";
-    headerStatus.style.color = "#25D366";
-    return;
-}
-
-if(response.last_seen) headerStatus.innerText = "last seen " + response.last_seen;
-else headerStatus.innerText = "";
+            // Last seen
+            const otherUserId = window.currentOtherUserId;
+            if(otherUserId){
+                const isBlocked = (window.iBlockedUsers && window.iBlockedUsers.includes(Number(otherUserId))) || (window.blockedByUsers && window.blockedByUsers.includes(Number(otherUserId)));
+                if(!isBlocked){
+                    $.ajax({ url: '/user/last-seen/' + otherUserId, method: 'GET', success: function(response){
+                        const headerStatus = document.getElementById('chat-status');
+                        if(!headerStatus) return;
+                        if(headerStatus.innerText === 'online') return;
+                        const sidebarItem = document.querySelector(`.chat-item[data-user-id="${otherUserId}"]`);
+                        if(sidebarItem && sidebarItem.querySelector('.online-dot')){ headerStatus.innerText = "online"; headerStatus.style.color = "#25D366"; return; }
+                        if(response.last_seen) headerStatus.innerText = "last seen " + response.last_seen;
+                        else headerStatus.innerText = "";
+                    }});
+                }
             }
-        });
-    }
-}
 
             const msgContainer = document.getElementById('chat-messages');
-  const scrollBtn = document.getElementById('scroll-to-bottom');
+            const scrollBtn    = document.getElementById('scroll-to-bottom');
 
-msgContainer.addEventListener('scroll', function(){
+            // ✅ Scroll listener — shows scroll-to-bottom btn + triggers load more at top
+            msgContainer.addEventListener('scroll', function(){
+                const isNearBottom = msgContainer.scrollHeight - msgContainer.scrollTop - msgContainer.clientHeight < 100;
+                if(isNearBottom) scrollBtn.classList.remove('show');
+                else scrollBtn.classList.add('show');
 
-    const isNearBottom =
-        msgContainer.scrollHeight - msgContainer.scrollTop - msgContainer.clientHeight < 100;
+                // ✅ Load more when scrolled near top
+                if(msgContainer.scrollTop < 80 && window.currentChatHasMore && !window.currentChatLoadingMore){
+                    loadMoreMessages();
+                }
+            });
 
-    if(isNearBottom){
-        scrollBtn.classList.remove('show');
-    } else {
-        scrollBtn.classList.add('show');
-    }
-});
+            scrollBtn.onclick = function(){
+                msgContainer.scrollTo({ top: msgContainer.scrollHeight, behavior: 'smooth' });
+            };
 
-scrollBtn.onclick = function(){
-    msgContainer.scrollTo({
-        top: msgContainer.scrollHeight,
-        behavior: 'smooth'
+            // Scroll to bottom on open
+            msgContainer.scrollTop = msgContainer.scrollHeight;
+
+            // Search target scroll
+            if(window.searchTargetMessage){
+                const target = msgContainer.querySelector(`[data-id="${window.searchTargetMessage}"]`);
+                if(target){ scrollToFoundMessage(target); }
+                else {
+                    fetch('/chat/load-around/' + window.searchTargetMessage).then(res => res.json()).then(data => {
+                        if(!data.messages || data.messages.length === 0) return;
+                        const container = document.getElementById('chat-messages');
+                        data.messages.forEach(msg => {
+                            if(container.querySelector(`[data-id="${msg.id}"]`)) return;
+                            const isMine = msg.sender_id == window.AUTH_USER_ID;
+                            const div = document.createElement('div');
+                            div.className = `msg ${isMine ? 'msg-right' : 'msg-left'}`;
+                            div.dataset.id = msg.id;
+                            div.innerHTML = `<div class="msg-content">${renderMessageContent(msg)}</div><div class="time">${formatTime(msg.created_at)}</div>`;
+                            container.prepend(div);
+                        });
+                        const newTarget = container.querySelector(`[data-id="${window.searchTargetMessage}"]`);
+                        if(newTarget) scrollToFoundMessage(newTarget);
+                    });
+                }
+                window.searchTargetMessage = null;
+            }
+
+            if(data.pinned_messages && data.pinned_messages.length) renderPinnedBar(data.pinned_messages);
+
+            // Restore paused uploads
+            $.ajax({ url: '/upload/pending/' + window.currentChatId, method: 'GET', success: function(response){
+                if(!response || !response.uploads) return;
+                response.uploads.forEach(upload => {
+                    if(document.querySelector(`[data-upload-uuid="${upload.upload_uuid}"]`)) return;
+                    const bubble = document.createElement('div');
+                    bubble.className = 'msg msg-right';
+                    bubble.dataset.uploadUuid = upload.upload_uuid;
+                    bubble.dataset.tempId = 'pending_' + upload.upload_uuid;
+                    const container = document.getElementById('chat-messages');
+                    const uploadTime = new Date(upload.created_at).getTime();
+                    let inserted = false;
+                    container.querySelectorAll('.msg').forEach(msg => {
+                        const msgTimeAttr = msg.getAttribute('data-created-at');
+                        if(!msgTimeAttr) return;
+                        const msgTime = new Date(msgTimeAttr).getTime();
+                        if(uploadTime < msgTime && !inserted) { container.insertBefore(bubble, msg); inserted = true; }
+                    });
+                    if(!inserted) container.appendChild(bubble);
+                    const thumbKey = upload.upload_uuid + '_thumb';
+                    const dbReq = indexedDB.open('UploadDB', 1);
+                    dbReq.onsuccess = function(ev) {
+                        const db = ev.target.result;
+                        const tx = db.transaction(['files'], 'readonly');
+                        const getThumb = tx.objectStore('files').get(thumbKey);
+                        getThumb.onsuccess = function() {
+                            const thumbSrc = getThumb.result || null;
+                            const capKey = upload.upload_uuid + '_caption';
+                            const tx2 = db.transaction(['files'], 'readonly');
+                            const capGet = tx2.objectStore('files').get(capKey);
+                            capGet.onsuccess = function() {
+                                const savedCaption = capGet.result || '';
+                                bubble.dataset.caption = savedCaption;
+                                const sizeMB = (upload.file_size / (1024*1024)).toFixed(1);
+                                const mime = upload.mime_type || '';
+                                const fileName = upload.file_name || 'File';
+                                const fileExt = fileName.split('.').pop().toUpperCase();
+                                const capRadius = savedCaption ? '10px 10px 0 0' : '10px';
+                                const capHtml = savedCaption ? `<div class="wa-caption" style="line-height:1.45;background:#005c4b;border-radius:0 0 10px 10px;padding:6px 10px 4px 10px;">${escapeHtml(savedCaption)}</div>` : '';
+                                const resumeArrow = `<svg width="48" height="48" viewBox="0 0 48 48" style="cursor:pointer;"><circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.25)" stroke-width="3" fill="rgba(0,0,0,0.35)"/><polyline points="24,15 24,33" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/><polyline points="16,22 24,14 32,22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
+                                if(mime.startsWith('audio')) {
+                                    bubble.innerHTML = `<div style="width:260px;display:block;"><div class="wa-media-box audio-resume-pending" style="width:260px;height:68px;display:flex;align-items:center;gap:12px;padding:12px;box-sizing:border-box;background:#111b21;border-radius:${capRadius};"><div style="width:44px;height:44px;background:#1d282f;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#25D366;font-size:18px;flex-shrink:0;">🎵</div><div style="flex:1;"><div style="font-size:11px;color:#8696a0;margin-bottom:4px;">${sizeMB} MB</div><div style="height:4px;background:#2a3942;border-radius:4px;"></div></div><div style="flex-shrink:0;width:48px;height:48px;cursor:pointer;" class="audio-resume-circle">${resumeArrow}</div></div>${capHtml}</div>`;
+                                    bubble.querySelector('.audio-resume-circle').onclick = () => MediaUpload.resumeUpload(upload.upload_uuid, null, bubble, null);
+                                } else if(mime.startsWith('image') || mime.startsWith('video')) {
+                                    bubble.innerHTML = `<div style="width:260px;display:block;line-height:0;"><div class="wa-media-box resume-upload" style="width:260px;height:180px;padding:0;overflow:hidden;border-radius:${capRadius};position:relative;cursor:pointer;">${thumbSrc ? `<img src="${thumbSrc}" style="width:100%;height:100%;object-fit:cover;display:block;">` : `<div style="width:100%;height:100%;background:#1d282f;"></div>`}<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;">${resumeArrow}<div style="font-size:11px;color:white;font-weight:500;background:rgba(0,0,0,0.4);padding:2px 8px;border-radius:8px;">${sizeMB} MB</div></div></div>${capHtml}</div>`;
+                                    bubble.querySelector('.resume-upload').onclick = () => MediaUpload.resumeUpload(upload.upload_uuid, null, bubble, null);
+                                } else {
+                                    bubble.innerHTML = `<div style="width:260px;display:block;"><div class="wa-media-box wa-doc" style="border-radius:${capRadius};"><div style="width:40px;height:48px;background:#1d282f;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:bold;color:#25D366;">${fileExt}</div><div style="flex:1;min-width:0;"><div style="font-size:14px;color:#e9edef;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(fileName)}</div><div style="font-size:12px;color:#8696a0;margin-top:3px;">${fileExt} • ${sizeMB} MB</div></div><div style="flex-shrink:0;width:48px;height:48px;cursor:pointer;" class="doc-resume-circle">${resumeArrow}</div></div>${capHtml}</div>`;
+                                    bubble.querySelector('.doc-resume-circle').onclick = () => MediaUpload.resumeUpload(upload.upload_uuid, null, bubble, null);
+                                }
+                            };
+                        };
+                    };
+                });
+            }});
+
+            ChatSystem.listenChat(chatId);
+        }
     });
-};
-            if(msgContainer) msgContainer.scrollTop = msgContainer.scrollHeight;
-            // ⭐ Scroll to searched message (from search results)
-if(window.searchTargetMessage){
+}
 
-    const target =
-    msgContainer.querySelector(`[data-id="${window.searchTargetMessage}"]`);
+/*
+|--------------------------------------------------------------------------
+| LOAD MORE MESSAGES  (ADD this function right after loadMessages)
+|--------------------------------------------------------------------------
+*/
+function loadMoreMessages() {
+    if(!window.currentChatId) return;
+    if(!window.currentChatHasMore) return;
+    if(window.currentChatLoadingMore) return;
 
-    if(target){
+    window.currentChatLoadingMore = true;
 
-        scrollToFoundMessage(target);
+    const msgContainer = document.getElementById('chat-messages');
+    if(!msgContainer) return;
 
-    }else{
+    // Show loading indicator
+    let loadingEl = document.getElementById('load-more-trigger');
+    if(loadingEl) loadingEl.innerText = 'Loading...';
 
-        // message not loaded → fetch it
-        fetch('/chat/load-around/' + window.searchTargetMessage)
-        .then(res => res.json())
-        .then(data => {
+    // Save scroll position so we can restore it after prepending
+    const scrollHeightBefore = msgContainer.scrollHeight;
+    const scrollTopBefore    = msgContainer.scrollTop;
 
-            if(!data.messages || data.messages.length === 0){
+    $.ajax({
+        url: '/chat/' + window.currentChatId + '/more?before_id=' + window.currentChatOldestId,
+        method: 'GET',
+        success: function(data) {
+            window.currentChatLoadingMore = false;
+
+            if(!data.messages || data.messages.length === 0) {
+                window.currentChatHasMore = false;
+                if(loadingEl) loadingEl.remove();
                 return;
             }
 
-            const container = document.getElementById('chat-messages');
+            window.currentChatHasMore  = data.has_more ?? false;
+            window.currentChatOldestId = data.oldest_id ?? window.currentChatOldestId;
 
-            data.messages.forEach(msg => {
+            // Build HTML for older messages
+            let html = '';
+            let lastDate = null;
 
-                if(container.querySelector(`[data-id="${msg.id}"]`)){
+            // We need to check the date of the first currently loaded message
+            // to avoid duplicate date separators
+            const firstLoadedMsg = msgContainer.querySelector('.msg[data-created-at]');
+            const firstLoadedDate = firstLoadedMsg ? new Date(firstLoadedMsg.getAttribute('data-created-at')).toDateString() : null;
+
+            data.messages.forEach((msg, index) => {
+                const msgDateObj = new Date(msg.created_at);
+                const msgDate    = msgDateObj.toDateString();
+
+                if(lastDate !== msgDate) {
+                    // Don't add date separator if same date as first loaded message
+                    if(index === data.messages.length - 1 && msgDate === firstLoadedDate) {
+                        // skip — date separator already exists
+                    } else {
+                        html += `<div class="msg-date">${formatMessageDate(msg.created_at)}</div>`;
+                    }
+                    lastDate = msgDate;
+                }
+
+                if(msg.message === 'You blocked this contact.' || msg.message === 'You unblocked this contact.' || msg.message === 'You pinned a message'){
+                    html += `<div class="msg-system">${msg.message}</div>`;
                     return;
                 }
 
                 const isMine = msg.sender_id == window.AUTH_USER_ID;
+                let tick = '';
+                if(isMine){
+                    if(msg.seen_at) tick = '<span style="color:#53bdeb">✔✔</span>';
+                    else if(msg.delivered_at) tick = '✔✔';
+                    else tick = '✔';
+                }
 
-                const div = document.createElement('div');
+                const time = formatTime(msg.edited_at ?? msg.sent_at ?? msg.created_at);
+                let replyHtml = '';
+                if(msg.reply){
+                    const replyAuthor = isMine ? 'You' : escapeHtml(msg.sender_name ?? 'User');
+                    const replyText   = msg.reply.message ? escapeHtml(msg.reply.message) : getReplyMediaLabel(msg.reply);
+                    replyHtml = `<div class="reply-quote" data-reply-id="${msg.reply.id}"><div><div class="reply-author">${replyAuthor}</div><div class="reply-text">${replyText}</div></div></div>`;
+                }
 
-                div.className = `msg ${isMine ? 'msg-right' : 'msg-left'}`;
-                div.dataset.id = msg.id;
-
-                div.innerHTML =
-                `<div class="msg-content">${renderMessageContent(msg)}</div>
-                 <div class="time">${formatTime(msg.created_at)}</div>`;
-
-                container.prepend(div);
-
+                html += `
+<div class="msg ${isMine?'msg-right':'msg-left'}"
+     data-id="${msg.id}"
+     data-created-at="${msg.created_at}"
+     data-pinned="${msg.is_pinned ? 1 : 0}"
+     data-starred="${msg.is_starred ? 1 : 0}">
+     <div class="msg-hover-arrow"></div>
+     ${replyHtml}
+     ${msg.deleted_for_everyone ? '<i>This message was deleted</i>' : `<div class="msg-content">${renderMessageContent(msg)}</div>`}
+     <div class="time">
+        ${msg.is_pinned ? '<span class="msg-pin">📌</span>' : ''}
+        ${msg.is_starred ? '<span class="star-icon">⭐</span>' : ''}
+        ${time}
+        ${msg.edited_at ? ' (edited)' : ''}
+        ${isMine ? tick : ''}
+     </div>
+</div>`;
             });
 
-            const newTarget =
-            container.querySelector(`[data-id="${window.searchTargetMessage}"]`);
-
-            if(newTarget){
-                scrollToFoundMessage(newTarget);
+            // Update or remove load-more trigger
+            if(loadingEl){
+                if(data.has_more){
+                    loadingEl.innerText = 'Load older messages';
+                } else {
+                    loadingEl.remove();
+                    loadingEl = null;
+                }
             }
 
-        });
+            // ✅ Prepend messages AFTER the load-more trigger
+            const insertAfter = document.getElementById('load-more-trigger');
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
 
-    }
-
-    window.searchTargetMessage = null;
-}
-
-            // -------------------------------
-// RENDER PINNED SYSTEM MESSAGES
-// -------------------------------
-if(data.pinned_messages && data.pinned_messages.length){
-    renderPinnedBar(data.pinned_messages);
-}
-
-// ✅ RESTORE paused uploads from DB (status = uploading)
-$.ajax({
-    url: '/upload/pending/' + window.currentChatId,
-    method: 'GET',
-    success: function(response){
-
-        if(!response || !response.uploads) return;
-
-        response.uploads.forEach(upload => {
-            // skip duplicates in case the server accidentally returns the same
-            // session twice (or a previous paused/uploading pair).
-            if(document.querySelector(`[data-upload-uuid="${upload.upload_uuid}"]`)) {
-                return;
+            const firstMsg = msgContainer.querySelector('.msg[data-id], .msg-date, .msg-system');
+            if(insertAfter){
+                while(tempDiv.firstChild){ insertAfter.after(tempDiv.firstChild); }
+            } else if(firstMsg){
+                while(tempDiv.firstChild){ msgContainer.insertBefore(tempDiv.firstChild, firstMsg); }
+            } else {
+                msgContainer.prepend(tempDiv);
             }
-const bubble = document.createElement('div');
-bubble.className = 'msg msg-right';
-bubble.dataset.uploadUuid = upload.upload_uuid;
-bubble.dataset.tempId = 'pending_' + upload.upload_uuid;
 
-       const container = document.getElementById('chat-messages');
-
-const uploadTime = new Date(upload.created_at).getTime();
-
-let inserted = false;
-
-container.querySelectorAll('.msg').forEach(msg => {
-    const msgTimeAttr = msg.getAttribute('data-created-at');
-    if(!msgTimeAttr) return;
-    const msgTime = new Date(msgTimeAttr).getTime();
-    if(uploadTime < msgTime && !inserted) {
-        container.insertBefore(bubble, msg);
-        inserted = true;
-    }
-});
-
-if(!inserted) {
-    container.appendChild(bubble);
-}
-
-const thumbKey = upload.upload_uuid + '_thumb';
-const dbReq = indexedDB.open('UploadDB', 1);
-dbReq.onsuccess = function(ev) {
-    const db = ev.target.result;
-    const tx = db.transaction(['files'], 'readonly');
-    const getThumb = tx.objectStore('files').get(thumbKey);
-  getThumb.onsuccess = function() {
-    const thumbSrc = getThumb.result || null;
-
-    // ✅ Load caption from IndexedDB
-    const capKey = upload.upload_uuid + '_caption';
-    const tx2 = db.transaction(['files'], 'readonly');
-    const capGet = tx2.objectStore('files').get(capKey);
-
- capGet.onsuccess = function() {
-    const savedCaption = capGet.result || '';
-    bubble.dataset.caption = savedCaption;
-
-    const sizeMB = (upload.file_size / (1024*1024)).toFixed(1);
-    const mime = upload.mime_type || '';
-    const fileName = upload.file_name || 'File';
-    const fileExt = fileName.split('.').pop().toUpperCase();
-    const capRadius = savedCaption ? '10px 10px 0 0' : '10px';
-    const capHtml = savedCaption
-        ? `<div class="wa-caption" style="line-height:1.45;background:#005c4b;border-radius:0 0 10px 10px;padding:6px 10px 4px 10px;">${escapeHtml(savedCaption)}</div>`
-        : '';
-
-    const resumeArrow = `
-        <svg width="48" height="48" viewBox="0 0 48 48" style="cursor:pointer;">
-            <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.25)" stroke-width="3" fill="rgba(0,0,0,0.35)"/>
-            <polyline points="24,15 24,33" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-            <polyline points="16,22 24,14 32,22" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        </svg>`;
-
-    if(mime.startsWith('audio')) {
-        // ── AUDIO: compact row with inline right-side resume arrow ──
-        bubble.innerHTML = `
-            <div style="width:260px;display:block;">
-                <div class="wa-media-box audio-resume-pending"
-                     style="width:260px;height:68px;display:flex;align-items:center;gap:12px;padding:12px;box-sizing:border-box;background:#111b21;border-radius:${capRadius};">
-                    <div style="width:44px;height:44px;background:#1d282f;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#25D366;font-size:18px;flex-shrink:0;">
-                        🎵
-                    </div>
-                    <div style="flex:1;">
-                        <div style="font-size:11px;color:#8696a0;margin-bottom:4px;">${sizeMB} MB</div>
-                        <div style="height:4px;background:#2a3942;border-radius:4px;"></div>
-                    </div>
-                    <div style="flex-shrink:0;width:48px;height:48px;cursor:pointer;" class="audio-resume-circle">
-                        ${resumeArrow}
-                    </div>
-                </div>
-                ${capHtml}
-            </div>`;
-        bubble.querySelector('.audio-resume-circle').onclick = () => {
-            MediaUpload.resumeUpload(upload.upload_uuid, null, bubble, null);
-        };
-
-    } else if(mime.startsWith('image') || mime.startsWith('video')) {
-        // ── IMAGE / VIDEO: big box with centered resume arrow ──
-        bubble.innerHTML = `
-            <div style="width:260px;display:block;line-height:0;">
-                <div class="wa-media-box resume-upload"
-                     style="width:260px;height:180px;padding:0;overflow:hidden;border-radius:${capRadius};position:relative;cursor:pointer;">
-                    ${thumbSrc
-                        ? `<img src="${thumbSrc}" style="width:100%;height:100%;object-fit:cover;display:block;">`
-                        : `<div style="width:100%;height:100%;background:#1d282f;"></div>`
-                    }
-                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;">
-                        ${resumeArrow}
-                        <div style="font-size:11px;color:white;font-weight:500;background:rgba(0,0,0,0.4);padding:2px 8px;border-radius:8px;">${sizeMB} MB</div>
-                    </div>
-                </div>
-                ${capHtml}
-            </div>`;
-        bubble.querySelector('.resume-upload').onclick = () => {
-            MediaUpload.resumeUpload(upload.upload_uuid, null, bubble, null);
-        };
-
-    } else {
-        // ── DOCUMENT: doc row with inline right-side resume arrow ──
-        bubble.innerHTML = `
-            <div style="width:260px;display:block;">
-                <div class="wa-media-box wa-doc" style="border-radius:${capRadius};">
-                    <div style="width:40px;height:48px;background:#1d282f;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;font-weight:bold;color:#25D366;">
-                        ${fileExt}
-                    </div>
-                    <div style="flex:1;min-width:0;">
-                        <div style="font-size:14px;color:#e9edef;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                            ${escapeHtml(fileName)}
-                        </div>
-                        <div style="font-size:12px;color:#8696a0;margin-top:3px;">
-                            ${fileExt} • ${sizeMB} MB
-                        </div>
-                    </div>
-                    <div style="flex-shrink:0;width:48px;height:48px;cursor:pointer;" class="doc-resume-circle">
-                        ${resumeArrow}
-                    </div>
-                </div>
-                ${capHtml}
-            </div>`;
-        bubble.querySelector('.doc-resume-circle').onclick = () => {
-            MediaUpload.resumeUpload(upload.upload_uuid, null, bubble, null);
-        };
-    }
-};
-};
-};
-        });
-
-    }
-});
-
-
-            ChatSystem.listenChat(chatId);
+            // ✅ Restore scroll position — user stays where they were
+            const scrollHeightAfter = msgContainer.scrollHeight;
+            msgContainer.scrollTop  = scrollTopBefore + (scrollHeightAfter - scrollHeightBefore);
+        },
+        error: function() {
+            window.currentChatLoadingMore = false;
+            if(loadingEl) loadingEl.innerText = 'Load older messages';
         }
     });
 }
@@ -905,6 +777,7 @@ if(window.pinnedMessages){
         renderPinnedBar(window.pinnedMessages);
     }
 }
+
         }
         
     });

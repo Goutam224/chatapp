@@ -168,7 +168,7 @@ Route::get('/chat/pinned',[PinChatController::class,'list']);
     Route::get('/users', [ChatController::class, 'users']);
 
     Route::post('/chat/create', [ChatController::class, 'create']);
-
+Route::get('/chat/{chat}/more', [ChatController::class, 'loadMore']);
     Route::post('/typing', function (Request $request) {
 
     $user = \App\Helpers\AuthHelper::user();
