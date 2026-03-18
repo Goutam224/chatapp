@@ -1760,11 +1760,13 @@ function removeMediaPreview() {
     const bar = document.getElementById('media-preview-bar');
     const list = document.getElementById('media-preview-list');
     const input = document.getElementById('media-input');
+    const captionInput = document.getElementById('media-caption-input');
     if(bar) bar.style.display = 'none';
     if(list) list.innerHTML = '';
     if(input) input.value = '';
+    if(captionInput) captionInput.value = '';
+    window.currentMediaCaption = null;
 }
-
 function handleSendAction() {
     const mediaInput = document.getElementById('media-input');
     const file = mediaInput.files[0];

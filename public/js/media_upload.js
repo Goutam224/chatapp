@@ -552,6 +552,15 @@ else
 
 bubble.innerHTML = mediaHtml;
 
+// ✅ Re-add time with clock icon after resume bubble rebuild
+const existingTime = bubble.querySelector('.time');
+if(!existingTime) {
+    const timeDiv = document.createElement('div');
+    timeDiv.className = 'time';
+    timeDiv.innerHTML = formatTime(new Date()) + getClockIcon();
+    bubble.appendChild(timeDiv);
+}
+
 // --------------------------------------------------------
 // Wire overlay / cancel for the resumed bubble
 // --------------------------------------------------------

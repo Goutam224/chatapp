@@ -74,8 +74,8 @@ const sizeMB = (file.size / (1024*1024)).toFixed(1);
 if(file.type.startsWith('image'))
 {
     const _cap = window.currentMediaCaption || '';
-    mediaHtml = `
-    <div style="width:260px;">
+mediaHtml = `
+    <div style="width:260px;border-radius:12px;overflow:hidden;">
     <div class="wa-media-box" style="width:260px;height:180px;padding:0;overflow:hidden;border-radius:${_cap ? '10px 10px 0 0' : '10px'};position:relative;display:block;">
             <img src="${url}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:0;">
             <div class="upload-eta" style="position:absolute;bottom:6px;left:8px;font-size:11px;color:white;background:rgba(0,0,0,0.55);padding:2px 7px;border-radius:6px;white-space:nowrap;z-index:5;">${sizeMB} MB</div>
@@ -88,7 +88,7 @@ else if(file.type.startsWith('video'))
 {
     const _cap = window.currentMediaCaption || '';
     mediaHtml = `
-    <div style="width:260px;">
+    <div style="width:260px;border-radius:12px;overflow:hidden;">
 <div class="wa-media-box" style="width:260px;height:180px;padding:0;overflow:hidden;border-radius:${_cap ? '10px 10px 0 0' : '10px'};position:relative;display:block;">
             <video src="${url}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:0;" muted></video>
             <div class="upload-eta" style="position:absolute;bottom:6px;left:8px;font-size:11px;color:white;background:rgba(0,0,0,0.55);padding:2px 7px;border-radius:6px;white-space:nowrap;z-index:5;">${sizeMB} MB</div>
@@ -474,9 +474,18 @@ else
                 MediaUpload.resumeUpload(uuid, file, bubble, bubble.dataset.tempId);
             };
         }
-        bubble.dataset.uploading = "1";
+      bubble.dataset.uploading = "1";
         bubble.dataset.finished = null;
         bubble.onclick = null;
+
+        // ✅ Re-add time with clock icon for doc pause state
+        const existingTimeDoc = bubble.querySelector('.time');
+        if(!existingTimeDoc) {
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'time';
+            timeDiv.innerHTML = formatTime(new Date()) + getClockIcon();
+            bubble.appendChild(timeDiv);
+        }
         return;
     }
 
@@ -542,6 +551,15 @@ bubble.dataset.uploading = "1";
 bubble.dataset.finished = null;
     // CRITICAL FIX — prevent auto resume
     bubble.onclick = null;
+
+// ✅ Re-add time with clock icon after pause
+const existingTime = bubble.querySelector('.time');
+if(!existingTime) {
+    const timeDiv = document.createElement('div');
+    timeDiv.className = 'time';
+    timeDiv.innerHTML = formatTime(new Date()) + getClockIcon();
+    bubble.appendChild(timeDiv);
+}
 
 // --------------------------------------------------------
 // AUDIO resume: wire the audio-resume-circle click
