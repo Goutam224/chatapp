@@ -781,9 +781,20 @@ if(window.pinnedMessages){
         }
         
     });
-    window.editingMessageId = null;
-    input.value = '';
-    return;
+const senderChatItem = document.querySelector(`.chat-item[data-chat-id="${window.currentChatId}"]`);
+if(senderChatItem){
+    const preview = senderChatItem.querySelector('.chat-last');
+    const lastBubble = [...document.querySelectorAll('#chat-messages .msg[data-id]')].pop();
+    const isLastMsg = lastBubble && lastBubble.dataset.id == editingId;
+    if(preview && isLastMsg){
+        preview.innerText = message;
+        senderChatItem.dataset.originalMessage = message;
+    }
+}
+
+window.editingMessageId = null;
+input.value = '';
+return;
 }
 
     // optimistic render for sender (instant local message)
@@ -1338,12 +1349,16 @@ function handleMessageDeleted(e) {
     // 🚫 STOP if this user is blocked in realtime
     const otherUserId = window.currentOtherUserId;
 
-    if(window.blockedUsersRealtime &&
-       window.blockedUsersRealtime[otherUserId] === true) {
+  // ✅ FIX: Check ALL block states — realtime map + initial page load arrays
+const isBlockedAny =
+    (window.blockedUsersRealtime && window.blockedUsersRealtime[otherUserId] === true) ||
+    (window.iBlockedUsers && window.iBlockedUsers.includes(Number(otherUserId))) ||
+    (window.blockedByUsers && window.blockedByUsers.includes(Number(otherUserId)));
 
-        console.log("Delete event ignored due to block state");
-        return;
-    }
+if(isBlockedAny) {
+    console.log("Delete event ignored due to block state");
+    return;
+}
 
   // ✅ ALWAYS remove from starred panel — before any early return
     const starredCard = document.querySelector(

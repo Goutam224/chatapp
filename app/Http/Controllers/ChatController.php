@@ -225,16 +225,17 @@ private function formatMessages($messages, $authId, $pinnedIds, $starredIds, $do
         $arr['is_starred'] = in_array($msg->id, $starredIds);
         $arr['sender_name'] = $msg->sender->name ?? 'User';
         $arr['downloaded'] = $msg->sender_id == $authId ? 1 : (in_array($msg->id, $downloadedIds) ? 1 : 0);
-
-        // ✅ original_message only exists when edited during a block — always show it
-        if (
-            $msg->sender_id != $authId &&
-            $msg->edited_at &&
-            !is_null($msg->original_message)
-        ) {
-            $arr['message']   = $msg->original_message;
-            $arr['edited_at'] = null;
-        }
+// AFTER
+if (
+    $msg->sender_id != $authId &&
+    !is_null($msg->original_message) &&
+    $msg->block_time &&
+    $msg->edited_at &&
+    strtotime($msg->edited_at) > strtotime($msg->block_time)
+) {
+    $arr['message']   = $msg->original_message;
+    $arr['edited_at'] = $msg->original_edited_at; // null = wasn't edited before block (no badge), timestamp = was edited before block (show badge)
+}
 
         if ($msg->reply) {
             $arr['reply'] = [
@@ -541,16 +542,6 @@ public function edit(Request $request, Message $message)
         return response()->json(['error' => 'Unauthorized'], 403);
     }
 
-    if (is_null($message->original_message)) {
-        $message->original_message = $message->message;
-    }
-
-    $message->message   = $request->message;
-    $message->edited_at = now();
-    $message->save();
-
-    $message = Message::find($message->id);
-
     $otherParticipant = \App\Models\ChatParticipant::where('chat_id', $message->chat_id)
         ->where('user_id', '!=', session('auth_user_id'))
         ->first();
@@ -558,12 +549,34 @@ public function edit(Request $request, Message $message)
     $shouldBroadcast = true;
 
     if ($otherParticipant) {
-        $isBlocking  = \App\Models\UserBlock::where('blocker_id', session('auth_user_id'))->where('blocked_id', $otherParticipant->user_id)->exists();
-        $isBlockedBy = \App\Models\UserBlock::where('blocker_id', $otherParticipant->user_id)->where('blocked_id', session('auth_user_id'))->exists();
-        if ($isBlocking || $isBlockedBy) $shouldBroadcast = false;
+
+        $block = \App\Models\UserBlock::where(function($q) use ($otherParticipant) {
+            $q->where(function($q2) use ($otherParticipant) {
+                $q2->where('blocker_id', session('auth_user_id'))
+                   ->where('blocked_id', $otherParticipant->user_id);
+            })->orWhere(function($q2) use ($otherParticipant) {
+                $q2->where('blocker_id', $otherParticipant->user_id)
+                   ->where('blocked_id', session('auth_user_id'));
+            });
+        })->orderBy('created_at','asc')->first();
+// AFTER
+if ($block) {
+    if (!$message->block_time) {
+        $message->block_time         = $block->created_at;
+        $message->original_message   = $message->message;
+        $message->original_edited_at = $message->edited_at; // null if never edited before block, timestamp if it was
+    }
+    $shouldBroadcast = false;
+}
     }
 
-    if ($shouldBroadcast) broadcast(new \App\Events\MessageEdited($message))->toOthers();
+    $message->message   = $request->message;
+    $message->edited_at = now();
+    $message->save();
+
+    if ($shouldBroadcast) {
+        broadcast(new \App\Events\MessageEdited($message))->toOthers();
+    }
 
     return response()->json($message);
 }
@@ -575,11 +588,42 @@ public function deleteForEveryone($id)
     if ($message->sender_id != session('auth_user_id')) return response()->json(['error' => 'Unauthorized'], 403);
     if ($message->created_at->diffInMinutes(now()) > 15) return response()->json(['error' => 'Expired'], 403);
 
+    $otherParticipant = \App\Models\ChatParticipant::where('chat_id', $message->chat_id)
+        ->where('user_id', '!=', session('auth_user_id'))
+        ->first();
+
+    $blockExists = false;
+    if ($otherParticipant) {
+        $blockExists = \App\Models\UserBlock::where(function($q) use ($otherParticipant) {
+            $q->where(function($q2) use ($otherParticipant) {
+                $q2->where('blocker_id', session('auth_user_id'))
+                   ->where('blocked_id', $otherParticipant->user_id);
+            })->orWhere(function($q2) use ($otherParticipant) {
+                $q2->where('blocker_id', $otherParticipant->user_id)
+                   ->where('blocked_id', session('auth_user_id'));
+            });
+        })->exists();
+    }
+if ($blockExists) {
+    $message->deleted_for_everyone = true;
+    $message->deleted_at           = now();
+    $message->block_time = now();
+    if (is_null($message->original_message)) {
+        $message->original_message = $message->message;
+    }
+    $message->save();
+
+    \App\Models\PinnedMessage::where('message_id', $message->id)->delete();
+
+    return response()->json(['success' => true, 'deleted_for_me_only' => true]);
+}
+
     $message->deleted_for_everyone = true;
     $message->deleted_at           = now();
     $message->save();
 
     \App\Models\PinnedMessage::where('message_id', $message->id)->delete();
+
     broadcast(new \App\Events\MessageDeleted($message->id, $message->chat_id, 'everyone', session('auth_user_id')));
 
     return response()->json(['success' => true]);
@@ -599,7 +643,7 @@ public function deleteForMe($id)
     $message->save();
 
     \App\Models\PinnedMessage::where('message_id', $message->id)->where('user_id', $userId)->delete();
-    broadcast(new \App\Events\MessageDeleted($message->id, $message->chat_id, 'me', $userId));
+   
 
     return response()->json(['success' => true]);
 }

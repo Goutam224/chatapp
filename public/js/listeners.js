@@ -208,7 +208,12 @@ window.ChatSystem = {
             const otherUserId = chatItem.getAttribute('data-user-id');
 
             // Ignore if blocked in realtime
-            if (window.blockedUsersRealtime[otherUserId] === true) return;
+ // ✅ FIX: Check all block states including page-load arrays
+const isBlockedSidebar =
+    (window.blockedUsersRealtime[otherUserId] === true) ||
+    (window.iBlockedUsers && window.iBlockedUsers.includes(Number(otherUserId))) ||
+    (window.blockedByUsers && window.blockedByUsers.includes(Number(otherUserId)));
+if (isBlockedSidebar) return;
 
             // Ignore if message not visible to me
             if (e.visible_to &&
@@ -223,6 +228,32 @@ window.ChatSystem = {
 
             lastMsg.innerHTML = "<i>This message was deleted</i>";
         });
+
+        /*
+| SIDEBAR: MESSAGE EDITED
+*/
+channel.listen('.message.edited', (e) => {
+    const message = e.message;
+    if(!message) return;
+
+    // Refresh chatItem reference
+    chatItem = document.querySelector(`.chat-item[data-chat-id="${message.chat_id}"]`) || chatItem;
+    if(!chatItem) return;
+
+    const otherUserId = chatItem.getAttribute('data-user-id');
+
+    // Ignore if blocked
+    if(window.blockedUsersRealtime[otherUserId] === true) return;
+    if(window.iBlockedUsers && window.iBlockedUsers.includes(Number(otherUserId))) return;
+    if(window.blockedByUsers && window.blockedByUsers.includes(Number(otherUserId))) return;
+
+    // Only update sidebar if this edited message is the currently shown last message
+    const lastMsg = chatItem.querySelector('.chat-last');
+    if(!lastMsg) return;
+
+    lastMsg.innerText = message.message ?? '';
+    chatItem.dataset.originalMessage = message.message ?? '';
+});
 
         this.sidebarChannels[chatId] = channel;
     },

@@ -38,21 +38,20 @@ class DashboardController extends Controller
                             $query->whereNull('visible_to')
                                   ->orWhereJsonContains('visible_to', (string) $userId);
                         })
-                        ->where(function ($query) use ($userId) {
-                            $query->whereNull('deleted_for_users')
-                                  ->orWhereRaw("JSON_CONTAINS(deleted_for_users, '\"$userId\"') = 0");
-                        })
-                        ->whereNull('deleted_at')
+                     ->where(function ($query) use ($userId) {
+    $query->whereNull('deleted_for_users')
+          ->orWhereRaw("NOT JSON_CONTAINS(deleted_for_users, '" . (int)$userId . "')");
+})
                         ->orderBy('created_at', 'desc')
                         ->with('media');
                 },
             ])
-            ->withMax(['messages as last_message_time' => function ($q) use ($userId) {
-                $q->where(function ($query) use ($userId) {
-                    $query->whereNull('deleted_for_users')
-                          ->orWhereRaw("JSON_CONTAINS(deleted_for_users, '\"$userId\"') = 0");
-                });
-            }], 'created_at')
+          ->withMax(['messages as last_message_time' => function ($q) use ($userId) {
+    $q->where(function ($query) use ($userId) {
+        $query->whereNull('deleted_for_users')
+          ->orWhereRaw("NOT JSON_CONTAINS(deleted_for_users, '" . (int)$userId . "')");
+    });
+}], 'created_at')
             ->orderByDesc('last_message_time')
             ->get();
 
@@ -223,31 +222,40 @@ class DashboardController extends Controller
             $sidebarBlockTime = $otherId ? ($blockTimes[$otherId] ?? null) : null;
 
             // Sidebar text
-            $sidebarText = '';
-            if ($visibleMessage) {
-                if ($visibleMessage->deleted_for_everyone) {
-                    $sidebarText = 'This message was deleted';
-                } elseif (
-                    $sidebarBlockTime &&
-                    $visibleMessage->edited_at &&
-                    $visibleMessage->sender_id != $userId &&
-                    $visibleMessage->edited_at > $sidebarBlockTime &&
-                    !is_null($visibleMessage->original_message)
-                ) {
-                    // ✅ RESTORED — message edited after block → show original text
-                    $sidebarText = $visibleMessage->original_message;
-                } elseif ($visibleMessage->media) {
-                    $mime        = $visibleMessage->media->mime_type ?? '';
-                    $mediaLabel  = '';
-                    if (str_starts_with($mime, 'image'))      $mediaLabel = '📷 Photo';
-                    elseif (str_starts_with($mime, 'video'))  $mediaLabel = '🎥 Video';
-                    elseif (str_starts_with($mime, 'audio'))  $mediaLabel = '🎵 Audio';
-                    else $mediaLabel = '📄 ' . ($visibleMessage->media->file_name ?? 'Document');
-                    $sidebarText = $mediaLabel . ($visibleMessage->message ? ' ' . $visibleMessage->message : '');
-                } elseif ($visibleMessage->message) {
-                    $sidebarText = $visibleMessage->message;
-                }
-            }
+          // Sidebar text
+$sidebarText = '';
+if ($visibleMessage) {
+   if ($visibleMessage->deleted_for_everyone) {
+    // original_message is ONLY set during block-delete
+    // Always show it to receiver whether block still exists or was removed
+    if ($visibleMessage->sender_id != $userId && !is_null($visibleMessage->original_message)) {
+        $sidebarText = $visibleMessage->original_message;
+    } else {
+        $sidebarText = 'This message was deleted';
+    }
+} elseif ($visibleMessage->media) {
+        $mime        = $visibleMessage->media->mime_type ?? '';
+        $mediaLabel  = '';
+        if (str_starts_with($mime, 'image'))      $mediaLabel = '📷 Photo';
+        elseif (str_starts_with($mime, 'video'))  $mediaLabel = '🎥 Video';
+        elseif (str_starts_with($mime, 'audio'))  $mediaLabel = '🎵 Audio';
+        else $mediaLabel = '📄 ' . ($visibleMessage->media->file_name ?? 'Document');
+        $sidebarText = $mediaLabel . ($visibleMessage->message ? ' ' . $visibleMessage->message : '');
+} elseif ($visibleMessage->message) {
+    if (
+        $visibleMessage->sender_id != $userId &&
+        $visibleMessage->edited_at &&
+        !is_null($visibleMessage->original_message) &&
+        $visibleMessage->block_time &&
+        strtotime($visibleMessage->edited_at) > strtotime($visibleMessage->block_time)
+    ) {
+        // edit happened after block — always show original regardless of current block state
+        $sidebarText = $visibleMessage->original_message;
+    } else {
+        $sidebarText = $visibleMessage->message;
+    }
+}
+}
 
             $unreadCount = $finalUnreadCounts[$chat->id] ?? 0;
 

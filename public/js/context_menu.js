@@ -244,9 +244,22 @@ function deleteForEveryone(id){
             'Accept': 'application/json'
         },
 
-        success: function(){
-            console.log('Deleted for everyone');
-        },
+    success: function(response){
+    const el = document.querySelector(`[data-id="${id}"]`);
+    if(!el) return;
+
+    // Always show "This message was deleted" on sender side
+    el.innerHTML = '<i>This message was deleted</i>';
+
+    // ✅ Update sidebar instantly
+    const chatItem = document.querySelector(`.chat-item[data-chat-id="${window.currentChatId}"]`);
+    if(chatItem){
+        const preview = chatItem.querySelector('.chat-last');
+        if(preview){
+            preview.innerHTML = '<i>This message was deleted</i>';
+        }
+    }
+},
 
         error: function(err){
             console.error('Delete everyone error:', err);
@@ -272,9 +285,31 @@ function deleteForMe(id){
             'Accept': 'application/json'
         },
 
-        success: function(){
-            console.log('Deleted for me');
-        },
+       success: function(){
+    const el = document.querySelector(`[data-id="${id}"]`);
+    if(el) el.remove();
+
+    // ✅ update sidebar after delete-for-me
+    const chatItem = document.querySelector(`.chat-item[data-chat-id="${window.currentChatId}"]`);
+    if(chatItem){
+        const preview = chatItem.querySelector('.chat-last');
+        const timeEl = chatItem.querySelector('.chat-time');
+        const lastBubble = [...document.querySelectorAll('#chat-messages .msg[data-id]')].pop();
+        if(lastBubble){
+            const msgContent = lastBubble.querySelector('.msg-content');
+            const text = msgContent ? msgContent.textContent.trim() : '';
+            if(preview) preview.innerText = text;
+            if(timeEl){
+                timeEl.dataset.time = lastBubble.dataset.createdAt ?? new Date().toISOString();
+                refreshSidebarTime(timeEl);
+            }
+            chatItem.dataset.originalMessage = text;
+        } else {
+            if(preview) preview.innerText = '';
+            if(timeEl) timeEl.innerHTML = '';
+        }
+    }
+},
 
         error: function(err){
             console.error('Delete me error:', err);
@@ -336,17 +371,15 @@ document.addEventListener('click', function(e){
 });
 
 function canDeleteForEveryone(msg){
-
-    const createdAt = msg.dataset.createdAt;
-    if(!createdAt) return false;
-
+    const createdAt = msg.dataset.createdAt ?? msg.dataset.uploadedAt;
+    if(!createdAt) {
+        // ✅ if no timestamp but message was just sent (has data-id), allow delete
+        return msg.dataset.id ? true : false;
+    }
     const msgTime = new Date(createdAt).getTime();
     const now = Date.now();
-
     const diffMinutes = (now - msgTime) / (1000 * 60);
-
     return diffMinutes <= 15;
-
 }
 
 function canEditMessage(msg){
