@@ -147,6 +147,191 @@ window.ChatSystem = {
                 markDelivered(message.id);
             }
 
+
+            // ADD THIS RIGHT AFTER:
+// ✅ If shared panel is open, append new file to correct pane instantly
+if(message.media && document.getElementById('shared-screen')?.classList.contains('active')){
+
+    const mime = message.media.mime_type ?? '';
+    let paneType = null;
+
+    if(mime.startsWith('image') || mime.startsWith('video')) paneType = 'media';
+    else if(mime.startsWith('audio')) paneType = 'audio';
+    else paneType = 'docs';
+
+    const container = document.getElementById('shared-container');
+    const pane = container?.querySelector(`.tab-pane[data-type="${paneType}"]`);
+
+if(pane){
+    // ✅ Prevent duplicate — skip if this message already exists in pane
+    if(pane.querySelector(`[data-id="${message.id}"]`) ||
+       pane.querySelector(`[data-url="/media/${message.id}"]`)){
+        return;
+    }
+
+    // ✅ Increment shared count on profile panel instantly
+    const countEl = document.getElementById('shared-count');
+    if(countEl){
+        const current = parseInt(countEl.innerText) || 0;
+        countEl.innerText = current + 1;
+    }
+
+    const isMine = message.sender_id == window.AUTH_USER_ID;
+
+        if(paneType === 'media'){
+            let grid = pane.querySelector('.media-grid');
+            if(!grid){
+                grid = document.createElement('div');
+                grid.className = 'media-grid';
+                pane.prepend(grid);
+            }
+            const div = document.createElement('div');
+            div.className = 'media-thumb';
+            const thumb = message.media.thumbnail_path ? `/media/thumb/${message.id}` : '';
+            div.innerHTML = `
+                <div class="media-grid-item"
+                     data-media-view
+                     data-url="/media/${message.id}"
+                     data-type="${message.type}"
+                     data-sender="${message.sender_id}"
+                     data-file-size="${message.media.file_size}"
+                     data-thumb="${message.id}">
+                    <img src="${thumb}" class="grid-thumb" loading="lazy">
+                    ${!isMine ? `<div class="grid-download-overlay">⬇</div>` : ``}
+                </div>
+            `;
+            if(isMine){
+                const img = div.querySelector('.grid-thumb');
+                const overlay = div.querySelector('.grid-download-overlay');
+                if(img) img.classList.remove('blurred');
+                if(overlay) overlay.remove();
+            } else {
+                const img = div.querySelector('.grid-thumb');
+                if(img) img.classList.add('blurred');
+            }
+            grid.prepend(div);
+        }
+
+        if(paneType === 'audio'){
+
+            function formatTime(sec){
+                const m = Math.floor(sec / 60);
+                const s = Math.floor(sec % 60);
+                return `${m}:${s < 10 ? '0'+s : s}`;
+            }
+
+            const div = document.createElement('div');
+
+            if(isMine || message.downloaded){
+                div.className = 'audio-item';
+                div.dataset.id = message.id;
+                div.innerHTML = `
+                    <div class="audio-play">▶</div>
+                    <div class="audio-info">
+                        <div class="audio-name">${message.media.file_name}</div>
+                        <div class="audio-time">0:00</div>
+                        <div class="audio-progress">
+                            <div class="audio-progress-bar"></div>
+                        </div>
+                    </div>
+                `;
+
+                let audio = ProfilePanel.audioObjects[message.id];
+                if(!audio){
+                    audio = new Audio(`/media/${message.id}`);
+                    audio.preload = 'metadata'; // ✅ fetch duration immediately
+                    ProfilePanel.audioObjects[message.id] = audio;
+                }
+
+                const playBtn = div.querySelector('.audio-play');
+                const timeEl  = div.querySelector('.audio-time');
+                const bar     = div.querySelector('.audio-progress-bar');
+                const progressContainer = div.querySelector('.audio-progress');
+
+                if(audio.duration && !isNaN(audio.duration)){
+                    timeEl.innerText = formatTime(audio.duration);
+                }
+
+                audio.onloadedmetadata = () => { timeEl.innerText = formatTime(audio.duration); };
+
+                progressContainer.onclick = function(e){
+                    if(!audio.duration) return;
+                    const rect = progressContainer.getBoundingClientRect();
+                    const percent = (e.clientX - rect.left) / rect.width;
+                    audio.currentTime = percent * audio.duration;
+                    if(!audio.paused) audio.play();
+                };
+
+                playBtn.onclick = function(){
+                    if(window.profileAudio && window.profileAudio !== audio){
+                        window.profileAudio.pause();
+                        if(window.currentAudioDiv){
+                            window.currentAudioDiv.classList.remove('playing');
+                            window.currentAudioDiv.querySelector('.audio-play').innerText = '▶';
+                        }
+                    }
+                    if(audio.paused){
+                        audio.play();
+                        playBtn.innerText = '⏸';
+                        div.classList.add('playing');
+                        window.profileAudio = audio;
+                        window.currentAudioDiv = div;
+                    } else {
+                        audio.pause();
+                        playBtn.innerText = '▶';
+                        div.classList.remove('playing');
+                    }
+                };
+
+                audio.ontimeupdate = () => {
+                    const percent = (audio.currentTime / audio.duration) * 100;
+                    bar.style.width = percent + '%';
+                    timeEl.innerText = formatTime(audio.currentTime);
+                };
+
+                audio.onended = () => {
+                    bar.style.width = '0%';
+                    playBtn.innerText = '▶';
+                    div.classList.remove('playing');
+                    timeEl.innerText = formatTime(audio.duration);
+                };
+
+        } else {
+    div.className = 'audio-item';
+    div.dataset.id = message.id;
+    div.style.opacity = '0.6';
+    div.style.cursor = 'pointer';
+    div.innerHTML = `
+        <div class="audio-play" style="background:#2a3942;font-size:16px;">🔒</div>
+        <div class="audio-info">
+            <div class="audio-name">${message.media.file_name}</div>
+            <div class="audio-time">--:--</div>
+            <div class="audio-progress">
+                <div class="audio-progress-bar"></div>
+            </div>
+        </div>
+    `;
+}
+
+pane.prepend(div);
+        }
+
+        if(paneType === 'docs'){
+            const div = document.createElement('div');
+            if(isMine || message.downloaded){
+                div.style.cursor = 'pointer';
+                div.innerHTML = `📄 ${message.media.file_name}`;
+                div.onclick = function(){ window.open(`/media/${message.id}`, '_blank'); };
+            } else {
+                div.style.opacity = '0.6';
+                div.style.cursor = 'pointer';
+                div.innerHTML = `🔒 📄 ${message.media.file_name}`;
+            }
+            pane.prepend(div);
+        }
+    }
+}
+
             // Unread count badge
             if (message.sender_id != window.AUTH_USER_ID) {
 
