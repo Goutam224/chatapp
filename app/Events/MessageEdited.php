@@ -40,6 +40,7 @@ public function broadcastWith()
             'delivered_at' => $this->message->delivered_at,
             'seen_at' => $this->message->seen_at,
             'link_preview' => $this->message->linkPreview,
+            'visible_to' => $this->message->visible_to,
         ]
     ];
 }

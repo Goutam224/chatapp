@@ -263,10 +263,10 @@ function loadMessages(chatId, item) {
                     msg.message === 'You pinned a message'
                 ){
                     let content = msg.message;
-                    const isLastMessage = data.messages[data.messages.length - 1].id === msg.id;
-                    if(msg.message === 'You blocked this contact.' && window.iBlocked === true && isLastMessage){
-                        content = `You blocked this contact. <span onclick="unblockUser(${window.currentOtherUserId})" style="color:#25D366;cursor:pointer;margin-left:6px;">Tap to unblock</span>`;
-                    }
+     const lastBlockMsg = [...data.messages].reverse().find(m => m.message === 'You blocked this contact.');
+if(msg.message === 'You blocked this contact.' && window.iBlocked === true && lastBlockMsg && lastBlockMsg.id === msg.id){
+    content = `You blocked this contact. <span onclick="unblockUser(${window.currentOtherUserId})" style="color:#25D366;cursor:pointer;margin-left:6px;">Tap to unblock</span>`;
+}
                     messagesHtml += `<div class="msg-system">${content}</div>`;
                     return;
                 }
@@ -1355,7 +1355,7 @@ const isBlockedAny =
     (window.iBlockedUsers && window.iBlockedUsers.includes(Number(otherUserId))) ||
     (window.blockedByUsers && window.blockedByUsers.includes(Number(otherUserId)));
 
-if(isBlockedAny) {
+if(isBlockedAny && e.type !== 'everyone') {
     console.log("Delete event ignored due to block state");
     return;
 }
@@ -1440,40 +1440,34 @@ if(e.type === 'me') {
 }
 
     const activeChat = document.querySelector(
-        `.chat-item[data-chat-id="${window.currentChatId}"]`
-    );
-
-    if(activeChat) {
-
-        const lastMsg =
-        document.querySelector('#chat-messages .msg:last-child');
-
-        const preview =
-        activeChat.querySelector('.chat-last');
-
-        const time =
-        activeChat.querySelector('.chat-time');
-
-        if(lastMsg) {
-
-            const text =
-            lastMsg.childNodes[0]?.textContent?.trim() ?? '';
-
-            const timeText =
-            lastMsg.querySelector('.time')?.textContent?.trim();
-
-            preview.innerHTML = text;
-
-            if(timeText)
-           time.dataset.time = new Date().toISOString();
-    refreshSidebarTime(time);
-
+    `.chat-item[data-chat-id="${window.currentChatId}"]`
+);
+if(activeChat) {
+    const preview = activeChat.querySelector('.chat-last');
+    const timeEl  = activeChat.querySelector('.chat-time');
+    const lastBubble = [...document.querySelectorAll('#chat-messages .msg[data-id]')].pop();
+    if(lastBubble) {
+        const isDeleted = lastBubble.innerHTML.includes('This message was deleted');
+        let text = '';
+        if(isDeleted) {
+            text = 'This message was deleted';
         } else {
-
-            preview.innerHTML = '';
-            time.innerHTML = '';
+            const msgContent = lastBubble.querySelector('.msg-content');
+            text = msgContent ? msgContent.textContent.trim() : '';
         }
+        if(preview) {
+            preview.innerText = text;
+            activeChat.dataset.originalMessage = text;
+        }
+        if(timeEl) {
+            timeEl.dataset.time = lastBubble.dataset.createdAt ?? new Date().toISOString();
+            refreshSidebarTime(timeEl);
+        }
+    } else {
+        if(preview) preview.innerText = '';
+        if(timeEl) timeEl.innerHTML = '';
     }
+}
 }
 
 /*

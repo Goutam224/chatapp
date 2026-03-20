@@ -225,14 +225,8 @@ class DashboardController extends Controller
           // Sidebar text
 $sidebarText = '';
 if ($visibleMessage) {
-   if ($visibleMessage->deleted_for_everyone) {
-    // original_message is ONLY set during block-delete
-    // Always show it to receiver whether block still exists or was removed
-    if ($visibleMessage->sender_id != $userId && !is_null($visibleMessage->original_message)) {
-        $sidebarText = $visibleMessage->original_message;
-    } else {
-        $sidebarText = 'This message was deleted';
-    }
+if ($visibleMessage->deleted_for_everyone) {
+    $sidebarText = 'This message was deleted';
 } elseif ($visibleMessage->media) {
         $mime        = $visibleMessage->media->mime_type ?? '';
         $mediaLabel  = '';

@@ -244,19 +244,22 @@ function deleteForEveryone(id){
             'Accept': 'application/json'
         },
 
-    success: function(response){
+success: function(response){
     const el = document.querySelector(`[data-id="${id}"]`);
     if(!el) return;
 
-    // Always show "This message was deleted" on sender side
     el.innerHTML = '<i>This message was deleted</i>';
 
-    // ✅ Update sidebar instantly
+    // ✅ Only update sidebar if this was the last message
     const chatItem = document.querySelector(`.chat-item[data-chat-id="${window.currentChatId}"]`);
     if(chatItem){
-        const preview = chatItem.querySelector('.chat-last');
-        if(preview){
-            preview.innerHTML = '<i>This message was deleted</i>';
+        const lastBubble = [...document.querySelectorAll('#chat-messages .msg[data-id]')].pop();
+        if(lastBubble && lastBubble.dataset.id == id){
+            const preview = chatItem.querySelector('.chat-last');
+            if(preview){
+                preview.innerHTML = '<i>This message was deleted</i>';
+                chatItem.dataset.originalMessage = 'This message was deleted';
+            }
         }
     }
 },

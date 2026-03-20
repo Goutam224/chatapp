@@ -615,6 +615,8 @@ if ($blockExists) {
 
     \App\Models\PinnedMessage::where('message_id', $message->id)->delete();
 
+    broadcast(new \App\Events\MessageDeleted($message->id, $message->chat_id, 'everyone', session('auth_user_id')));
+
     return response()->json(['success' => true, 'deleted_for_me_only' => true]);
 }
 

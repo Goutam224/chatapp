@@ -200,34 +200,37 @@ window.ChatSystem = {
         /*
         | SIDEBAR: MESSAGE DELETED
         */
-        channel.listen('.message.deleted', (e) => {
+     channel.listen('.message.deleted', (e) => {
 
-            const lastMsg = chatItem.querySelector('.chat-last');
-            if (!lastMsg) return;
+    const lastMsg = chatItem.querySelector('.chat-last');
+    if (!lastMsg) return;
 
-            const otherUserId = chatItem.getAttribute('data-user-id');
+    const otherUserId = chatItem.getAttribute('data-user-id');
 
-            // Ignore if blocked in realtime
- // ✅ FIX: Check all block states including page-load arrays
-const isBlockedSidebar =
-    (window.blockedUsersRealtime[otherUserId] === true) ||
-    (window.iBlockedUsers && window.iBlockedUsers.includes(Number(otherUserId))) ||
-    (window.blockedByUsers && window.blockedByUsers.includes(Number(otherUserId)));
-if (isBlockedSidebar) return;
+    const isBlockedSidebar =
+        (window.blockedUsersRealtime[otherUserId] === true) ||
+        (window.iBlockedUsers && window.iBlockedUsers.includes(Number(otherUserId))) ||
+        (window.blockedByUsers && window.blockedByUsers.includes(Number(otherUserId)));
+    if (isBlockedSidebar) return;
 
-            // Ignore if message not visible to me
-            if (e.visible_to &&
-                !e.visible_to.includes(window.AUTH_USER_ID)) {
-                return;
-            }
+    if (e.visible_to && !e.visible_to.includes(window.AUTH_USER_ID)) return;
 
-            // Only update if sidebar currently shows THIS message
-            const originalMessage = chatItem.dataset.originalMessage;
-            if (!originalMessage) return;
-            if (lastMsg.innerText.trim() !== originalMessage) return;
+    // ✅ only update sidebar if the deleted message is the last one in the chat
+    // Check via the chat messages container if chat is open
+    if(window.currentChatId == chatItem.dataset.chatId) {
+        // chat is open — check DOM for last bubble
+        const lastBubble = [...document.querySelectorAll('#chat-messages .msg[data-id]')].pop();
+        if(!lastBubble || lastBubble.dataset.id != e.message_id) return;
+    } else {
+        // chat is not open — fallback to originalMessage comparison
+        const originalMessage = chatItem.dataset.originalMessage ?? '';
+        if(!originalMessage) return;
+        if(lastMsg.innerText.trim() !== originalMessage.trim()) return;
+    }
 
-            lastMsg.innerHTML = "<i>This message was deleted</i>";
-        });
+    lastMsg.innerHTML = "<i>This message was deleted</i>";
+    chatItem.dataset.originalMessage = 'This message was deleted';
+});
 
         /*
 | SIDEBAR: MESSAGE EDITED
@@ -235,7 +238,8 @@ if (isBlockedSidebar) return;
 channel.listen('.message.edited', (e) => {
     const message = e.message;
     if(!message) return;
-
+ // ✅ If visible_to is set and does NOT include me — ignore completely
+    if(message.visible_to && !message.visible_to.includes(window.AUTH_USER_ID)) return;
     // Refresh chatItem reference
     chatItem = document.querySelector(`.chat-item[data-chat-id="${message.chat_id}"]`) || chatItem;
     if(!chatItem) return;
@@ -500,7 +504,6 @@ channel.listen('.message.edited', (e) => {
 |--------------------------------------------------------------------------
 */
 window.unblockUser = function(userId) {
-
     $.ajax({
         url: '/unblock',
         method: 'POST',
@@ -511,9 +514,23 @@ window.unblockUser = function(userId) {
         data: JSON.stringify({ user_id: userId }),
         success: function() {
             window.iBlocked = false;
-            const systemMsg = document.querySelector('.msg-system:last-child');
-            if (systemMsg) {
-                systemMsg.innerText = "You unblocked this contact.";
+
+            // ✅ Remove "Tap to unblock" span from the block message (keep the text)
+            const allSystemMsgs = document.querySelectorAll('.msg-system');
+            allSystemMsgs.forEach(function(msg) {
+                if (msg.innerText.includes('You blocked this contact.')) {
+                    msg.innerText = 'You blocked this contact.';
+                }
+            });
+
+            // ✅ Append a NEW system message for unblock instead of overwriting
+            const msgContainer = document.getElementById('chat-messages');
+            if (msgContainer) {
+                const div = document.createElement('div');
+                div.className = 'msg-system';
+                div.innerText = 'You unblocked this contact.';
+                msgContainer.appendChild(div);
+                msgContainer.scrollTop = msgContainer.scrollHeight;
             }
         }
     });
