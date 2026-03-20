@@ -15,14 +15,23 @@ window.replyMessage = null;
 */
 function getReplyMediaLabel(msg){
 
-    if(msg.type === 'image') return '📷 Photo';
-    if(msg.type === 'video') return '🎥 Video';
-    if(msg.type === 'audio') return '🎤 Audio';
-    if(msg.type === 'file') return '📄 Document';
+    const type = msg.type ?? '';
 
-    return '';
+    if(type === 'image') return '📷 Photo';
+    if(type === 'video') return '🎥 Video';
+    if(type === 'audio') return '🎤 Audio';
+    if(type === 'file') return '📄 Document';
+
+    if(msg.media){
+        const mime = msg.media.mime_type ?? '';
+
+        if(mime.startsWith('image')) return '📷 Photo';
+        if(mime.startsWith('video')) return '🎥 Video';
+        if(mime.startsWith('audio')) return '🎤 Audio';
+    }
+
+    return '📎 Media';
 }
-
 
 /*
 |--------------------------------------------------------------------------
@@ -61,10 +70,33 @@ window.setReply = function(messageId){
         text = clone.innerText.trim();
     }
 
-    window.replyMessage = {
-        id: messageId,
-        text: text
-    };
+  let thumb = null;
+
+if(mediaBox){
+
+    const img = mediaBox.querySelector('img');
+    const video = mediaBox.querySelector('video');
+
+    if(img){
+        thumb = {
+            type:'image',
+            src: img.src
+        };
+    }
+
+    else if(video){
+        thumb = {
+            type:'video',
+            src: video.src
+        };
+    }
+}
+
+window.replyMessage = {
+    id: messageId,
+    text: text,
+    thumb: thumb
+};
 
     const replyBox = document.getElementById('reply-preview');
 
@@ -72,6 +104,12 @@ window.setReply = function(messageId){
 
     document.getElementById('reply-user').innerText = 'You';
     document.getElementById('reply-text').innerText = text;
+
+    // focus message input
+const input = document.getElementById('message-input');
+if(input){
+    input.focus();
+}
 };
 
 

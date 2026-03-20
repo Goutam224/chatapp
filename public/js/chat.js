@@ -287,9 +287,40 @@ if(msg.message === 'You blocked this contact.' && window.iBlocked === true && la
                     const replyAuthor = isMineReply ? 'You' : escapeHtml(msg.sender_name ?? 'User');
                     const replyText = msg.reply.message ? escapeHtml(msg.reply.message) : getReplyMediaLabel(msg.reply);
                     let thumb = '';
-                    if(msg.reply.media){
-                        thumb = `<div style="width:36px;height:36px;overflow:hidden;border-radius:4px;margin-left:8px;">${MediaDownloader.render(msg.reply)}</div>`;
-                    }
+if(msg.reply.media){
+
+    const file = msg.reply.media;
+
+    if(file.mime_type.startsWith('image')){
+        thumb = `<img src="/media/${msg.reply.id}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;margin-left:8px;">`;
+    }
+
+    else if(file.mime_type.startsWith('video')){
+        thumb = `
+        <div style="width:36px;height:36px;position:relative;margin-left:8px;">
+            <video src="/media/${msg.reply.id}" preload="metadata" muted style="width:36px;height:36px;object-fit:cover;border-radius:4px;"></video>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:white;font-size:12px;">▶</div>
+        </div>`;
+    }
+
+    else if(file.mime_type.startsWith('audio')){
+        thumb = `
+        <div style="
+            width:36px;
+            height:36px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:#1f2c34;
+            border-radius:4px;
+            margin-left:8px;
+            font-size:18px;
+        ">
+        🎵
+        </div>`;
+    }
+
+}
                     replyHtml = `<div class="reply-quote" data-reply-id="${msg.reply.id}" style="display:flex;align-items:center;justify-content:space-between;"><div><div class="reply-author">${replyAuthor}</div><div class="reply-text">${replyText}</div></div>${thumb}</div>`;
                 }
 
@@ -811,10 +842,32 @@ return;
        let replyHtml = '';
 
 if(window.replyMessage){
+
+let thumb = '';
+
+if(window.replyMessage.thumb){
+
+if(window.replyMessage.thumb.type === 'image'){
+thumb = `<img src="${window.replyMessage.thumb.src}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;margin-left:8px;">`;
+}
+
+else if(window.replyMessage.thumb.type === 'video'){
+thumb = `
+<div style="width:36px;height:36px;position:relative;margin-left:8px;">
+<video src="${window.replyMessage.thumb.src}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;"></video>
+<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:white;font-size:12px;">▶</div>
+</div>`;
+}
+
+}
+
 replyHtml = `
-<div class="reply-quote" data-reply-id="${window.replyMessage.id}">
+<div class="reply-quote" data-reply-id="${window.replyMessage.id}" style="display:flex;align-items:center;justify-content:space-between;">
+<div>
 <div class="reply-author">You</div>
 <div class="reply-text">${escapeHtml(window.replyMessage.text)}</div>
+</div>
+${thumb}
 </div>`;
 }
 // ✅ Add Today separator if no messages exist yet
@@ -1098,10 +1151,40 @@ const replyText = message.reply.message
 let thumb='';
 
 if(message.reply.media){
-thumb=`
-<div style="width:36px;height:36px;overflow:hidden;border-radius:4px;margin-left:8px;">
-${MediaDownloader.render(message.reply)}
-</div>`;
+
+    const file = message.reply.media;
+
+    if(file.mime_type.startsWith('image')){
+        thumb = `<img src="/media/${message.reply.id}" loading="lazy" decoding="async"
+        style="width:36px;height:36px;object-fit:cover;border-radius:4px;margin-left:8px;">`;
+    }
+
+    else if(file.mime_type.startsWith('video')){
+        thumb = `
+        <div style="width:36px;height:36px;position:relative;margin-left:8px;">
+            <video src="/media/${message.reply.id}" preload="metadata" muted
+            style="width:36px;height:36px;object-fit:cover;border-radius:4px;"></video>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:white;font-size:12px;">▶</div>
+        </div>`;
+    }
+
+    else if(file.mime_type.startsWith('audio')){
+        thumb = `
+        <div style="
+            width:36px;
+            height:36px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:#1f2c34;
+            border-radius:4px;
+            margin-left:8px;
+            font-size:18px;
+        ">
+        🎵
+        </div>`;
+    }
+
 }
 
 replyHtml=`

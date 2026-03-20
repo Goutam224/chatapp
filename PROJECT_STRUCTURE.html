@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laravel Chat App - Complete Project Structure Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+        
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+            font-size: 1.8em;
+        }
+        
+        h3 {
+            color: #555;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .overview {
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-left: 4px solid #3498db;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .file-list {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        
+        .file-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .file-item:last-child {
+            border-bottom: none;
+        }
+        
+        .file-name {
+            font-weight: 600;
+            color: #2980b9;
+            min-width: 250px;
+            font-family: 'Courier New', monospace;
+            background-color: #f0f7ff;
+            padding: 4px 8px;
+            border-radius: 3px;
+        }
+        
+        .file-description {
+            flex: 1;
+            color: #555;
+        }
+        
+        .directory-path {
+            background-color: #f5f5f5;
+            padding: 10px 15px;
+            margin: 15px 0;
+            border-left: 3px solid #27ae60;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            color: #27ae60;
+        }
+        
+        .tech-stack {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        
+        .tech-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .tech-item {
+            background-color: #ffffff;
+            padding: 10px;
+            border-left: 3px solid #27ae60;
+            border-radius: 3px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .code-block {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-size: 0.9em;
+        }
+        
+        .page-break {
+            page-break-after: always;
+            margin-top: 40px;
+        }
+        
+        .architecture {
+            background-color: #f0f7ff;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 15px 0;
+            border: 2px solid #3498db;
+        }
+        
+        .toc {
+            background-color: #fff3cd;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .toc ul {
+            list-style-position: inside;
+            margin-left: 10px;
+        }
+        
+        .toc li {
+            margin: 8px 0;
+        }
+        
+        .toc a {
+            color: #2980b9;
+            text-decoration: none;
+        }
+        
+        @media print {
+            body {
+                background-color: white;
+                padding: 0;
+            }
+            
+            .container {
+                box-shadow: none;
+                padding: 0;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Laravel Chat Application</h1>
+        <h2 style="border: none; border-bottom: 2px solid #3498db; padding-bottom: 10px;">Complete Project Structure & Documentation</h2>
+        
+        <div class="overview">
+            <strong>Project Description:</strong> A comprehensive real-time chat application built with Laravel 12, featuring WebSocket support via Laravel Reverb, OTP verification, file uploads, message management, and user blocking capabilities.
+        </div>
+        
+        <!-- TABLE OF CONTENTS -->
+        <div class="page-break">
+            <h2>📑 Table of Contents</h2>
+            <div class="toc">
+                <ul>
+                    <li><a href="#tech-stack">Technology Stack</a></li>
+                    <li><a href="#project-structure">Project Structure Overview</a></li>
+                    <li><a href="#core-directories">Core Directories</a></li>
+                    <li><a href="#models">Database Models</a></li>
+                    <li><a href="#controllers">HTTP Controllers</a></li>
+                    <li><a href="#events">Events & Broadcasting</a></li>
+                    <li><a href="#frontend">Frontend Structure</a></li>
+                    <li><a href="#database">Database Configuration</a></li>
+                    <li><a href="#config">Configuration Files</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- TECHNOLOGY STACK -->
+        <div class="section" id="tech-stack">
+            <h2>🛠️ Technology Stack</h2>
+            
+            <h3>Backend</h3>
+            <div class="tech-stack">
+                <div class="tech-list">
+                    <div class="tech-item">
+                        <strong>PHP:</strong> 8.2 or higher
+                    </div>
+                    <div class="tech-item">
+                        <strong>Laravel:</strong> v12.0
+                    </div>
+                    <div class="tech-item">
+                        <strong>Laravel Reverb:</strong> v1.7 - WebSocket Server
+                    </div>
+                    <div class="tech-item">
+                        <strong>Laravel Sanctum:</strong> v4.3 - API Authentication
+                    </div>
+                    <div class="tech-item">
+                        <strong>Intervention Image:</strong> v3.11 - Image Processing
+                    </div>
+                    <div class="tech-item">
+                        <strong>TUS PHP:</strong> v2.4 - File Uploads
+                    </div>
+                    <div class="tech-item">
+                        <strong>Twilio SDK:</strong> v8.11 - SMS/OTP Services
+                    </div>
+                </div>
+            </div>
+            
+            <h3>Frontend</h3>
+            <div class="tech-stack">
+                <div class="tech-list">
+                    <div class="tech-item">
+                        <strong>JavaScript (ES6+):</strong> Modern JS Framework
+                    </div>
+                    <div class="tech-item">
+                        <strong>Tailwind CSS:</strong> v4.0 - Utility Styling
+                    </div>
+                    <div class="tech-item">
+                        <strong>Bootstrap:</strong> v5.3.8 - UI Components
+                    </div>
+                    <div class="tech-item">
+                        <strong>Vite:</strong> v7.0.7 - Build Tool
+                    </div>
+                    <div class="tech-item">
+                        <strong>Axios:</strong> v1.11 - HTTP Client
+                    </div>
+                </div>
+            </div>
+            
+            <h3>Development Tools</h3>
+            <div class="tech-stack">
+                <div class="tech-list">
+                    <div class="tech-item">
+                        <strong>Laravel Pint:</strong> Code Style Fixer
+                    </div>
+                    <div class="tech-item">
+                        <strong>PHPUnit:</strong> v11.5.3 - Testing Framework
+                    </div>
+                    <div class="tech-item">
+                        <strong>Laravel Pail:</strong> Log Viewer
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- PROJECT STRUCTURE OVERVIEW -->
+        <div class="page-break">
+            <div class="section" id="project-structure">
+                <h2>📁 Project Structure Overview</h2>
+                <div class="code-block">chatapp/
+├── app/                          # Application Source Code
+│   ├── Events/                    # Broadcast Events
+│   ├── Helpers/                   # Helper Functions
+│   ├── Http/                      # HTTP Layer
+│   │   ├── Controllers/           # Request Controllers
+│   │   └── Middleware/            # HTTP Middleware
+│   ├── Models/                    # Eloquent Models
+│   ├── Providers/                 # Service Providers
+│   └── Services/                  # Business Logic Services
+├── bootstrap/                     # Application Bootstrap
+├── config/                        # Configuration Files
+├── database/                      # Database Files
+│   ├── factories/                 # Model Factories
+│   ├── migrations/                # Database Migrations
+│   └── seeders/                   # Database Seeders
+├── public/                        # Public Assets
+│   ├── css/                       # Compiled CSS
+│   ├── js/                        # JavaScript Files
+│   ├── uploads/                   # User Uploads
+│   └── storage/                   # Storage Link
+├── resources/                     # Raw Assets
+│   ├── css/                       # Tailwind CSS
+│   ├── js/                        # JavaScript Source
+│   └── views/                     # Blade Templates
+├── routes/                        # Route Definitions
+├── storage/                       # Runtime Storage
+├── tests/                         # Test Suites
+├── vendor/                        # Composer Dependencies
+├── .env                           # Environment Variables
+├── .env.example                   # Environment Template
+├── artisan                        # CLI Application
+├── composer.json                  # PHP Dependencies
+├── package.json                   # NPM Dependencies
+├── phpunit.xml                    # PHPUnit Configuration
+├── vite.config.js                 # Vite Configuration
+└── README.md                      # Project Documentation
+                </div>
+            </div>
+        </div>
+        
+        <!-- CORE DIRECTORIES -->
+        <div class="page-break">
+            <div class="section" id="core-directories">
+                <h2>📂 Core Directories & Files</h2>
+                
+                <!-- APP DIRECTORY -->
+                <h3>app/ - Application Source Code</h3>
+                
+                <h4>app/Events/ - Broadcast Events</h4>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">MessageSent.php</div>
+                        <div class="file-description">Fired when a new message is sent. Broadcasts to chat participants.</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">MessageEdited.php</div>
+                        <div class="file-description">Fired when a message is updated. Notifies all chat participants.</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">MessageDeleted.php</div>
+                        <div class="file-description">Fired when a message is deleted. Updates UI for all users.</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">MessagePinned.php</div>
+                        <div class="file-description">Fired when a message is pinned to chat. Real-time update.</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">UserTyping.php</div>
+                        <div class="file-description">Fired when user is typing. Shows typing indicator in real-time.</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">UserBlocked.php</div>
+                        <div class="file-description">Fired when a user blocks another. Prevents further interactions.</div>
+                    </div>
+                </div>
+                
+                <h4>app/Helpers/ - Utility Functions</h4>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">AuthHelper.php</div>
+                        <div class="file-description">Authentication helper functions. Auto-loaded from composer.json. Contains utility functions for auth operations.</div>
+                    </div>
+                </div>
+                
+                <h4>app/Http/Controllers/ - HTTP Controllers</h4>
+                <p>20 controller files handling different features:</p>
+                <table>
+                    <tr>
+                        <th>Controller</th>
+                        <th>Responsibility</th>
+                    </tr>
+                    <tr>
+                        <td>AuthController.php</td>
+                        <td>User authentication, login, logout, registration</td>
+                    </tr>
+                    <tr>
+                        <td>ChatController.php</td>
+                        <td>Chat operations, creation, retrieval, management</td>
+                    </tr>
+                    <tr>
+                        <td>MessageController.php</td>
+                        <td>Message CRUD operations, message management</td>
+                    </tr>
+                    <tr>
+                        <td>DashboardController.php</td>
+                        <td>Main dashboard view and user interface</td>
+                    </tr>
+                    <tr>
+                        <td>ProfileController.php</td>
+                        <td>User profile management and updates</td>
+                    </tr>
+                    <tr>
+                        <td>MediaController.php</td>
+                        <td>Media file handling and management</td>
+                    </tr>
+                    <tr>
+                        <td>UploadController.php</td>
+                        <td>File upload processing and storage</td>
+                    </tr>
+                    <tr>
+                        <td>MediaDownloadController.php</td>
+                        <td>Download media files and attachments</td>
+                    </tr>
+                    <tr>
+                        <td>BlockController.php</td>
+                        <td>User blocking and unblocking functionality</td>
+                    </tr>
+                    <tr>
+                        <td>UserProfileController.php</td>
+                        <td>View other users' profiles</td>
+                    </tr>
+                    <tr>
+                        <td>MyProfileController.php</td>
+                        <td>Manage own profile</td>
+                    </tr>
+                    <tr>
+                        <td>PinChatController.php</td>
+                        <td>Pin/unpin chats in sidebar</td>
+                    </tr>
+                    <tr>
+                        <td>PinMessageController.php</td>
+                        <td>Pin messages in conversation</td>
+                    </tr>
+                    <tr>
+                        <td>StarredMessageController.php</td>
+                        <td>Star/unstar important messages</td>
+                    </tr>
+                    <tr>
+                        <td>ClearChatController.php</td>
+                        <td>Clear chat history for user</td>
+                    </tr>
+                    <tr>
+                        <td>DeleteChatController.php</td>
+                        <td>Delete entire chats</td>
+                    </tr>
+                    <tr>
+                        <td>ChatSearchController.php</td>
+                        <td>Search chats and messages</td>
+                    </tr>
+                    <tr>
+                        <td>SharedMediaController.php</td>
+                        <td>View shared media in chats</td>
+                    </tr>
+                    <tr>
+                        <td>DownloadSessionController.php</td>
+                        <td>Manage download sessions</td>
+                    </tr>
+                    <tr>
+                        <td>TusController.php</td>
+                        <td>Handle TUS protocol for resumable uploads</td>
+                    </tr>
+                </table>
+                
+                <h4>app/Http/Middleware/ - Request Middleware</h4>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">EnsureAuthenticated.php</div>
+                        <div class="file-description">Verify user is authenticated before accessing protected routes.</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">EnsureOtpVerified.php</div>
+                        <div class="file-description">Verify OTP has been confirmed via SMS/email.</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">EnsurePhoneEntered.php</div>
+                        <div class="file-description">Verify user has entered a phone number.</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">EnsureProfileCompleted.php</div>
+                        <div class="file-description">Verify user profile is fully completed.</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">SetAuthUserForBroadcasting.php</div>
+                        <div class="file-description">Authenticate WebSocket connections for real-time broadcasting.</div>
+                    </div>
+                </div>
+                
+                <h4>app/Providers/ - Service Providers</h4>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">AppServiceProvider.php</div>
+                        <div class="file-description">Bootstrap application services and register service bindings.</div>
+                    </div>
+                </div>
+                
+                <h4>app/Services/ - Business Logic</h4>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">LinkPreviewService.php</div>
+                        <div class="file-description">Generate link previews for URLs shared in messages. Extracts metadata like title, description, image.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- MODELS -->
+        <div class="page-break">
+            <div class="section" id="models">
+                <h2>📊 Database Models (app/Models/)</h2>
+                <table>
+                    <tr>
+                        <th>Model</th>
+                        <th>Table Name</th>
+                        <th>Purpose</th>
+                    </tr>
+                    <tr>
+                        <td>User.php</td>
+                        <td>users</td>
+                        <td>User account information, authentication details, profile data</td>
+                    </tr>
+                    <tr>
+                        <td>Chat.php</td>
+                        <td>chats</td>
+                        <td>Chat/conversation records, stores chat metadata</td>
+                    </tr>
+                    <tr>
+                        <td>ChatParticipant.php</td>
+                        <td>chat_participants</td>
+                        <td>Links users to chats, tracks participant status</td>
+                    </tr>
+                    <tr>
+                        <td>Message.php</td>
+                        <td>messages</td>
+                        <td>Message records, content, timestamps, status, editing history</td>
+                    </tr>
+                    <tr>
+                        <td>Media.php</td>
+                        <td>media</td>
+                        <td>Uploaded files/attachments, file metadata</td>
+                    </tr>
+                    <tr>
+                        <td>PinnedMessage.php</td>
+                        <td>pinned_messages</td>
+                        <td>Messages pinned in conversations for quick reference</td>
+                    </tr>
+                    <tr>
+                        <td>StarredMessage.php</td>
+                        <td>starred_messages</td>
+                        <td>Messages starred by users for bookmarking</td>
+                    </tr>
+                    <tr>
+                        <td>PinnedChat.php</td>
+                        <td>pinned_chats</td>
+                        <td>Chats pinned to top of sidebar by user</td>
+                    </tr>
+                    <tr>
+                        <td>ClearedChat.php</td>
+                        <td>cleared_chats</td>
+                        <td>Tracks when user cleared chat history</td>
+                    </tr>
+                    <tr>
+                        <td>DeletedChat.php</td>
+                        <td>deleted_chats</td>
+                        <td>Tracks deleted chats with deletion timestamps</td>
+                    </tr>
+                    <tr>
+                        <td>UserBlock.php</td>
+                        <td>user_blocks</td>
+                        <td>User blocking relationships, prevents unwanted contact</td>
+                    </tr>
+                    <tr>
+                        <td>LinkPreview.php</td>
+                        <td>link_previews</td>
+                        <td>Cached link preview data (title, description, image)</td>
+                    </tr>
+                    <tr>
+                        <td>OtpVerification.php</td>
+                        <td>otp_verifications</td>
+                        <td>OTP codes for phone/email verification</td>
+                    </tr>
+                    <tr>
+                        <td>UploadSession.php</td>
+                        <td>upload_sessions</td>
+                        <td>TUS upload session data for resumable uploads</td>
+                    </tr>
+                    <tr>
+                        <td>DownloadSession.php</td>
+                        <td>download_sessions</td>
+                        <td>Download session tracking and management</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- EVENTS & BROADCASTING -->
+        <div class="section" id="events">
+            <h2>📡 Events & Broadcasting</h2>
+            <div class="overview">
+                The application uses Laravel Reverb for WebSocket support enabling real-time features:
+            </div>
+            
+            <h3>Event Broadcasting Channels (routes/channels.php)</h3>
+            <div class="file-list">
+                <div class="file-item">
+                    <div class="file-name">chat.{id}</div>
+                    <div class="file-description">Private channel for chat-specific events. Only participants can join.</div>
+                </div>
+                <div class="file-item">
+                    <div class="file-name">user.{id}</div>
+                    <div class="file-description">Private channel for user-specific events and notifications.</div>
+                </div>
+                <div class="file-item">
+                    <div class="file-name">presence.{id}</div>
+                    <div class="file-description">Presence channel for tracking online status and typing indicators.</div>
+                </div>
+            </div>
+            
+            <h3>Real-time Events</h3>
+            <div class="file-list">
+                <div class="file-item">
+                    <div class="file-name">Event: MessageSent</div>
+                    <div class="file-description">Broadcast to chat.{id} when message is created</div>
+                </div>
+                <div class="file-item">
+                    <div class="file-name">Event: MessageEdited</div>
+                    <div class="file-description">Broadcast to chat.{id} when message is updated</div>
+                </div>
+                <div class="file-item">
+                    <div class="file-name">Event: MessageDeleted</div>
+                    <div class="file-description">Broadcast to chat.{id} when message is deleted</div>
+                </div>
+                <div class="file-item">
+                    <div class="file-name">Event: UserTyping</div>
+                    <div class="file-description">Broadcast to presence.{id} when user starts typing</div>
+                </div>
+                <div class="file-item">
+                    <div class="file-name">Event: MessagePinned</div>
+                    <div class="file-description">Broadcast to chat.{id} when message is pinned</div>
+                </div>
+                <div class="file-item">
+                    <div class="file-name">Event: UserBlocked</div>
+                    <div class="file-description">Broadcast to user.{id} when user is blocked</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- FRONTEND STRUCTURE -->
+        <div class="page-break">
+            <div class="section" id="frontend">
+                <h2>🎨 Frontend Structure</h2>
+                
+                <h3>resources/views/ - Blade Templates</h3>
+                <div class="directory-path">views/
+├── welcome.blade.php          # Landing/welcome page
+├── auth/                        # Authentication pages
+│   ├── login.blade.php         # Login form
+│   ├── register.blade.php      # Registration form
+│   └── verify.blade.php        # OTP/Email verification
+├── chat/                        # Chat interface
+│   ├── dashboard.blade.php     # Main chat interface
+│   ├── sidebar.blade.php       # Chat list sidebar
+│   └── messages.blade.php      # Message display
+├── profile/                     # Profile pages
+│   ├── view.blade.php          # View profile
+│   ├── edit.blade.php          # Edit profile
+│   └── settings.blade.php      # User settings
+└── layouts/                     # Layout templates
+    ├── app.blade.php           # Main application layout
+    └── auth.blade.php          # Authentication layout
+                </div>
+                
+                <h3>resources/js/ - JavaScript Source</h3>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">app.js</div>
+                        <div class="file-description">Main JavaScript entry point. Loads dependencies and initializes app.</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">bootstrap.js</div>
+                        <div class="file-description">Bootstrap configuration, sets up axios, Vue, and other libraries.</div>
+                    </div>
+                </div>
+                
+                <h3>public/js/ - Compiled JavaScript (31 files)</h3>
+                <table>
+                    <tr>
+                        <th>File</th>
+                        <th>Purpose</th>
+                    </tr>
+                    <tr>
+                        <td>chat.js</td>
+                        <td>Core chat messaging functionality</td>
+                    </tr>
+                    <tr>
+                        <td>dashboard.js</td>
+                        <td>Main dashboard initialization and controls</td>
+                    </tr>
+                    <tr>
+                        <td>message_*.js</td>
+                        <td>Message features: edit.js, pin.js, reply.js, star.js, info.js</td>
+                    </tr>
+                    <tr>
+                        <td>chat_*.js</td>
+                        <td>Chat features: search.js, filters.js, clear.js</td>
+                    </tr>
+                    <tr>
+                        <td>media_*.js</td>
+                        <td>Media handling: upload.js, download.js, viewer.js, progress.js</td>
+                    </tr>
+                    <tr>
+                        <td>profile_*.js</td>
+                        <td>Profile management: panel.js, auth.js, my_profile.js</td>
+                    </tr>
+                    <tr>
+                        <td>pin_chat.js</td>
+                        <td>Pin/unpin chats in sidebar</td>
+                    </tr>
+                    <tr>
+                        <td>typing-indicator.js</td>
+                        <td>Display typing status in real-time</td>
+                    </tr>
+                    <tr>
+                        <td>presence.js</td>
+                        <td>Track online/offline status</td>
+                    </tr>
+                    <tr>
+                        <td>context_menu.js</td>
+                        <td>Right-click context menus</td>
+                    </tr>
+                    <tr>
+                        <td>echo.js</td>
+                        <td>Laravel Echo setup for WebSocket connection</td>
+                    </tr>
+                    <tr>
+                        <td>listeners.js</td>
+                        <td>Event listeners for broadcasts</td>
+                    </tr>
+                    <tr>
+                        <td>loginauth.js</td>
+                        <td>Login page authentication</td>
+                    </tr>
+                    <tr>
+                        <td>profileauth.js</td>
+                        <td>Profile authentication functions</td>
+                    </tr>
+                    <tr>
+                        <td>resumable_upload.js</td>
+                        <td>Resumable file upload with TUS protocol</td>
+                    </tr>
+                    <tr>
+                        <td>download_speed.js</td>
+                        <td>Calculate download speed/progress</td>
+                    </tr>
+                    <tr>
+                        <td>media_uploadspeed.js</td>
+                        <td>Calculate upload speed/progress</td>
+                    </tr>
+                    <tr>
+                        <td>verifyphone.js</td>
+                        <td>Phone verification functionality</td>
+                    </tr>
+                </table>
+                
+                <h3>resources/css/ - Stylesheets</h3>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">app.css</div>
+                        <div class="file-description">Main application styles using Tailwind CSS</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- DATABASE -->
+        <div class="page-break">
+            <div class="section" id="database">
+                <h2>🗄️ Database Configuration</h2>
+                
+                <h3>Database Migrations (database/migrations/)</h3>
+                <p>The database consists of 34 migrations organized chronologically:</p>
+                
+                <h4>Core Tables (Laravel)</h4>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">0001_01_01_000000</div>
+                        <div class="file-description">Create users table</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">0001_01_01_000001</div>
+                        <div class="file-description">Create cache table</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">0001_01_01_000002</div>
+                        <div class="file-description">Create jobs table for queues</div>
+                    </div>
+                </div>
+                
+                <h4>Authentication & Security</h4>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">2026_02_12_053757</div>
+                        <div class="file-description">Create personal access tokens table (Sanctum API)</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_02_12_054227</div>
+                        <div class="file-description">Create OTP verifications table</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_02_12_054247</div>
+                        <div class="file-description">Create user devices table</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_02_12_054304</div>
+                        <div class="file-description">Create user sessions table</div>
+                    </div>
+                </div>
+                
+                <h4>Chat & Messaging</h4>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">2026_02_13_053358</div>
+                        <div class="file-description">Create chats table</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_02_13_053405</div>
+                        <div class="file-description">Create chat participants table</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_02_13_053411</div>
+                        <div class="file-description">Create messages table</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_02_13_120007</div>
+                        <div class="file-description">Add status column to messages</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_02_17_154222</div>
+                        <div class="file-description">Add edited_at to messages (track edits)</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_02_17_165341</div>
+                        <div class="file-description">Add deleted fields to messages (soft deletes)</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_03_05_111502</div>
+                        <div class="file-description">Add reply_to column for message replies</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_03_06_105839</div>
+                        <div class="file-description">Add pin columns to messages</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_03_06_122041</div>
+                        <div class="file-description">Create pinned messages table</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_03_06_181326</div>
+                        <div class="file-description">Add original_message to messages (editing reference)</div>
+                    </div>
+                </div>
+                
+                <h4>Media & Files</h4>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">2026_02_19_161945</div>
+                        <div class="file-description">Create media table</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_02_19_162044</div>
+                        <div class="file-description">Add type column to messages (text/image/file)</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_02_19_164849</div>
+                        <div class="file-description">Allow null message content</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_02_20_131804</div>
+                        <div class="file-description">Create upload sessions table (TUS)</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_02_23_160140</div>
+                        <div class="file-description">Create download sessions table</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_03_16_124628</div>
+                        <div class="file-description">Alter media file name column</div>
+                    </div>
+                </div>
+                
+                <h4>User Features</h4>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">2026_02_19_105221</div>
+                        <div class="file-description">Add last_seen to users table</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_02_26_113130</div>
+                        <div class="file-description">Create user blocks table</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_02_26_133413</div>
+                        <div class="file-description">Add visible_to column to messages (visibility control)</div>
+                    </div>
+                </div>
+                
+                <h4>Chat Features</h4>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">2026_03_07_114220</div>
+                        <div class="file-description">Create starred messages table</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_03_07_162729</div>
+                        <div class="file-description">Create cleared chats table</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_03_10_175551</div>
+                        <div class="file-description">Create pinned chats table</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_03_12_135307</div>
+                        <div class="file-description">Create deleted chats table</div>
+                    </div>
+                </div>
+                
+                <h4>Link Previews</h4>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">2026_03_09_162503</div>
+                        <div class="file-description">Alter messages type enum (add link, system types)</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">2026_03_09_171318</div>
+                        <div class="file-description">Create link previews table</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- CONFIGURATION FILES -->
+        <div class="page-break">
+            <div class="section" id="config">
+                <h2>⚙️ Configuration Files</h2>
+                
+                <h3>config/ - Application Configuration</h3>
+                
+                <h4>Essential Configuration Files</h4>
+                <table>
+                    <tr>
+                        <th>File</th>
+                        <th>Purpose</th>
+                    </tr>
+                    <tr>
+                        <td>app.php</td>
+                        <td>Application name, timezone, locale, debug mode, providers, aliases</td>
+                    </tr>
+                    <tr>
+                        <td>auth.php</td>
+                        <td>Authentication configuration, guards, password reset</td>
+                    </tr>
+                    <tr>
+                        <td>broadcasting.php</td>
+                        <td>Broadcasting driver config (Reverb for WebSockets)</td>
+                    </tr>
+                    <tr>
+                        <td>cache.php</td>
+                        <td>Cache driver, default cache store configuration</td>
+                    </tr>
+                    <tr>
+                        <td>database.php</td>
+                        <td>Database connection, migration settings</td>
+                    </tr>
+                    <tr>
+                        <td>filesystems.php</td>
+                        <td>File storage disks, upload paths</td>
+                    </tr>
+                    <tr>
+                        <td>logging.php</td>
+                        <td>Logging channels, debug output</td>
+                    </tr>
+                    <tr>
+                        <td>mail.php</td>
+                        <td>Email driver, SMTP settings, from address</td>
+                    </tr>
+                    <tr>
+                        <td>queue.php</td>
+                        <td>Job queue driver configuration</td>
+                    </tr>
+                    <tr>
+                        <td>sanctum.php</td>
+                        <td>API token authentication settings</td>
+                    </tr>
+                    <tr>
+                        <td>services.php</td>
+                        <td>Third-party service credentials (Twilio, etc.)</td>
+                    </tr>
+                    <tr>
+                        <td>session.php</td>
+                        <td>Session driver, cookie settings</td>
+                    </tr>
+                </table>
+                
+                <h3>Root Configuration Files</h3>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">.env</div>
+                        <div class="file-description">Environment variables (database, mail, API keys - NOT in version control)</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">.env.example</div>
+                        <div class="file-description">Template for environment variables (copied to create .env)</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">phpunit.xml</div>
+                        <div class="file-description">PHPUnit test configuration and paths</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">vite.config.js</div>
+                        <div class="file-description">Vite build tool configuration for front-end assets</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">composer.json</div>
+                        <div class="file-description">PHP package dependencies and scripts</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">package.json</div>
+                        <div class="file-description">NPM/Node.js package dependencies</div>
+                    </tr>
+                    <div class="file-item">
+                        <div class="file-name">artisan</div>
+                        <div class="file-description">Laravel CLI application for running commands</div>
+                    </div>
+                </div>
+                
+                <h3>Routes Configuration (routes/)</h3>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">web.php</div>
+                        <div class="file-description">Web routes, handles HTTP requests, redirects to controllers</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">api.php</div>
+                        <div class="file-description">API routes (if exists), JSON responses with API tokens</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">channels.php</div>
+                        <div class="file-description">Broadcasting channel authorization, WebSocket connections</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">console.php</div>
+                        <div class="file-description">Console/CLI command registration</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- DIRECTORY STRUCTURE -->
+        <div class="page-break">
+            <div class="section">
+                <h2>📚 Other Key Directories</h2>
+                
+                <h3>bootstrap/ - Application Bootstrap</h3>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">app.php</div>
+                        <div class="file-description">Creates and returns the Laravel application instance</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">providers.php</div>
+                        <div class="file-description">Registers service providers</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">cache/packages.php</div>
+                        <div class="file-description">Cached package discovery (auto-generated)</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">cache/services.php</div>
+                        <div class="file-description">Cached service provider manifest</div>
+                    </div>
+                </div>
+                
+                <h3>database/ - Database Files</h3>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">factories/UserFactory.php</div>
+                        <div class="file-description">Factory for generating test User models</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">migrations/</div>
+                        <div class="file-description">Database schema migrations (34 files)</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">seeders/</div>
+                        <div class="file-description">Database seeders for populating test data</div>
+                    </div>
+                </div>
+                
+                <h3>public/ - Publicly Accessible Files</h3>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">index.php</div>
+                        <div class="file-description">Application entry point for all HTTP requests</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">robots.txt</div>
+                        <div class="file-description">Search engine crawling instructions</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">css/</div>
+                        <div class="file-description">Compiled CSS files</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">js/</div>
+                        <div class="file-description">Compiled JavaScript files (31 files)</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">uploads/</div>
+                        <div class="file-description">User-uploaded media and attachments</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">storage/</div>
+                        <div class="file-description">Symbolic link to storage directory</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">build/</div>
+                        <div class="file-description">Vite build output directory</div>
+                    </div>
+                </div>
+                
+                <h3>storage/ - Application Storage</h3>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">app/</div>
+                        <div class="file-description">Application-generated files and uploads</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">framework/</div>
+                        <div class="file-description">Framework-generated files (cache, sessions)</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">logs/</div>
+                        <div class="file-description">Application logs and error logs</div>
+                    </div>
+                </div>
+                
+                <h3>tests/ - Testing</h3>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">TestCase.php</div>
+                        <div class="file-description">Base test class with helper methods</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">Feature/</div>
+                        <div class="file-description">Feature tests (integration tests)</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">Unit/</div>
+                        <div class="file-description">Unit tests (individual component tests)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ARCHITECTURE OVERVIEW -->
+        <div class="page-break">
+            <div class="section">
+                <h2>🏗️ Application Architecture Overview</h2>
+                
+                <div class="architecture">
+                    <h3>MVC Architecture</h3>
+                    <div class="code-block">REQUEST → ROUTES → MIDDLEWARE → CONTROLLER → MODEL → DATABASE
+     ↓
+   EVENTS (Broadcasting)
+     ↓
+   WebSocket Broadcast → JavaScript Listeners → UI Update
+                    </div>
+                </div>
+                
+                <h3>Real-time Communication Flow</h3>
+                <div class="code-block">1. User sends message via UI
+2. JavaScript sends HTTP POST to Controller
+3. Controller saves to Database
+4. Event is fired (MessageSent)
+5. Event is broadcast to WebSocket channel (chat.{id})
+6. Laravel Echo receives broadcast
+7. JavaScript listeners update UI in real-time
+8. All connected users see message instantly
+                </div>
+                
+                <h3>File Upload Flow (TUS Protocol)</h3>
+                <div class="code-block">1. User selects file
+2. JavaScript (resumable_upload.js) initiates TUS upload
+3. File chunks sent to TusController
+4. TusController manages upload session
+5. Completed file stored in public/uploads
+6. Media model created with file metadata
+7. Message sent with media attachment
+8. Media displayed in chat UI
+                </div>
+                
+                <h3>Authentication Flow</h3>
+                <div class="code-block">1. User submits login form (loginauth.js)
+2. AuthController validates credentials
+3. Sanctum generates API token
+4. Session created with middleware checks:
+   - EnsureAuthenticated
+   - EnsurePhoneEntered
+   - EnsureOtpVerified
+   - EnsureProfileCompleted
+5. User redirected to dashboard
+6. WebSocket connection authenticated
+7. Real-time features enabled
+                </div>
+                
+                <h3>Key Dependencies Relationship</h3>
+                <div class="code-block">Chat Model
+  ├── Has Many Messages
+  ├── Has Many Participants (ChatParticipant)
+  └── Relates to Multiple Users
+
+Message Model
+  ├── Belongs To Chat
+  ├── Belongs To User (sender)
+  ├── Has Many Media attachments
+  ├── Can have PinnedMessage record
+  ├── Can have StarredMessage record
+  └── Can be a reply (reply_to field)
+
+User Model
+  ├── Has Many Chats (through ChatParticipant)
+  ├── Has Many Messages
+  ├── Has Many UserBlocks
+  ├── Last seen timestamp
+  ├── OTP Verification status
+  └── Device & Session records
+                </div>
+            </div>
+        </div>
+        
+        <!-- GETTING STARTED -->
+        <div class="page-break">
+            <div class="section">
+                <h2>🚀 Getting Started / Setup Instructions</h2>
+                
+                <h3>Prerequisites</h3>
+                <div class="file-list">
+                    <div class="file-item">
+                        <div class="file-name">PHP 8.2+</div>
+                        <div class="file-description">Server-side language</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">Node.js & NPM</div>
+                        <div class="file-description">Front-end build tools</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">Composer</div>
+                        <div class="file-description">PHP package manager</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-name">Database (MySQL/PostgreSQL)</div>
+                        <div class="file-description">Data persistence</div>
+                    </div>
+                </div>
+                
+                <h3>Installation Steps</h3>
+                <div class="code-block">1. Clone repository
+   git clone [repo-url]
+   cd chatapp
+
+2. Install PHP dependencies
+   composer install
+
+3. Setup environment
+   cp .env.example .env
+   php artisan key:generate
+
+4. Configure database in .env
+   DB_HOST=localhost
+   DB_DATABASE=chatapp
+   DB_USERNAME=root
+   DB_PASSWORD=
+
+5. Run migrations
+   php artisan migrate
+
+6. Install NPM dependencies
+   npm install
+
+7. Build front-end assets
+   npm run build
+
+8. Start development server
+   php artisan serve
+
+9. In another terminal, start WebSocket server
+   php artisan reverb:start
+
+10. In another terminal, start queue listener
+    php artisan queue:listen
+
+11. Access application
+    http://localhost:8000
+                </div>
+                
+                <h3>Development Commands</h3>
+                <div class="code-block">composer dev          # Run all dev services concurrently
+npm run dev            # Watch and rebuild assets
+php artisan migrate    # Run database migrations
+php artisan test       # Run tests
+php artisan tinker     # Interactive shell
+php artisan queue:work # Process background jobs
+                </div>
+            </div>
+        </div>
+        
+        <!-- SUMMARY -->
+        <div class="page-break">
+            <div class="section">
+                <h2>📝 Project Summary</h2>
+                
+                <div class="overview">
+                    <h3>Project Statistics</h3>
+                    <table style="width: 100%;">
+                        <tr>
+                            <td style="width: 50%; padding: 10px;">
+                                <strong>Total Files:</strong> 150+
+                            </td>
+                            <td style="width: 50%; padding: 10px;">
+                                <strong>Controllers:</strong> 20
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px;">
+                                <strong>Models:</strong> 15
+                            </td>
+                            <td style="padding: 10px;">
+                                <strong>Migrations:</strong> 34
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px;">
+                                <strong>Events:</strong> 6
+                            </td>
+                            <td style="padding: 10px;">
+                                <strong>JS Files:</strong> 31
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px;">
+                                <strong>Middleware:</strong> 5
+                            </td>
+                            <td style="padding: 10px;">
+                                <strong>DB Tables:</strong> 20+
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <h3>Core Features</h3>
+                <ul style="margin-left: 20px; line-height: 2;">
+                    <li>✅ Real-time messaging with WebSocket support</li>
+                    <li>✅ User authentication with OTP verification</li>
+                    <li>✅ File upload with resumable transfer (TUS protocol)</li>
+                    <li>✅ User blocking and privacy controls</li>
+                    <li>✅ Message features: edit, delete, pin, star, reply</li>
+                    <li>✅ Chat management: pin, clear, delete</li>
+                    <li>✅ Typing indicators</li>
+                    <li>✅ Online/offline presence tracking</li>
+                    <li>✅ Media sharing and downloading</li>
+                    <li>✅ Link preview generation</li>
+                    <li>✅ User profiles and search</li>
+                </ul>
+                
+                <h3>Technology Highlights</h3>
+                <ul style="margin-left: 20px; line-height: 2;">
+                    <li>🔧 <strong>Laravel Reverb:</strong> Real-time WebSocket server</li>
+                    <li>🔐 <strong>Laravel Sanctum:</strong> API token authentication</li>
+                    <li>📤 <strong>TUS Protocol:</strong> Resumable file uploads</li>
+                    <li>🖼️ <strong>Intervention Image:</strong> Image processing</li>
+                    <li>💬 <strong>Twilio SDK:</strong> SMS and OTP services</li>
+                    <li>🎨 <strong>Tailwind CSS:</strong> Utility-first styling</li>
+                    <li>⚡ <strong>Vite:</strong> Fast build tool</li>
+                </ul>
+                
+                <h3>Security Features</h3>
+                <ul style="margin-left: 20px; line-height: 2;">
+                    <li>🔒 Middleware-based route protection</li>
+                    <li>🔒 OTP verification for phone numbers</li>
+                    <li>🔒 User blocking prevents unauthorized contact</li>
+                    <li>🔒 Broadcasting channel authorization</li>
+                    <li>🔒 API token authentication (Sanctum)</li>
+                    <li>🔒 Session management with multiple devices</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div style="margin-top: 80px; padding-top: 20px; border-top: 2px solid #3498db; text-align: center; color: #7f8c8d;">
+            <p><strong>Laravel Chat App - Complete Project Documentation</strong></p>
+            <p>Generated: March 20, 2026</p>
+            <p>For more information, refer to individual source files in the project directory</p>
+        </div>
+    </div>
+</body>
+</html>
