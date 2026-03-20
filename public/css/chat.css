@@ -126,7 +126,7 @@
 }
 
 /* Text-only bubbles — inline time */
-.msg:not(:has(img)):not(:has(video)):not(:has(audio)):not(:has(.wa-doc)):not(:has(.wa-media-box)) .time {
+.msg:not(:has(img)):not(:has(video)):not(:has(audio)):not(:has(.wa-doc)):not(:has(.wa-media-box)):not(:has(.wa-audio-download-wrap)):not(:has(.wa-audio-box)) .time {
     position: static;
     font-size: 11px;
     color: rgba(255,255,255,0.75);
@@ -152,7 +152,7 @@
 }
 
 .msg:not(:has(img)):not(:has(video)):not(:has(audio)) .time {
-    position: static;
+    position: absolute;
     font-size: 11px;
     color: rgba(255,255,255,0.75);
     white-space: nowrap;
@@ -766,4 +766,9 @@ color:#111;
 
 .msg .msg-content > div {
     display: block !important;
+}
+
+.msg:has(.wa-audio-download-wrap),
+.msg:has(.wa-audio-box) {
+    padding-bottom: 22px !important;
 }
