@@ -11,7 +11,7 @@ class StarredMessageController extends Controller
 
 public function star(Request $request)
 {
-    $authId = session('auth_user_id');
+    $authId = $this->getAuthId();
 
     StarredMessage::firstOrCreate([
         'user_id' => $authId,
@@ -25,7 +25,7 @@ public function star(Request $request)
 
 public function unstar(Request $request)
 {
-    $authId = session('auth_user_id');
+    $authId = $this->getAuthId();
 
     StarredMessage::where('user_id',$authId)
         ->where('message_id',$request->message_id)
@@ -38,7 +38,7 @@ public function unstar(Request $request)
 
 public function list()
 {
-    $authId = session('auth_user_id');
+    $authId = $this->getAuthId();
 
    $stars = \App\Models\StarredMessage::where('user_id', $authId)
     ->with(['message.sender', 'message.media'])
@@ -51,7 +51,7 @@ public function list()
         return true;
     });
 
-    if(request()->ajax() || request()->wantsJson()){
+   if(request()->ajax() || request()->wantsJson() || request()->bearerToken()){
 
         // ✅ fetch all download sessions for this user in one query (avoid N+1)
         $messageIds = $stars->pluck('message.id')->filter()->values()->toArray();
@@ -122,7 +122,7 @@ if($star->message->deleted_for_everyone) return null;
 }
 public function unstarOnDelete($messageId)
 {
-    $authId = session('auth_user_id');
+    $authId = $this->getAuthId();
 
     StarredMessage::where('user_id', $authId)
         ->where('message_id', $messageId)

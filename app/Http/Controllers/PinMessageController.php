@@ -12,7 +12,7 @@ class PinMessageController extends Controller
 public function pin(Request $request)
 {
 
-    $authId = session('auth_user_id');
+    $authId = $this->getAuthId();
 
     $request->validate([
         'message_id' => 'required|exists:messages,id'
@@ -73,7 +73,7 @@ if($pinCount >= 3){
 public function unpin(Request $request)
 {
 
-    $authId = session('auth_user_id');
+    $authId = $this->getAuthId();
 
     $request->validate([
         'message_id'=>'required'

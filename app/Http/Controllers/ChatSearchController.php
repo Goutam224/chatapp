@@ -13,7 +13,7 @@ class ChatSearchController extends Controller
 public function search(Request $request)
 {
 
-    $authId = session('auth_user_id');
+    $authId = $this->getAuthId();
     $query = trim($request->q);
 
   

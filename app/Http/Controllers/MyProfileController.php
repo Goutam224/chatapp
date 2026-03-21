@@ -11,7 +11,7 @@ class MyProfileController extends Controller
     public function get()
     {
 
-        $user = User::find(session('auth_user_id'));
+        $user = User::find($this->getAuthId());
 
         return response()->json($user);
 
@@ -21,7 +21,7 @@ class MyProfileController extends Controller
     public function update(Request $request)
     {
 
-        $user = User::find(session('auth_user_id'));
+        $user = User::find($this->getAuthId());
 
         $user->name = $request->name;
 
@@ -39,7 +39,7 @@ class MyProfileController extends Controller
     public function updatePhoto(Request $request)
     {
 
-        $user = User::find(session('auth_user_id'));
+        $user = User::find($this->getAuthId());
 
         if($request->hasFile('photo')){
 

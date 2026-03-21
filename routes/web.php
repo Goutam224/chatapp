@@ -303,7 +303,7 @@ Route::post('/user/update-last-seen', function () {
 
 Route::get('/user/last-seen/{id}', function ($id) {
 
-    $authId = session('auth_user_id');
+    $authId = \App\Helpers\AuthHelper::id();
 
     if (!$authId) {
         return response()->json(['last_seen' => null]);

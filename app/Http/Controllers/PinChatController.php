@@ -11,7 +11,7 @@ class PinChatController extends Controller
     public function pin(Request $request)
     {
 
-        $userId = session('auth_user_id');
+        $userId = $this->getAuthId();
 
         $chatId = $request->chat_id;
 
@@ -48,7 +48,7 @@ if(!$alreadyPinned && $count >= 3){
     public function unpin(Request $request)
     {
 
-        $userId = session('auth_user_id');
+        $userId = $this->getAuthId();
 
         PinnedChat::where('user_id',$userId)
             ->where('chat_id',$request->chat_id)
@@ -63,7 +63,7 @@ if(!$alreadyPinned && $count >= 3){
     public function list()
     {
 
-        $userId = session('auth_user_id');
+        $userId = $this->getAuthId();
 
       $pinned = PinnedChat::where('user_id',$userId)
     ->orderBy('pinned_at', 'desc')

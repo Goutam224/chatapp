@@ -33,7 +33,7 @@ public function start(Request $request)
 
         'upload_uuid' => $uuid,
 
-        'user_id' => session('auth_user_id'),
+        'user_id' => $this->getAuthId(),
 
         'chat_id' => $request->chat_id,
 
@@ -259,7 +259,7 @@ if($writtenSize !== (int)$session->file_size)
 unlink($tempPath);
 
   // ================= BLOCK CHECK =================
-    $userId = session('auth_user_id');
+    $userId = $this->getAuthId();
     $otherParticipant = \App\Models\ChatParticipant::where('chat_id', $session->chat_id)
         ->where('user_id', '!=', $userId)
         ->first();
@@ -414,7 +414,7 @@ public function cancel($uuid)
         return response()->json([
             'uploads' => UploadSession::where('chat_id', $chatId)
                 ->whereIn('status', ['uploading','paused'])
-                ->where('user_id', Auth::id()) // only sender
+                ->where('user_id', $this->getAuthId()) // only sender
                 ->get()
         ]);
     }

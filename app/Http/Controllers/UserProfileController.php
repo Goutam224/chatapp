@@ -11,7 +11,7 @@ class UserProfileController extends Controller
 
 public function show($id)
 {
-    $authId = session('auth_user_id');
+    $authId = $this->getAuthId();
 
     if (!$authId) {
         return response()->json([], 401);

@@ -18,7 +18,7 @@ class ChatController extends Controller
 {
 public function users()
 {
-    $authId = session('auth_user_id');
+   $authId = $this->getAuthId();
 
     if (!$authId) {
         return response()->json([], 401);
@@ -154,7 +154,7 @@ public function users()
 
 public function create(Request $request)
 {
-    $authId = session('auth_user_id');
+    $authId = $this->getAuthId();
 
     if (!$authId) {
         return response()->json(['success' => false, 'error' => 'Unauthorized - Session or auth missing'], 401);
@@ -253,7 +253,7 @@ if (
 
 public function open(Chat $chat)
 {
-    $authId = session('auth_user_id');
+    $authId = $this->getAuthId();
 
     $isParticipant = ChatParticipant::where('chat_id', $chat->id)
         ->where('user_id', $authId)
@@ -416,7 +416,7 @@ public function open(Chat $chat)
 // =========================================================
 public function loadMore(Chat $chat, Request $request)
 {
-    $authId   = session('auth_user_id');
+    $authId   = $this->getAuthId();
     $beforeId = $request->query('before_id'); // load messages before this ID
     $limit    = 40;
 
@@ -480,7 +480,7 @@ public function loadMore(Chat $chat, Request $request)
 
 public function send(Request $request)
 {
-    $authId = session('auth_user_id');
+    $authId = $this->getAuthId();
 
     $request->validate([
         'chat_id'  => 'required|exists:chats,id',
@@ -538,12 +538,12 @@ public function send(Request $request)
 
 public function edit(Request $request, Message $message)
 {
-    if ($message->sender_id != session('auth_user_id')) {
+    if ($message->sender_id != $this->getAuthId()) {
         return response()->json(['error' => 'Unauthorized'], 403);
     }
 
     $otherParticipant = \App\Models\ChatParticipant::where('chat_id', $message->chat_id)
-        ->where('user_id', '!=', session('auth_user_id'))
+        ->where('user_id', '!=', $this->getAuthId())
         ->first();
 
     $shouldBroadcast = true;
@@ -552,11 +552,11 @@ public function edit(Request $request, Message $message)
 
         $block = \App\Models\UserBlock::where(function($q) use ($otherParticipant) {
             $q->where(function($q2) use ($otherParticipant) {
-                $q2->where('blocker_id', session('auth_user_id'))
+                $q2->where('blocker_id', $this->getAuthId())
                    ->where('blocked_id', $otherParticipant->user_id);
             })->orWhere(function($q2) use ($otherParticipant) {
                 $q2->where('blocker_id', $otherParticipant->user_id)
-                   ->where('blocked_id', session('auth_user_id'));
+                   ->where('blocked_id', $this->getAuthId());
             });
         })->orderBy('created_at','asc')->first();
 // AFTER
@@ -585,22 +585,22 @@ public function deleteForEveryone($id)
 {
     $message = Message::find($id);
     if (!$message) return response()->json(['error' => 'Not found'], 404);
-    if ($message->sender_id != session('auth_user_id')) return response()->json(['error' => 'Unauthorized'], 403);
+    if ($message->sender_id != $this->getAuthId()) return response()->json(['error' => 'Unauthorized'], 403);
     if ($message->created_at->diffInMinutes(now()) > 15) return response()->json(['error' => 'Expired'], 403);
 
     $otherParticipant = \App\Models\ChatParticipant::where('chat_id', $message->chat_id)
-        ->where('user_id', '!=', session('auth_user_id'))
+        ->where('user_id', '!=', $this->getAuthId())
         ->first();
 
     $blockExists = false;
     if ($otherParticipant) {
         $blockExists = \App\Models\UserBlock::where(function($q) use ($otherParticipant) {
             $q->where(function($q2) use ($otherParticipant) {
-                $q2->where('blocker_id', session('auth_user_id'))
+                $q2->where('blocker_id', $this->getAuthId())
                    ->where('blocked_id', $otherParticipant->user_id);
             })->orWhere(function($q2) use ($otherParticipant) {
                 $q2->where('blocker_id', $otherParticipant->user_id)
-                   ->where('blocked_id', session('auth_user_id'));
+                   ->where('blocked_id', $this->getAuthId());
             });
         })->exists();
     }
@@ -615,7 +615,7 @@ if ($blockExists) {
 
     \App\Models\PinnedMessage::where('message_id', $message->id)->delete();
 
-    broadcast(new \App\Events\MessageDeleted($message->id, $message->chat_id, 'everyone', session('auth_user_id')));
+    broadcast(new \App\Events\MessageDeleted($message->id, $message->chat_id, 'everyone', $this->getAuthId()));
 
     return response()->json(['success' => true, 'deleted_for_me_only' => true]);
 }
@@ -626,7 +626,7 @@ if ($blockExists) {
 
     \App\Models\PinnedMessage::where('message_id', $message->id)->delete();
 
-    broadcast(new \App\Events\MessageDeleted($message->id, $message->chat_id, 'everyone', session('auth_user_id')));
+    broadcast(new \App\Events\MessageDeleted($message->id, $message->chat_id, 'everyone', $this->getAuthId()));
 
     return response()->json(['success' => true]);
 }
@@ -636,7 +636,7 @@ public function deleteForMe($id)
     $message = Message::find($id);
     if (!$message) return response()->json(['error' => 'Not found'], 404);
 
-    $userId  = session('auth_user_id');
+    $userId  = $this->getAuthId();
     $deleted = $message->deleted_for_users ?? [];
     if (!is_array($deleted)) $deleted = json_decode($deleted, true) ?? [];
     if (!in_array($userId, $deleted)) $deleted[] = $userId;
@@ -686,7 +686,7 @@ public function info($id)
 
 public function loadAroundMessage($messageId)
 {
-    $authId  = session('auth_user_id');
+    $authId  = $this->getAuthId();
     $message = Message::find($messageId);
 
     if (!$message) return response()->json(['messages' => []]);
@@ -713,7 +713,7 @@ public function loadAroundMessage($messageId)
 
 public function markAllDelivered()
 {
-    $authId = session('auth_user_id');
+    $authId = $this->getAuthId();
     if (!$authId) return response()->json([], 401);
 
     $chatIds = \App\Models\ChatParticipant::where('user_id', $authId)->pluck('chat_id');

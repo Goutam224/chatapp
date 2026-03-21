@@ -125,15 +125,14 @@ if ($mode === 'twilio') {
         $request->validate([
             'otp' => 'required|digits:6'
         ]);
+$phone = $request->phone ?? session('auth_phone');
 
-        $phone = session('auth_phone');
-
-        if (!$phone) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Session expired. Please login again.'
-            ], 400);
-        }
+if (!$phone) {
+    return response()->json([
+        'success' => false,
+        'message' => 'Phone number required.'
+    ], 400);
+}
 
         $otpRecord = OtpVerification::where('phone', $phone)->first();
 
@@ -182,10 +181,12 @@ if ($mode === 'twilio') {
 
         $otpRecord->delete();
 $token = $user->createToken('web_token')->plainTextToken;
-// After creating token, add:
-$request->session()->regenerate();
-$request->session()->put('auth_user_id', $user->id);
-$request->session()->put('auth_token', $token);
+
+if ($request->hasSession()) {
+    $request->session()->regenerate();
+    $request->session()->put('auth_user_id', $user->id);
+    $request->session()->put('auth_token', $token);
+}
 
         return response()->json([
             'success' => true,

@@ -11,7 +11,7 @@ class DeleteChatController extends Controller
 public function delete(Request $request)
 {
 
-$authId = session('auth_user_id');
+$authId = $this->getAuthId();
 
 $request->validate([
 'chat_id' => 'required|exists:chats,id'

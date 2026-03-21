@@ -24,24 +24,24 @@ return Application::configure(basePath: dirname(__DIR__))
 )
 
 
-    ->withMiddleware(function (Middleware $middleware): void {
+->withMiddleware(function (Middleware $middleware): void {
 
-    // enable Laravel web middleware (SESSION, CSRF, COOKIE)
+    // Remove BOTH default CSRF middlewares
+    $middleware->web(remove: [
+        \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
+        \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+    ]);
+
+    // Add our custom CSRF that allows Bearer tokens
     $middleware->web(append: [
-     
-          \Illuminate\Cookie\Middleware\EncryptCookies::class,
-        \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-        \Illuminate\Session\Middleware\StartSession::class,
-        \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-        \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class.':tus/upload,tus/upload/*,tus/complete',
-        \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        \App\Http\Middleware\VerifyCsrfOrBearer::class,
     ]);
 
     // your custom middleware aliases
     $middleware->alias([
         'phone.entered' => EnsurePhoneEntered::class,
-        'otp.verified' => EnsureOtpVerified::class,
-        'auth.session' => EnsureAuthenticated::class,
+        'otp.verified'  => EnsureOtpVerified::class,
+        'auth.session'  => EnsureAuthenticated::class,
         'profile.completed' => EnsureProfileCompleted::class,
     ]);
 

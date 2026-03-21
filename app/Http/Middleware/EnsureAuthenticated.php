@@ -11,20 +11,43 @@ class EnsureAuthenticated
 {
     public function handle(Request $request, Closure $next)
     {
-        // check Sanctum token via your helper
+        // ─────────────────────────────────────────
+        // CHECK: Bearer token (API clients)
+        // ─────────────────────────────────────────
+        if ($request->bearerToken()) {
+            $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken(
+                $request->bearerToken()
+            );
+
+            if (!$accessToken) {
+                // Bearer token invalid → JSON error (not redirect)
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid or expired token'
+                ], 401);
+            }
+
+            $user = $accessToken->tokenable;
+
+            // Attach to Laravel Auth so rest of app works
+            Auth::login($user);
+
+            return $next($request);
+        }
+
+        // ─────────────────────────────────────────
+        // CHECK: Session (browser users)
+        // Exactly as before — zero changes
+        // ─────────────────────────────────────────
         if (!AuthHelper::check()) {
             return redirect()->route('login');
         }
 
-        // CRITICAL FIX: attach Sanctum user to Laravel Auth
         if (!Auth::check()) {
-
             $user = AuthHelper::user();
-
             if ($user) {
                 Auth::login($user);
             }
-
         }
 
         return $next($request);

@@ -16,7 +16,7 @@ class MediaController extends Controller
     public function send(Request $request)
     {
 
-        $userId = session('auth_user_id');
+        $userId = $this->getAuthId();
 
         if(!$userId)
             return response()->json(['error'=>'Unauthorized'],403);

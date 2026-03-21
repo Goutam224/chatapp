@@ -16,7 +16,7 @@ class BlockController extends Controller
     $request->validate([
         'user_id' => 'required|exists:users,id'
     ]);
-$authId = session('auth_user_id');
+$authId = $this->getAuthId();
     $targetId = $request->user_id;
 
     if ($authId == $targetId) {
@@ -64,7 +64,7 @@ return response()->json(['status' => 'blocked']);
         'user_id' => 'required|exists:users,id'
     ]);
 
-  $authId = session('auth_user_id');
+  $authId = $this->getAuthId();
     $targetId = $request->user_id;
 
     UserBlock::where('blocker_id', $authId)
@@ -99,7 +99,7 @@ return response()->json(['status' => 'unblocked']);
 
     public function status($userId)
     {
-        $auth = Auth::user();
+        $auth = $this->getAuthUser();
 
         return response()->json([
             'blocked_by_me' => $auth->hasBlocked($userId),

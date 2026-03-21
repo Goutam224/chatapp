@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -214,7 +216,7 @@
 <div id="wa-toast"></div>
 
 <script>
-window.AUTH_USER_ID = {{ session('auth_user_id') }};
+window.AUTH_USER_ID = {{ $user->id ?? 'null' }};
 window.APP_PAGE = "{{ $page ?? 'chat' }}";
 
 document.addEventListener('DOMContentLoaded', function(){

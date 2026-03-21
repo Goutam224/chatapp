@@ -14,7 +14,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $userId = session('auth_user_id');
+        $userId = $this->getAuthId();
 
         $user = User::find($userId);
 
@@ -46,13 +46,6 @@ class DashboardController extends Controller
                         ->with('media');
                 },
             ])
-          ->withMax(['messages as last_message_time' => function ($q) use ($userId) {
-    $q->where(function ($query) use ($userId) {
-        $query->whereNull('deleted_for_users')
-          ->orWhereRaw("NOT JSON_CONTAINS(deleted_for_users, '" . (int)$userId . "')");
-    });
-}], 'created_at')
-            ->orderByDesc('last_message_time')
             ->get();
 
         // =========================================================
