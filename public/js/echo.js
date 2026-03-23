@@ -4,21 +4,22 @@
 const EchoConstructor =
     window.Echo?.default || window.Echo;
 
+const isNgrok = window.location.protocol === 'https:'
+    && !window.location.hostname.includes('localhost')
+    && !window.location.hostname.includes('127.0.0.1');
+
+const wsHost  = window.location.hostname;
+const wsPort  = isNgrok ? 443 : 8080;
+const forceTLS = isNgrok;
+
 window.EchoInstance = new EchoConstructor({
-
     broadcaster: 'reverb',
-
     key: 'local',
-
-    wsHost: window.location.hostname,
-
-    wsPort: 8080,
-
-    wssPort: 8080,
-
-    forceTLS: false,
-
-    enabledTransports: ['ws','wss'],
+    wsHost:  wsHost,
+    wsPort:  wsPort,
+    wssPort: wsPort,
+    forceTLS: forceTLS,
+    enabledTransports: ['ws', 'wss'],
 
     authorizer: (channel, options) => ({
         authorize: (socketId, callback) => {
