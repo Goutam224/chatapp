@@ -71,12 +71,16 @@ public function users()
 
     $chatIds = collect($chatByUser)->pluck('id')->toArray();
 
-    $unreadCounts = Message::whereIn('chat_id', $chatIds)
-        ->where('sender_id', '!=', $authId)
-        ->whereNull('seen_at')
-        ->select('chat_id', DB::raw('COUNT(*) as count'))
-        ->groupBy('chat_id')
-        ->pluck('count', 'chat_id');
+ $unreadCounts = Message::whereIn('chat_id', $chatIds)
+    ->where('sender_id', '!=', $authId)
+    ->whereNull('seen_at')
+    ->where(function($q) use ($authId) {
+        $q->whereNull('visible_to')
+          ->orWhereJsonContains('visible_to', (string) $authId);
+    })
+    ->select('chat_id', DB::raw('COUNT(*) as count'))
+    ->groupBy('chat_id')
+    ->pluck('count', 'chat_id');
 
     $clearedChats = \App\Models\ClearedChat::where('user_id', $authId)
         ->whereIn('chat_id', $chatIds)
@@ -152,6 +156,67 @@ public function users()
     return response()->json($users);
 }
 
+
+public function list()
+{
+    $authId = $this->getAuthId();
+
+    if (!$authId) {
+        return response()->json([], 401);
+    }
+
+    // Get chats where user participates
+    $chats = Chat::whereHas('participants', function ($q) use ($authId) {
+        $q->where('user_id', $authId);
+    })
+    ->with([
+        'participants.user'
+    ])
+    ->get();
+
+    $result = [];
+
+    foreach ($chats as $chat) {
+
+        // Get other participant
+        $otherParticipant = $chat->participants
+            ->where('user_id', '!=', $authId)
+            ->first();
+
+        if (!$otherParticipant) {
+            continue;
+        }
+
+        $otherUser = $otherParticipant->user;
+
+        // Get last message
+        $lastMessage = Message::where('chat_id', $chat->id)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        // Count unread
+        $unreadCount = Message::where('chat_id', $chat->id)
+            ->where('sender_id', '!=', $authId)
+            ->whereNull('seen_at')
+            ->count();
+
+        $result[] = [
+            'chat_id' => $chat->id,
+            'user' => [
+                'id' => $otherUser->id,
+                'name' => $otherUser->name,
+                'profile_photo' => $otherUser->profile_photo
+            ],
+            'last_message' => $lastMessage->message ?? null,
+            'last_message_time' => $lastMessage->created_at ?? null,
+            'unread_count' => $unreadCount
+        ];
+    }
+
+    return response()->json($result);
+}
+
+
 public function create(Request $request)
 {
     $authId = $this->getAuthId();
@@ -178,9 +243,19 @@ public function create(Request $request)
         ->first();
 
     if (!$chat) {
-        $chat = Chat::create(['type' => 'private', 'created_by' => $authId]);
-        ChatParticipant::create(['chat_id' => $chat->id, 'user_id' => $authId]);
-        ChatParticipant::create(['chat_id' => $chat->id, 'user_id' => $otherId]);
+       $chat = Chat::create(['type' => 'private', 'created_by' => $authId]);
+
+ChatParticipant::create([
+    'chat_id' => $chat->id,
+    'user_id' => $authId
+]);
+
+if ($authId != $otherId) {
+    ChatParticipant::create([
+        'chat_id' => $chat->id,
+        'user_id' => $otherId
+    ]);
+}
     }
 
     return response()->json(['success' => true, 'id' => $chat->id]);

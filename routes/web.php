@@ -73,6 +73,16 @@ Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 
 /*
 |--------------------------------------------------------------------------
+| TOKEN EXCHANGE (External app integration)
+|--------------------------------------------------------------------------
+*/
+Route::post('/auth/token', [
+    \App\Http\Controllers\TokenExchangeController::class,
+    'exchange'
+]);
+
+/*
+|--------------------------------------------------------------------------
 | AUTHENTICATED ROUTES (Token required)
 |--------------------------------------------------------------------------
 */
@@ -151,6 +161,8 @@ Route::post('/download/status/batch', [DownloadSessionController::class, 'batchS
     | CHAT SYSTEM
     |--------------------------------------------------------------------------
     */
+
+    Route::get('/chats', [ChatController::class, 'list']);
 Route::get('/chat/search', [ChatSearchController::class, 'search']);
 Route::get('/chat/load-around/{messageId}', [ChatController::class,'loadAroundMessage']);
 

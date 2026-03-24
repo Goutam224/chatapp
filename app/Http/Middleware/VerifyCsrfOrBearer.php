@@ -12,6 +12,7 @@ class VerifyCsrfOrBearer extends Middleware
         'tus/complete',
         'send-otp',      // ← add this
     'verify-otp',
+    'auth/token',
     ];
 
     public function handle($request, \Closure $next)

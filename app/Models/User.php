@@ -15,7 +15,16 @@ class User extends Authenticatable
         'about',
         'profile_photo',
         'is_phone_verified',
-        'account_status'
+        'account_status',
+
+           // ── NEW for token exchange ───────────────────────────────
+        'external_id',
+        'api_client_id',
+        'photo',
+        'email',
+        'username',
+
+
     ];
 
     public function blockedUsers()
@@ -43,5 +52,18 @@ public function isBlockedBy($userId)
         ->where('blocked_id', $this->id)
         ->exists();
 }
+
+  // ── NEW relationship ─────────────────────────────────────────
+    public function apiClient()
+    {
+        return $this->belongsTo(ApiClient::class, 'api_client_id');
+    }
+
+    // ── Helper: is this an external user? ───────────────────────
+    public function isExternalUser(): bool
+    {
+        return !is_null($this->api_client_id);
+    }
+
 
 }

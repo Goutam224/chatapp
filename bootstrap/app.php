@@ -43,6 +43,7 @@ return Application::configure(basePath: dirname(__DIR__))
         'otp.verified'  => EnsureOtpVerified::class,
         'auth.session'  => EnsureAuthenticated::class,
         'profile.completed' => EnsureProfileCompleted::class,
+        'api.key' => \App\Http\Middleware\ValidateApiKey::class,
     ]);
 
 })

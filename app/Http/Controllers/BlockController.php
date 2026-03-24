@@ -50,7 +50,7 @@ $authId = $this->getAuthId();
         ]);
     }
 try {
-    broadcast(new \App\Events\UserBlocked((int)$authId, (int)$targetId, 'blocked'));
+    broadcast(new \App\Events\UserBlocked((int)$authId, (int)$targetId, 'blocked'))->toOthers();
     Log::info('UserBlocked broadcast fired', ['blocker' => $authId, 'target' => $targetId]);
 } catch (\Throwable $e) {
     Log::error('UserBlocked broadcast FAILED: ' . $e->getMessage());
@@ -93,7 +93,7 @@ return response()->json(['status' => 'blocked']);
         ]);
     }
 
-  broadcast(new \App\Events\UserBlocked($authId, $targetId, 'unblocked'));
+  broadcast(new \App\Events\UserBlocked($authId, $targetId, 'unblocked'))->toOthers();
 return response()->json(['status' => 'unblocked']);
 }
 

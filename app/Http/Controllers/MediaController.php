@@ -61,11 +61,13 @@ Log::info('MEDIA BLOCK DEBUG', [
 ]);
 
 // EITHER blocked → save silently, visible only to sender, no broadcast
+// Replace the blocked section with this:
+
 if ($blockedMe || $blockedByMe) {
-    $file = $request->file('file');
-    $mime = $file->getMimeType();
-    $type = $this->detectType($mime);
-    $folder = match($type){
+    $file   = $request->file('file');
+    $mime   = $file->getMimeType();
+    $type   = $this->detectType($mime);
+    $folder = match($type) {
         'image' => 'chat/images',
         'video' => 'chat/videos',
         'audio' => 'chat/audio',
@@ -90,10 +92,12 @@ if ($blockedMe || $blockedByMe) {
         'file_size'  => $file->getSize()
     ]);
 
+    // ✅ return early - NO broadcast
     return response()->json([
         'success' => true,
         'message' => $message->load('sender', 'media')
     ]);
+    // broadcast never reaches here ✅
 }
 
         $file = $request->file('file');
