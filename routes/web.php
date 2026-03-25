@@ -247,38 +247,14 @@ Route::post('/broadcasting/auth', function (Request $request) {
 })->middleware(['web']);
 
 
-Route::post('/message/delivered/{id}', function($id){
+Route::get('/reverblab', function () {
+    return view('reverblab');
+})->middleware(['web']);
 
-    $message = \App\Models\Message::find($id);
+Route::post('/message/delivered/{id}', [ChatController::class, 'markDelivered']);
 
-    if($message && !$message->delivered_at){
 
-        $message->delivered_at = now();
-        $message->save();
-
-        broadcast(new \App\Events\MessageSent($message))->toOthers();
-    }
-
-    return response()->json(['success'=>true]);
-
-});
-
-Route::post('/message/seen/{id}', function($id){
-
-$message = \App\Models\Message::find($id);
-
-if($message && !$message->seen_at){
-
-$message->seen_at = now();
-$message->save();
-
-broadcast(new \App\Events\MessageSent($message))->toOthers();
-
-}
-
-return response()->json(['success'=>true]);
-
-});
+       Route::post('/message/seen/{id}', [ChatController::class, 'markSeen']);
 
 
 
