@@ -29,6 +29,7 @@ use App\Http\Controllers\ClearChatController;
 use App\Http\Controllers\ChatSearchController;
 use App\Http\Controllers\PinChatController;
 use App\Http\Controllers\DeleteChatController;
+use App\Models\ChatParticipant;
 /*
 |--------------------------------------------------------------------------
 | PUBLIC ROUTES (No authentication required)
@@ -125,7 +126,7 @@ Route::get('/media/{message}', [\App\Http\Controllers\MediaDownloadController::c
 Route::get('/media/thumb/{message}', [MediaDownloadController::class, 'thumbnail'])
     ->middleware('auth.session');
 
-    
+
     Route::post('/download/start', [DownloadSessionController::class, 'start']);
 Route::post('/download/progress', [DownloadSessionController::class, 'progress']);
 Route::post('/download/complete', [DownloadSessionController::class, 'complete']);
@@ -181,12 +182,28 @@ Route::get('/chat/pinned',[PinChatController::class,'list']);
 
     Route::post('/chat/create', [ChatController::class, 'create']);
 Route::get('/chat/{chat}/more', [ChatController::class, 'loadMore']);
-    Route::post('/typing', function (Request $request) {
+
+Route::post('/typing', function (Request $request) {
 
     $user = \App\Helpers\AuthHelper::user();
 
-    if(!$user){
-        return response()->json([], 403);
+    if (!$user) {
+        return response()->json(['error' => 'Unauthorized'], 403);
+    }
+
+    $request->validate([
+        'chat_id' => 'required|integer'
+    ]);
+
+    // Check if user belongs to this chat
+    $isParticipant = ChatParticipant::where('chat_id', $request->chat_id)
+        ->where('user_id', $user->id)
+        ->exists();
+
+    if (!$isParticipant) {
+        return response()->json([
+            'error' => 'User is not a participant of this chat'
+        ], 403);
     }
 
     event(new \App\Events\UserTyping(
@@ -194,7 +211,9 @@ Route::get('/chat/{chat}/more', [ChatController::class, 'loadMore']);
         $user->id
     ));
 
-    return response()->json(['ok' => true]);
+    return response()->json([
+        'ok' => true
+    ]);
 });
 
 Route::post('/media/send', [App\Http\Controllers\MediaController::class, 'send']);
@@ -247,38 +266,14 @@ Route::post('/broadcasting/auth', function (Request $request) {
 })->middleware(['web']);
 
 
-Route::post('/message/delivered/{id}', function($id){
+Route::get('/reverblab', function () {
+    return view('reverblab');
+})->middleware(['web']);
 
-    $message = \App\Models\Message::find($id);
+Route::post('/message/delivered/{id}', [ChatController::class, 'markDelivered']);
 
-    if($message && !$message->delivered_at){
 
-        $message->delivered_at = now();
-        $message->save();
-
-        broadcast(new \App\Events\MessageSent($message))->toOthers();
-    }
-
-    return response()->json(['success'=>true]);
-
-});
-
-Route::post('/message/seen/{id}', function($id){
-
-$message = \App\Models\Message::find($id);
-
-if($message && !$message->seen_at){
-
-$message->seen_at = now();
-$message->save();
-
-broadcast(new \App\Events\MessageSent($message))->toOthers();
-
-}
-
-return response()->json(['success'=>true]);
-
-});
+       Route::post('/message/seen/{id}', [ChatController::class, 'markSeen']);
 
 
 

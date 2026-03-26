@@ -165,53 +165,205 @@ public function list()
         return response()->json([], 401);
     }
 
-    // Get chats where user participates
-    $chats = Chat::whereHas('participants', function ($q) use ($authId) {
-        $q->where('user_id', $authId);
-    })
-    ->with([
-        'participants.user'
-    ])
-    ->get();
+    // ✅ Get all chat IDs where this user participates
+    $chatIds = ChatParticipant::where('user_id', $authId)
+        ->pluck('chat_id')
+        ->toArray();
+
+    if (empty($chatIds)) {
+        return response()->json([]);
+    }
+
+    // ✅ FIX 1: No N+1 — load last message per chat in ONE query
+    $lastMessages = Message::whereIn('chat_id', $chatIds)
+        ->where(function ($q) use ($authId) {
+            $q->whereNull('deleted_for_users')
+              ->orWhereJsonDoesntContain('deleted_for_users', $authId);
+        })
+        ->where(function ($q) use ($authId) {
+            $q->whereNull('visible_to')
+              ->orWhereJsonContains('visible_to', (string) $authId);
+        })
+        ->orderBy('created_at', 'desc')
+        ->get()
+        ->groupBy('chat_id')
+        ->map(fn($msgs) => $msgs->first());
+
+    // ✅ FIX 2: Unread count respects cleared_at boundary — ONE query
+    $clearedChats = \App\Models\ClearedChat::where('user_id', $authId)
+        ->whereIn('chat_id', $chatIds)
+        ->pluck('cleared_at', 'chat_id');
+
+    $deletedChats = \App\Models\DeletedChat::where('user_id', $authId)
+        ->whereIn('chat_id', $chatIds)
+        ->pluck('deleted_at', 'chat_id');
+
+    // ✅ FIX 3: Get other participants in ONE query
+    $otherParticipants = ChatParticipant::whereIn('chat_id', $chatIds)
+        ->where('user_id', '!=', $authId)
+        ->with('user')
+        ->get()
+        ->keyBy('chat_id');
+
+    // ✅ FIX 4: Block check in ONE query
+    $otherUserIds = $otherParticipants->pluck('user_id')->toArray();
+
+    $blocks = \App\Models\UserBlock::where(function ($q) use ($authId, $otherUserIds) {
+            $q->where(function ($q2) use ($authId, $otherUserIds) {
+                $q2->where('blocker_id', $authId)
+                   ->whereIn('blocked_id', $otherUserIds);
+            })->orWhere(function ($q2) use ($authId, $otherUserIds) {
+                $q2->whereIn('blocker_id', $otherUserIds)
+                   ->where('blocked_id', $authId);
+            });
+        })
+        ->get();
+
+    $iBlockedIds    = $blocks->where('blocker_id', $authId)->pluck('blocked_id')->toArray();
+    $blockedByIds   = $blocks->where('blocked_id', $authId)->pluck('blocker_id')->toArray();
+
+    // ✅ FIX 5: Unread count per chat — ONE query for all chats
+    $allUnread = Message::whereIn('chat_id', $chatIds)
+        ->where('sender_id', '!=', $authId)
+        ->whereNull('seen_at')
+        ->where(function ($q) use ($authId) {
+            $q->whereNull('visible_to')
+              ->orWhereJsonContains('visible_to', (string) $authId);
+        })
+        ->where(function ($q) use ($authId) {
+            $q->whereNull('deleted_for_users')
+              ->orWhereJsonDoesntContain('deleted_for_users', $authId);
+        })
+        ->select('chat_id', 'created_at', DB::raw('COUNT(*) as count'))
+        ->groupBy('chat_id', 'created_at')
+        ->get();
 
     $result = [];
 
-    foreach ($chats as $chat) {
+    foreach ($chatIds as $chatId) {
 
-        // Get other participant
-        $otherParticipant = $chat->participants
-            ->where('user_id', '!=', $authId)
-            ->first();
+        $participant = $otherParticipants[$chatId] ?? null;
+        if (!$participant) continue;
 
-        if (!$otherParticipant) {
-            continue;
+        $otherUser = $participant->user;
+        if (!$otherUser) continue;
+
+        $isBlockedByThem = in_array($otherUser->id, $blockedByIds);
+        $iBlockedThem    = in_array($otherUser->id, $iBlockedIds);
+
+        // ✅ Get boundaries
+        $clearedAt  = $clearedChats[$chatId]  ?? null;
+        $deletedAt  = $deletedChats[$chatId]  ?? null;
+        $boundary   = collect(array_filter([$clearedAt, $deletedAt]))->max();
+
+        // ✅ Get last message
+        $lastMsg = $lastMessages[$chatId] ?? null;
+
+        // Skip if last message is before boundary
+        if ($boundary && $lastMsg && $lastMsg->created_at <= $boundary) {
+            $lastMsg = null;
         }
 
-        $otherUser = $otherParticipant->user;
+        // ✅ Format last message text
+        $lastMessageText = null;
+        if ($lastMsg) {
+            if ($lastMsg->deleted_for_everyone) {
+                $lastMessageText = 'This message was deleted';
+            } elseif ($lastMsg->media) {
+                $mime = $lastMsg->media->mime_type ?? '';
+                $lastMessageText = str_starts_with($mime, 'image') ? '📷 Photo'
+                    : (str_starts_with($mime, 'video') ? '🎥 Video'
+                    : (str_starts_with($mime, 'audio') ? '🎵 Audio'
+                    : '📄 File'));
+                if ($lastMsg->message) {
+                    $lastMessageText .= ' ' . $lastMsg->message;
+                }
+            } else {
+                $lastMessageText = $lastMsg->message;
+            }
+        }
 
-        // Get last message
-        $lastMessage = Message::where('chat_id', $chat->id)
-            ->orderBy('created_at', 'desc')
-            ->first();
+        // ✅ FIX 6: Correct unread count with boundary
+       $unreadCount = 0;
+$unreadQuery = Message::where('chat_id', $chatId)
+    ->where('sender_id', '!=', $authId)
+    ->whereNull('seen_at')
+    ->where(function ($q) use ($authId) {
+        $q->whereNull('visible_to')
+          ->orWhereJsonContains('visible_to', (string) $authId);
+    })
+    ->where(function ($q) use ($authId) {
+        $q->whereNull('deleted_for_users')
+          ->orWhereJsonDoesntContain('deleted_for_users', $authId);
+    });
 
-        // Count unread
-        $unreadCount = Message::where('chat_id', $chat->id)
-            ->where('sender_id', '!=', $authId)
-            ->whereNull('seen_at')
-            ->count();
+// respect cleared / deleted boundary
+if ($boundary) {
+    $unreadQuery->where('created_at', '>', $boundary);
+}
 
-        $result[] = [
-            'chat_id' => $chat->id,
-            'user' => [
-                'id' => $otherUser->id,
-                'name' => $otherUser->name,
-                'profile_photo' => $otherUser->profile_photo
-            ],
-            'last_message' => $lastMessage->message ?? null,
-            'last_message_time' => $lastMessage->created_at ?? null,
-            'unread_count' => $unreadCount
-        ];
+$unreadCount = $unreadQuery->count();
+
+        // ✅ FIX 7: Format time properly — both raw and human readable
+        $lastMessageTime          = $lastMsg?->created_at ?? null;
+        $lastMessageTimeFormatted = null;
+
+        if ($lastMessageTime) {
+            $dt = \Carbon\Carbon::parse($lastMessageTime);
+            if ($dt->isToday()) {
+                $lastMessageTimeFormatted = $dt->format('g:i A');
+            } elseif ($dt->isYesterday()) {
+                $lastMessageTimeFormatted = 'Yesterday';
+            } elseif ($dt->isCurrentWeek()) {
+                $lastMessageTimeFormatted = $dt->format('l');
+            } else {
+                $lastMessageTimeFormatted = $dt->format('d/m/Y');
+            }
+        }
+
+       $result[] = [
+    'chat_id' => $chatId,
+
+    // ✅ NEW (future-proof for groups later)
+    'chat_type' => 'private',
+
+    'user' => [
+        'id'            => $otherUser->id,
+        'name'          => $otherUser->name,
+        'profile_photo' => $otherUser->profile_photo ?? '/default.png',
+        'last_seen'     => $isBlockedByThem ? null : $otherUser->last_seen,
+        'is_online'     => !$isBlockedByThem && $otherUser->last_seen
+                            && \Carbon\Carbon::parse($otherUser->last_seen)
+                                ->diffInSeconds(now()) < 60,
+    ],
+
+    'last_message' => $lastMessageText,
+
+    // ✅ NEW (frontend shows "You:")
+    'last_message_sender_id' => $lastMsg?->sender_id,
+
+    // ✅ NEW (frontend shows 📷 photo / 🎥 video)
+    'last_message_type' => $lastMsg?->type ?? 'text',
+
+    'last_message_time' => $lastMessageTime,
+    'last_message_time_formatted' => $lastMessageTimeFormatted,
+
+    'unread_count' => $unreadCount,
+
+    // ✅ NEW (for pinned chat UI later)
+    'is_pinned' => false,
+
+    'i_blocked' => $iBlockedThem,
+    'blocked_by_them' => $isBlockedByThem,
+];
     }
+
+    // ✅ FIX 12: Sort by last message time — newest first
+    usort($result, function ($a, $b) {
+        if (!$a['last_message_time']) return 1;
+        if (!$b['last_message_time']) return -1;
+        return $b['last_message_time'] <=> $a['last_message_time'];
+    });
 
     return response()->json($result);
 }
@@ -617,6 +769,22 @@ public function edit(Request $request, Message $message)
         return response()->json(['error' => 'Unauthorized'], 403);
     }
 
+       // 15 min edit limit
+    if ($message->created_at->diffInMinutes(now()) > 15) {
+        return response()->json(['error' => 'Edit window expired'], 403);
+    }
+
+
+      $request->validate([
+        'message' => 'required|string'
+    ]);
+
+    // ✅ Save original message only on first edit
+    if (!$message->original_message) {
+        $message->original_message = $message->message;
+    }
+
+
     $otherParticipant = \App\Models\ChatParticipant::where('chat_id', $message->chat_id)
         ->where('user_id', '!=', $this->getAuthId())
         ->first();
@@ -636,11 +804,15 @@ public function edit(Request $request, Message $message)
         })->orderBy('created_at','asc')->first();
 // AFTER
 if ($block) {
-    if (!$message->block_time) {
-        $message->block_time         = $block->created_at;
-        $message->original_message   = $message->message;
-        $message->original_edited_at = $message->edited_at; // null if never edited before block, timestamp if it was
-    }
+
+   if (!$message->block_time) {
+    $message->block_time = $block->created_at;
+
+    // store last visible message before block
+    $message->original_message = $message->message;
+    $message->original_edited_at = $message->edited_at;
+}
+
     $shouldBroadcast = false;
 }
     }
@@ -720,7 +892,7 @@ public function deleteForMe($id)
     $message->save();
 
     \App\Models\PinnedMessage::where('message_id', $message->id)->where('user_id', $userId)->delete();
-   
+
 
     return response()->json(['success' => true]);
 }
@@ -831,6 +1003,55 @@ public function markAllDelivered()
         $msg->save();
         broadcast(new \App\Events\MessageSent($msg))->toOthers();
     }
+
+    return response()->json(['success' => true]);
+}
+public function markDelivered($id)
+{
+    $message = Message::find($id);
+
+    if (!$message) {
+        return response()->json([
+            'success' => false,
+            'error'   => 'Message not found'
+        ], 404);
+    }
+
+    if ($message->delivered_at) {
+        return response()->json([
+            'success' => false,
+            'error'   => 'Already delivered'
+        ], 200);
+    }
+
+    $message->delivered_at = now();
+    $message->save();
+    broadcast(new MessageSent($message))->toOthers();
+
+    return response()->json(['success' => true]);
+}
+
+public function markSeen($id)
+{
+    $message = Message::find($id);
+
+    if (!$message) {
+        return response()->json([
+            'success' => false,
+            'error'   => 'Message not found'
+        ], 404);
+    }
+
+    if ($message->seen_at) {
+        return response()->json([
+            'success' => false,
+            'error'   => 'Already seen'
+        ], 200);
+    }
+
+    $message->seen_at = now();
+    $message->save();
+    broadcast(new MessageSent($message))->toOthers();
 
     return response()->json(['success' => true]);
 }
