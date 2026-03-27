@@ -20,7 +20,7 @@ window.EchoInstance = new EchoConstructor({
     wssPort: wsPort,
     forceTLS: forceTLS,
     enabledTransports: ['ws', 'wss'],
-
+authEndpoint: '/broadcasting/auth', 
     authorizer: (channel, options) => ({
         authorize: (socketId, callback) => {
 

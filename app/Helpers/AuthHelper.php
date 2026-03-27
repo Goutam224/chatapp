@@ -28,7 +28,7 @@ class AuthHelper
         // For browser users (your existing UI)
         // Exactly what your app does now
         // ─────────────────────────────────────────
-        $token = session('auth_token');
+     $token = session('auth_token');
 
         if (!$token) {
             return null;

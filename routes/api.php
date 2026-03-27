@@ -59,6 +59,7 @@ Route::post('/auth/token', [
 ]);
 
 
+
 /*
 |--------------------------------------------------------------------------
 | ALL ROUTES BELOW REQUIRE: Authorization: Bearer {token}

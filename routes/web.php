@@ -250,19 +250,17 @@ Route::post('/messages/mark-all-delivered', [ChatController::class, 'markAllDeli
 
 
 
-Route::post('/broadcasting/auth', function (Request $request) {
-
-    $user = AuthHelper::user();
-
-    if (!$user) {
-        return response()->json(['error' => 'User not authenticated'], 403);
-    }
-
-    // THIS IS THE CRITICAL LINE
-    Auth::login($user);
-
-    return Broadcast::auth($request);
-
+Route::post('/broadcasting/auth/debug', function (Request $request) {
+    return response()->json([
+        'has_session'   => $request->hasSession(),
+        'session_keys'  => $request->hasSession() ? array_keys($request->session()->all()) : [],
+        'auth_token'    => $request->hasSession() ? $request->session()->get('auth_token') : null,
+        'bearer'        => $request->bearerToken(),
+        'content_type'  => $request->header('Content-Type'),
+        'channel_name'  => $request->input('channel_name'),
+        'socket_id'     => $request->input('socket_id'),
+        'all_input'     => $request->all(),
+    ]);
 })->middleware(['web']);
 
 

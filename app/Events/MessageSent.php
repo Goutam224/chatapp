@@ -37,29 +37,30 @@ class MessageSent implements ShouldBroadcastNow
             ->value('user_id');
     }
 
-    public function broadcastOn()
-    {
-        if (!$this->receiverId) return [];
+ public function broadcastOn()
+{
+    if (!$this->receiverId) return [];
 
-        // ✅ check BOTH directions
-        $anyBlockExists = UserBlock::where(function($q) {
-            $q->where(function($q2) {
-                $q2->where('blocker_id', $this->receiverId)
-                   ->where('blocked_id', $this->message->sender_id);
-            })->orWhere(function($q2) {
-                $q2->where('blocker_id', $this->message->sender_id)
-                   ->where('blocked_id', $this->receiverId);
-            });
-        })->exists();
+    // ✅ check BOTH directions
+    $anyBlockExists = UserBlock::where(function($q) {
+        $q->where(function($q2) {
+            $q2->where('blocker_id', $this->receiverId)
+               ->where('blocked_id', $this->message->sender_id);
+        })->orWhere(function($q2) {
+            $q2->where('blocker_id', $this->message->sender_id)
+               ->where('blocked_id', $this->receiverId);
+        });
+    })->exists();
 
-        if ($anyBlockExists) return [];
+    if ($anyBlockExists) return [];
 
-        return [
-            new PrivateChannel('chat.' . $this->message->chat_id),
-            new PrivateChannel('user.messages.' . $this->receiverId),
-        ];
-    }
-
+    // ✅ ONLY receiver's personal channel
+    // sender already has message from API response
+    // chat channel removed — prevents sender seeing their own event
+    return [
+        new PrivateChannel('user.messages.' . $this->receiverId),
+    ];
+}
     public function broadcastAs()
     {
         return 'message.sent';
@@ -96,7 +97,9 @@ class MessageSent implements ShouldBroadcastNow
                 'chat_id'      => $this->message->chat_id,
                 'sender_id'    => $this->message->sender_id,
                 'sender_name'  => $this->message->sender->name ?? 'User',
-                'sender_photo' => $this->message->sender->profile_photo ?? '/default.png',
+              'sender_photo' => $this->message->sender->photo
+    ?? $this->message->sender->profile_photo
+    ?? '/default.png',
                 'message'      => $this->message->message,
                 'type'         => $this->message->type,
                 'media'        => $this->message->media,

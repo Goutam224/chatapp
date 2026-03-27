@@ -12,7 +12,7 @@ return [
     | any of the connections defined in the "connections" array below.
     |
     | Supported: "reverb", "pusher", "ably", "redis", "log", "null"
-    |
+    | 
     */
 
     'default' => env('BROADCAST_CONNECTION', 'reverb'),
