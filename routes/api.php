@@ -20,7 +20,9 @@ use App\Http\Controllers\DownloadSessionController;
 use App\Http\Controllers\MediaDownloadController;
 use App\Http\Controllers\MyProfileController;
 use App\Http\Controllers\UserProfileController;
+
 use App\Models\ChatParticipant;
+
 /*
 |==========================================================================
 | CHAT ENGINE — EXTERNAL API ROUTES
@@ -218,6 +220,7 @@ Route::middleware(['auth.session'])->group(function () {
     |
     */
 
+
 Route::post('/typing', function (Request $request) {
 
     $user = \App\Helpers\AuthHelper::user();
@@ -250,6 +253,14 @@ Route::post('/typing', function (Request $request) {
         'ok' => true
     ]);
 });
+
+    Route::post('/typing', function (Request $request) {
+        $user = AuthHelper::user();
+        if (!$user) return response()->json([], 403);
+        event(new \App\Events\UserTyping($request->chat_id, $user->id));
+        return response()->json(['ok' => true]);
+    });
+
 
 
     /*
@@ -550,5 +561,5 @@ Route::any('/tus/upload/{token}', [TusController::class, 'server']);
 |   .user.typing       → someone is typing  { userId, chatId }
 |   .user.blocked      → block/unblock action { blockerId, blockedId, action }
 |
-|==========================================================================
+|=========================================================================
 */
