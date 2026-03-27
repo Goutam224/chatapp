@@ -926,23 +926,73 @@ public function deleteForEveryone($id)
     'server_time' => now()
 ]);
 }
+
+
 public function deleteForMe($id)
 {
     $message = Message::find($id);
-    if (!$message) return response()->json(['error' => 'Not found'], 404);
 
-    $userId  = $this->getAuthId();
+    // 1️⃣ Message must exist
+    if (!$message) {
+        return response()->json([
+            'success' => false,
+            'error' => 'Message not found'
+        ], 404);
+    }
+
+    $userId = $this->getAuthId();
+
+    // 2️⃣ Ensure user belongs to the chat
+    $participant = \App\Models\ChatParticipant::where('chat_id', $message->chat_id)
+        ->where('user_id', $userId)
+        ->exists();
+
+    if (!$participant) {
+        return response()->json([
+            'success' => false,
+            'error' => 'Not part of this chat'
+        ], 403);
+    }
+
+    // 3️⃣ Decode deleted_for_users safely
     $deleted = $message->deleted_for_users ?? [];
-    if (!is_array($deleted)) $deleted = json_decode($deleted, true) ?? [];
-    if (!in_array($userId, $deleted)) $deleted[] = $userId;
+
+    if (!is_array($deleted)) {
+        $deleted = json_decode($deleted, true) ?? [];
+    }
+
+    // 4️⃣ Prevent deleting again
+    if (in_array($userId, $deleted)) {
+        return response()->json([
+            'success' => false,
+            'error' => 'Message already deleted for this user',
+            'message_id' => $message->id,
+            'chat_id' => $message->chat_id
+        ], 409);
+    }
+
+    // 5️⃣ Add user to deleted list
+    $deleted[] = $userId;
 
     $message->deleted_for_users = $deleted;
     $message->save();
 
-    \App\Models\PinnedMessage::where('message_id', $message->id)->where('user_id', $userId)->delete();
+    // 6️⃣ Remove pinned message only for this user
+    \App\Models\PinnedMessage::where('message_id', $message->id)
+        ->where('user_id', $userId)
+        ->delete();
 
-
-    return response()->json(['success' => true]);
+    // 7️⃣ Return developer-friendly response
+    return response()->json([
+        'success' => true,
+        'event' => 'message.deleted',
+        'type' => 'me',
+        'message_id' => $message->id,
+        'chat_id' => $message->chat_id,
+        'deleted_by' => $userId,
+        'user_id' => $userId,
+        'server_time' => now()
+    ]);
 }
 
 public function info($id)
