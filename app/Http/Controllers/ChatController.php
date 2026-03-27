@@ -992,42 +992,92 @@ public function deleteForMe($id)
         'deleted_by' => $userId,
         'user_id' => $userId,
         'server_time' => now()
-        
+
     ]);
 }
 
 public function info($id)
 {
-    $message = \App\Models\Message::with('media')->findOrFail($id);
-    $msgDate = \Carbon\Carbon::parse($message->created_at);
+    try {
 
-    if ($msgDate->isToday())           $label = "Today";
-    elseif ($msgDate->isYesterday())   $label = "Yesterday";
-    elseif ($msgDate->isCurrentWeek()) $label = $msgDate->format('l');
-    else                               $label = $msgDate->format('d/m/Y');
+        $message = \App\Models\Message::with('media')->findOrFail($id);
 
-    $type = 'text'; $media = null;
-    if ($message->media) {
-        $mime = $message->media->mime_type ?? '';
-        if (str_starts_with($mime, 'image'))      $type = 'image';
-        elseif (str_starts_with($mime, 'video'))  $type = 'video';
-        elseif (str_starts_with($mime, 'audio'))  $type = 'audio';
-        else                                       $type = 'file';
-        $media = $message->media;
+        // SECURITY CHECK: user must belong to this chat
+        $userId = request()->user()->id;
+
+        $participant = \App\Models\ChatParticipant::where('chat_id', $message->chat_id)
+            ->where('user_id', $userId)
+            ->exists();
+
+        if (!$participant) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Unauthorized access'
+            ], 403);
+        }
+
+        $msgDate = \Carbon\Carbon::parse($message->created_at);
+
+        if ($msgDate->isToday())           $label = "Today";
+        elseif ($msgDate->isYesterday())   $label = "Yesterday";
+        elseif ($msgDate->isCurrentWeek()) $label = $msgDate->format('l');
+        else                               $label = $msgDate->format('d/m/Y');
+
+        $type = 'text';
+        $media = null;
+
+        if ($message->media) {
+            $mime = $message->media->mime_type ?? '';
+
+            if (str_starts_with($mime, 'image'))      $type = 'image';
+            elseif (str_starts_with($mime, 'video'))  $type = 'video';
+            elseif (str_starts_with($mime, 'audio'))  $type = 'audio';
+            else                                      $type = 'file';
+
+            $media = $message->media;
+        }
+
+        return response()->json([
+            'success' => true,
+
+            // Added identifiers (important for external apps)
+            'message_id' => $message->id,
+            'chat_id' => $message->chat_id,
+            'sender_id' => $message->sender_id,
+'is_sender' => $message->sender_id === $userId,
+            // your existing response fields
+            'type'         => $type,
+            'media'        => $media,
+            'file_name'    => $media?->file_name,
+            'file_size'    => $media?->file_size ?? $media?->size,
+            'file_ext'     => $media?->file_name ? strtoupper(pathinfo($media->file_name, PATHINFO_EXTENSION)) : 'FILE',
+            'message'      => $message->message,
+            'reply_to' => $message->reply_to,
+            'time'         => $msgDate->format('g:i A'),
+            'date_label'   => $label,
+
+            // timestamps
+            'sent_at' => $message->sent_at ? \Carbon\Carbon::parse($message->sent_at)->toISOString() : null,
+            'delivered_at' => $message->delivered_at ? \Carbon\Carbon::parse($message->delivered_at)->format('M d, g:i A') : null,
+            'seen_at'      => $message->seen_at ? \Carbon\Carbon::parse($message->seen_at)->format('M d, g:i A') : null,
+
+            // additional useful message states
+            'edited_at' => $message->edited_at,
+            'deleted_for_everyone' => (bool) $message->deleted_for_everyone,
+
+            // server time for client sync
+            'server_time' => now()->toISOString()
+
+        ]);
+
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+
+        return response()->json([
+            'success' => false,
+            'error' => 'Message not found'
+        ], 404);
+
     }
-
-    return response()->json([
-        'type'         => $type,
-        'media'        => $media,
-        'file_name'    => $media?->file_name,
-        'file_size'    => $media?->file_size ?? $media?->size,
-        'file_ext'     => $media?->file_name ? strtoupper(pathinfo($media->file_name, PATHINFO_EXTENSION)) : 'FILE',
-        'message'      => $message->message,
-        'time'         => $msgDate->format('g:i A'),
-        'date_label'   => $label,
-        'delivered_at' => $message->delivered_at ? \Carbon\Carbon::parse($message->delivered_at)->format('M d, g:i A') : null,
-        'seen_at'      => $message->seen_at ? \Carbon\Carbon::parse($message->seen_at)->format('M d, g:i A') : null,
-    ]);
 }
 
 public function loadAroundMessage($messageId)
