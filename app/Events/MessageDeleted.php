@@ -31,12 +31,14 @@ class MessageDeleted implements ShouldBroadcastNow
         return 'message.deleted';
     }
 
-    public function broadcastWith()
-    {
-        return [
-            'message_id' => $this->messageId,
-            'type' => $this->type,
-            'user_id' => $this->userId,
-        ];
-    }
+   public function broadcastWith()
+{
+    return [
+        'message_id' => $this->messageId,
+        'chat_id' => $this->chatId,     // new field
+        'type' => $this->type,
+        'user_id' => $this->userId,     // keep this (UI already uses it)
+        'deleted_by' => $this->userId   // optional alias for developers
+    ];
+}
 }

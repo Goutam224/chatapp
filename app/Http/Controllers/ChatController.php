@@ -827,57 +827,105 @@ if ($block) {
 
     return response()->json($message);
 }
-
 public function deleteForEveryone($id)
 {
     $message = Message::find($id);
-    if (!$message) return response()->json(['error' => 'Not found'], 404);
-    if ($message->sender_id != $this->getAuthId()) return response()->json(['error' => 'Unauthorized'], 403);
-    if ($message->created_at->diffInMinutes(now()) > 15) return response()->json(['error' => 'Expired'], 403);
+
+    if (!$message)
+        return response()->json(['error' => 'Not found'], 404);
+
+    // check chat participant
+    $participant = \App\Models\ChatParticipant::where('chat_id',$message->chat_id)
+        ->where('user_id',$this->getAuthId())
+        ->exists();
+
+    if(!$participant)
+        return response()->json(['error'=>'Not part of this chat'],403);
+
+    if ($message->sender_id != $this->getAuthId())
+        return response()->json(['error' => 'Unauthorized'], 403);
+
+    if ($message->deleted_for_everyone)
+        return response()->json(['error'=>'Message already deleted'],409);
+
+    if ($message->created_at && $message->created_at->diffInMinutes(now()) > 15)
+        return response()->json(['error' => 'Expired'], 403);
+
 
     $otherParticipant = \App\Models\ChatParticipant::where('chat_id', $message->chat_id)
         ->where('user_id', '!=', $this->getAuthId())
         ->first();
 
     $blockExists = false;
+
     if ($otherParticipant) {
+
         $blockExists = \App\Models\UserBlock::where(function($q) use ($otherParticipant) {
+
             $q->where(function($q2) use ($otherParticipant) {
+
                 $q2->where('blocker_id', $this->getAuthId())
                    ->where('blocked_id', $otherParticipant->user_id);
+
             })->orWhere(function($q2) use ($otherParticipant) {
+
                 $q2->where('blocker_id', $otherParticipant->user_id)
                    ->where('blocked_id', $this->getAuthId());
+
             });
+
         })->exists();
     }
-if ($blockExists) {
-    $message->deleted_for_everyone = true;
-    $message->deleted_at           = now();
-    $message->block_time = now();
-    if (is_null($message->original_message)) {
-        $message->original_message = $message->message;
+
+
+    if ($blockExists) {
+
+        $message->deleted_for_everyone = true;
+        $message->deleted_at = now();
+        $message->block_time = now();
+
+        if (is_null($message->original_message)) {
+            $message->original_message = $message->message;
+        }
+
+        $message->save();
+
+        \App\Models\PinnedMessage::where('message_id', $message->id)->delete();
+
+        broadcast(new \App\Events\MessageDeleted($message->id,$message->chat_id,'everyone',$this->getAuthId()));
+
+      return response()->json([
+    'success' => true,
+    'message_id' => $message->id,
+    'chat_id' => $message->chat_id,
+    'type' => 'everyone',
+    'deleted_by' => $this->getAuthId(),
+    'deleted_at' => $message->deleted_at,
+    'blocked_context' => true
+]);
     }
-    $message->save();
 
-    \App\Models\PinnedMessage::where('message_id', $message->id)->delete();
-
-    broadcast(new \App\Events\MessageDeleted($message->id, $message->chat_id, 'everyone', $this->getAuthId()));
-
-    return response()->json(['success' => true, 'deleted_for_me_only' => true]);
-}
 
     $message->deleted_for_everyone = true;
-    $message->deleted_at           = now();
+    $message->deleted_at = now();
     $message->save();
 
     \App\Models\PinnedMessage::where('message_id', $message->id)->delete();
 
-    broadcast(new \App\Events\MessageDeleted($message->id, $message->chat_id, 'everyone', $this->getAuthId()));
+    broadcast(new \App\Events\MessageDeleted($message->id,$message->chat_id,'everyone',$this->getAuthId()));
 
-    return response()->json(['success' => true]);
+ return response()->json([
+    'success' => true,
+    'event' => 'message.deleted',
+    'message_id' => $message->id,
+    'chat_id' => $message->chat_id,
+    'type' => 'everyone',
+    'deleted_by' => $this->getAuthId(),
+    'user_id' => $this->getAuthId(),
+    'deleted_at' => $message->deleted_at,
+    'server_time' => now()
+]);
 }
-
 public function deleteForMe($id)
 {
     $message = Message::find($id);
