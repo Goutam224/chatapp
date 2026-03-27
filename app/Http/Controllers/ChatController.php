@@ -992,6 +992,7 @@ public function deleteForMe($id)
         'deleted_by' => $userId,
         'user_id' => $userId,
         'server_time' => now()
+        
     ]);
 }
 
