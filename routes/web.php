@@ -296,29 +296,19 @@ Route::post('/message/delete/everyone/{id}', [ChatController::class, 'deleteForE
 
 Route::post('/message/delete/me/{id}', [ChatController::class, 'deleteForMe']);
 
-
 Route::post('/user/update-last-seen', function () {
-
     $user = \App\Helpers\AuthHelper::user();
-
     if ($user) {
-
         \App\Models\User::where('id', $user->id)
-            ->update([
-                'last_seen' => now()
-            ]);
+            ->update(['last_seen' => now()]);
 
-       Log::info("Last seen updated for user ID: " . $user->id);
-
+        // ✅ fire the event
+        $user->refresh(); // get updated last_seen
+        broadcast(new \App\Events\UserOnlineStatusUpdated($user));
 
         return response()->json(['status' => true]);
-
     }
-
-    Log::info("Last seen update failed: user not authenticated");
-
     return response()->json(['status' => false], 401);
-
 });
 
 Route::get('/user/last-seen/{id}', function ($id) {

@@ -364,14 +364,22 @@ Route::post('/typing', [TypingController::class, 'typing']);
     | GET  /user/last-seen/{user_id}
     |
     */
-    Route::post('/user/update-last-seen', function () {
-        $user = AuthHelper::user();
-        if ($user) {
-            \App\Models\User::where('id', $user->id)->update(['last_seen' => now()]);
-            return response()->json(['status' => true]);
-        }
-        return response()->json(['status' => false], 401);
-    });
+
+Route::post('/user/update-last-seen', function () {
+    $user = \App\Helpers\AuthHelper::user();
+    if ($user) {
+        \App\Models\User::where('id', $user->id)
+            ->update(['last_seen' => now()]);
+
+        // ✅ fire the event
+        $user->refresh(); // get updated last_seen
+        broadcast(new \App\Events\UserOnlineStatusUpdated($user));
+
+        return response()->json(['status' => true]);
+    }
+    return response()->json(['status' => false], 401);
+});
+
 
     Route::get('/user/last-seen/{id}', function ($id) {
         $authId = AuthHelper::id();

@@ -45,12 +45,14 @@ class UserOnlineStatusUpdated implements ShouldBroadcastNow
         return 'user.online_status';
     }
 
-    public function broadcastWith(): array
-    {
-        return [
-            'user_id'   => $this->user->id,
-            'last_seen' => $this->user->last_seen,
-            'is_online' => true,
-        ];
-    }
+  public function broadcastWith(): array
+{
+    $lastSeen = \Carbon\Carbon::parse($this->user->last_seen);
+    
+    return [
+        'user_id'   => $this->user->id,
+        'last_seen' => $this->user->last_seen,
+        'is_online' => $lastSeen->diffInMinutes(now()) < 2,
+    ];
+}
 }
