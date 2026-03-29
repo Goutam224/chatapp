@@ -20,7 +20,7 @@ use App\Http\Controllers\DownloadSessionController;
 use App\Http\Controllers\MediaDownloadController;
 use App\Http\Controllers\MyProfileController;
 use App\Http\Controllers\UserProfileController;
-
+use App\Http\Controllers\TypingController;
 use App\Models\ChatParticipant;
 
 /*
@@ -221,46 +221,8 @@ Route::middleware(['auth.session'])->group(function () {
     |
     */
 
+Route::post('/typing', [TypingController::class, 'typing']);
 
-Route::post('/typing', function (Request $request) {
-
-    $user = \App\Helpers\AuthHelper::user();
-
-    if (!$user) {
-        return response()->json(['error' => 'Unauthorized'], 403);
-    }
-
-    $request->validate([
-        'chat_id' => 'required|integer'
-    ]);
-
-    // Check if user belongs to this chat
-    $isParticipant = ChatParticipant::where('chat_id', $request->chat_id)
-        ->where('user_id', $user->id)
-        ->exists();
-
-    if (!$isParticipant) {
-        return response()->json([
-            'error' => 'User is not a participant of this chat'
-        ], 403);
-    }
-
-    event(new \App\Events\UserTyping(
-        $request->chat_id,
-        $user->id
-    ));
-
-    return response()->json([
-        'ok' => true
-    ]);
-});
-
-    Route::post('/typing', function (Request $request) {
-        $user = AuthHelper::user();
-        if (!$user) return response()->json([], 403);
-        event(new \App\Events\UserTyping($request->chat_id, $user->id));
-        return response()->json(['ok' => true]);
-    });
 
 
 

@@ -733,12 +733,46 @@ public function send(Request $request)
 
         if ($isBlockedBy) {
             $message = Message::create(['chat_id' => $request->chat_id, 'sender_id' => $authId, 'message' => $request->message, 'sent_at' => now(), 'visible_to' => [$authId]]);
-            return response()->json(['success' => true, 'message' => $message->load('sender')]);
+           return response()->json([
+    'success' => true,
+    'message' => [
+        'id'        => $message->id,
+        'chat_id'   => $message->chat_id,
+        'sender_id' => $message->sender_id,
+        'message'   => $message->message,
+        'type'      => $message->type,
+        'sent_at'   => $message->sent_at,
+        'sender'    => [
+            'id'    => $message->sender->id,
+            'name'  => $message->sender->name,
+            'photo' => $message->sender->photo
+                        ?? $message->sender->profile_photo
+                        ?? null,
+        ],
+    ]
+]);
         }
 
         if ($isBlocking) {
             $message = Message::create(['chat_id' => $request->chat_id, 'sender_id' => $authId, 'message' => $request->message, 'sent_at' => now(), 'visible_to' => [$authId]]);
-            return response()->json(['success' => true, 'message' => $message->load('sender')]);
+          return response()->json([
+    'success' => true,
+    'message' => [
+        'id'        => $message->id,
+        'chat_id'   => $message->chat_id,
+        'sender_id' => $message->sender_id,
+        'message'   => $message->message,
+        'type'      => $message->type,
+        'sent_at'   => $message->sent_at,
+        'sender'    => [
+            'id'    => $message->sender->id,
+            'name'  => $message->sender->name,
+            'photo' => $message->sender->photo
+                        ?? $message->sender->profile_photo
+                        ?? null,
+        ],
+    ]
+]);
         }
     }
 
@@ -758,9 +792,40 @@ public function send(Request $request)
 
     \App\Services\LinkPreviewService::generate($message);
     $message = Message::with('sender', 'linkPreview')->find($message->id);
-    broadcast(new \App\Events\MessageSent($message->load('linkPreview')))->toOthers();
+  broadcast(new \App\Events\MessageSent($message->load('linkPreview')))->toOthers();
 
-    return response()->json(['success' => true, 'message' => $message->load('sender', 'linkPreview')]);
+return response()->json([
+    'success' => true,
+    'message' => [
+        'id'           => $message->id,
+        'chat_id'      => $message->chat_id,
+        'sender_id'    => $message->sender_id,
+        'message'      => $message->message,
+        'type'         => $message->type,
+        'reply_to'     => $message->reply_to,
+        'sent_at'      => $message->sent_at,
+        'delivered_at' => $message->delivered_at,
+        'seen_at'      => $message->seen_at,
+        'edited_at'    => $message->edited_at,
+        'deleted_at'   => $message->deleted_at,
+        'link_preview' => $message->linkPreview,
+        'media'        => $message->media,
+        'reply'        => $message->reply ? [
+            'id'          => $message->reply->id,
+            'message'     => $message->reply->message,
+            'sender_name' => $message->reply->sender->name ?? 'User',
+            'type'        => $message->reply->type,
+            'media'       => $message->reply->media,
+        ] : null,
+        'sender' => [
+            'id'    => $message->sender->id,
+            'name'  => $message->sender->name,
+            'photo' => $message->sender->photo
+                        ?? $message->sender->profile_photo
+                        ?? null,
+        ],
+    ]
+]);
 }
 
 public function edit(Request $request, Message $message)

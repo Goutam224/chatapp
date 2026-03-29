@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;800&display=swap');
 
@@ -304,7 +305,7 @@ function connect() {
     forceTLS: false,
     enabledTransports: ['ws'],
     cluster: 'mt1',
-    authEndpoint: (apiBase || 'http://localhost:8000') + '/broadcasting/auth',
+    authEndpoint: (apiBase || window.location.origin) + '/broadcasting/auth',
     auth: {
       headers: {
         Authorization: 'Bearer ' + token,

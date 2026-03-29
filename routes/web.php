@@ -29,6 +29,7 @@ use App\Http\Controllers\ClearChatController;
 use App\Http\Controllers\ChatSearchController;
 use App\Http\Controllers\PinChatController;
 use App\Http\Controllers\DeleteChatController;
+use App\Http\Controllers\TypingController;
 use App\Models\ChatParticipant;
 /*
 |--------------------------------------------------------------------------
@@ -182,39 +183,7 @@ Route::get('/chat/pinned',[PinChatController::class,'list']);
 
     Route::post('/chat/create', [ChatController::class, 'create']);
 Route::get('/chat/{chat}/more', [ChatController::class, 'loadMore']);
-
-Route::post('/typing', function (Request $request) {
-
-    $user = \App\Helpers\AuthHelper::user();
-
-    if (!$user) {
-        return response()->json(['error' => 'Unauthorized'], 403);
-    }
-
-    $request->validate([
-        'chat_id' => 'required|integer'
-    ]);
-
-    // Check if user belongs to this chat
-    $isParticipant = ChatParticipant::where('chat_id', $request->chat_id)
-        ->where('user_id', $user->id)
-        ->exists();
-
-    if (!$isParticipant) {
-        return response()->json([
-            'error' => 'User is not a participant of this chat'
-        ], 403);
-    }
-
-    event(new \App\Events\UserTyping(
-        $request->chat_id,
-        $user->id
-    ));
-
-    return response()->json([
-        'ok' => true
-    ]);
-});
+Route::post('/typing', [TypingController::class, 'typing']);
 
 Route::post('/media/send', [App\Http\Controllers\MediaController::class, 'send']);
 
@@ -251,18 +220,64 @@ Route::post('/messages/mark-all-delivered', [ChatController::class, 'markAllDeli
 
 
 Route::post('/broadcasting/auth/debug', function (Request $request) {
+    $webUser = \Illuminate\Support\Facades\Auth::guard('web')->user();
+    $sessionUserId = $request->session()->get('login_web_59ba36addc2b2f9401580f014c7f58ea4e30989d');
+    
     return response()->json([
-        'has_session'   => $request->hasSession(),
-        'session_keys'  => $request->hasSession() ? array_keys($request->session()->all()) : [],
-        'auth_token'    => $request->hasSession() ? $request->session()->get('auth_token') : null,
-        'bearer'        => $request->bearerToken(),
-        'content_type'  => $request->header('Content-Type'),
-        'channel_name'  => $request->input('channel_name'),
-        'socket_id'     => $request->input('socket_id'),
-        'all_input'     => $request->all(),
+        'has_session'      => $request->hasSession(),
+        'session_keys'     => $request->hasSession() ? array_keys($request->session()->all()) : [],
+        'auth_token'       => $request->hasSession() ? $request->session()->get('auth_token') : null,
+        'bearer'           => $request->bearerToken(),
+        'web_guard_user'   => $webUser ? $webUser->id : null,
+        'login_web_key'    => $sessionUserId,
+        'channel_name'     => $request->input('channel_name'),
+        'socket_id'        => $request->input('socket_id'),
     ]);
 })->middleware(['web']);
 
+
+Route::post('/broadcasting/auth', function (Request $request) {
+
+    $user = null;
+
+    // ── Priority 1: Bearer token (external apps / Reverb Lab) ──
+    if ($request->bearerToken()) {
+        $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken(
+            $request->bearerToken()
+        );
+        if ($accessToken) {
+            $user = $accessToken->tokenable;
+        }
+    }
+
+    // ── Priority 2: Laravel web guard (OTP browser users) ──
+    // This reads the login_web_xxx session key automatically
+    if (!$user) {
+        $user = \Illuminate\Support\Facades\Auth::guard('web')->user();
+    }
+
+    // ── Priority 3: auth_token session key (fallback) ──
+    if (!$user) {
+        $sessionToken = $request->session()->get('auth_token');
+        if ($sessionToken) {
+            $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken(
+                $sessionToken
+            );
+            if ($accessToken) {
+                $user = $accessToken->tokenable;
+            }
+        }
+    }
+
+    if (!$user) {
+        return response()->json(['error' => 'Unauthorized'], 403);
+    }
+
+    \Illuminate\Support\Facades\Auth::login($user);
+
+    return \Illuminate\Support\Facades\Broadcast::auth($request);
+
+})->middleware(['web']);
 
 Route::get('/reverblab', function () {
     return view('reverblab');
