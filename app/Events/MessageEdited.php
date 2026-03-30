@@ -34,13 +34,14 @@ public function broadcastWith()
             'sender_id' => $this->message->sender_id,
             'message' => $this->message->message,
 
-            'edited_at' => $this->message->edited_at,
-
-            // FIX: do NOT use ->format()
-            'delivered_at' => $this->message->delivered_at,
-            'seen_at' => $this->message->seen_at,
+            'edited_at' => $this->message->edited_at?->toDateTimeString(),
+'delivered_at' => $this->message->delivered_at?->toDateTimeString(),
+'seen_at' => $this->message->seen_at?->toDateTimeString(),
             'link_preview' => $this->message->linkPreview,
-            'visible_to' => $this->message->visible_to,
+              'is_edited'  => true,                                          // ← added
+            'is_deleted' => (bool) $this->message->deleted_for_everyone,   // ← added
+            'reply_to'   => $this->message->reply_to,    
+
         ]
     ];
 }
