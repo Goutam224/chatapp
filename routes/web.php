@@ -222,7 +222,7 @@ Route::post('/messages/mark-all-delivered', [ChatController::class, 'markAllDeli
 Route::post('/broadcasting/auth/debug', function (Request $request) {
     $webUser = \Illuminate\Support\Facades\Auth::guard('web')->user();
     $sessionUserId = $request->session()->get('login_web_59ba36addc2b2f9401580f014c7f58ea4e30989d');
-    
+
     return response()->json([
         'has_session'      => $request->hasSession(),
         'session_keys'     => $request->hasSession() ? array_keys($request->session()->all()) : [],
@@ -235,49 +235,6 @@ Route::post('/broadcasting/auth/debug', function (Request $request) {
     ]);
 })->middleware(['web']);
 
-
-Route::post('/broadcasting/auth', function (Request $request) {
-
-    $user = null;
-
-    // ── Priority 1: Bearer token (external apps / Reverb Lab) ──
-    if ($request->bearerToken()) {
-        $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken(
-            $request->bearerToken()
-        );
-        if ($accessToken) {
-            $user = $accessToken->tokenable;
-        }
-    }
-
-    // ── Priority 2: Laravel web guard (OTP browser users) ──
-    // This reads the login_web_xxx session key automatically
-    if (!$user) {
-        $user = \Illuminate\Support\Facades\Auth::guard('web')->user();
-    }
-
-    // ── Priority 3: auth_token session key (fallback) ──
-    if (!$user) {
-        $sessionToken = $request->session()->get('auth_token');
-        if ($sessionToken) {
-            $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken(
-                $sessionToken
-            );
-            if ($accessToken) {
-                $user = $accessToken->tokenable;
-            }
-        }
-    }
-
-    if (!$user) {
-        return response()->json(['error' => 'Unauthorized'], 403);
-    }
-
-    \Illuminate\Support\Facades\Auth::login($user);
-
-    return \Illuminate\Support\Facades\Broadcast::auth($request);
-
-})->middleware(['web']);
 
 Route::get('/reverblab', function () {
     return view('reverblab');

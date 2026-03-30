@@ -16,9 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         health: '/up',
     )->withBroadcasting(
-        __DIR__.'/../routes/channels.php',
-        ['middleware' => ['web']]
-    )
+    __DIR__.'/../routes/channels.php',
+    ['middleware' => ['web', \App\Http\Middleware\SetAuthUserForBroadcasting::class]]
+)
 
 
 ->withMiddleware(function (Middleware $middleware): void {
