@@ -217,7 +217,9 @@ Route::post('/messages/mark-all-delivered', [ChatController::class, 'markAllDeli
 
        Route::post('/message/seen/{id}', [ChatController::class, 'markSeen']);
 Route::post('/message/edit/{message}', [App\Http\Controllers\ChatController::class, 'edit']);
+Route::post('/message/delete/everyone/{id}', [ChatController::class, 'deleteForEveryone']);
 
+Route::post('/message/delivered/{id}', [ChatController::class, 'markDelivered']);
 
 });
 
@@ -244,11 +246,9 @@ Route::get('/reverblab', function () {
     return view('reverblab');
 })->middleware(['web']);
 
-Route::post('/message/delivered/{id}', [ChatController::class, 'markDelivered']);
 
 
 
-Route::post('/message/delete/everyone/{id}', [ChatController::class, 'deleteForEveryone']);
 
 Route::post('/message/delete/me/{id}', [ChatController::class, 'deleteForMe']);
 
