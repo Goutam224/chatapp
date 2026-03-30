@@ -1220,54 +1220,82 @@ public function markAllDelivered()
 
     return response()->json(['success' => true]);
 }
+
+
 public function markDelivered($id)
 {
+    $authId = $this->getAuthId();
     $message = Message::find($id);
 
     if (!$message) {
-        return response()->json([
-            'success' => false,
-            'error'   => 'Message not found'
-        ], 404);
+        return response()->json(['success' => false, 'error' => 'Message not found'], 404);
     }
 
     if ($message->delivered_at) {
-        return response()->json([
-            'success' => false,
-            'error'   => 'Already delivered'
-        ], 200);
+        return response()->json(['success' => false, 'error' => 'Already delivered'], 200);
+    }
+
+    // ✅ only receiver can mark delivered
+    if ($message->sender_id === $authId) {
+        return response()->json(['success' => false, 'error' => 'Sender cannot mark own message'], 403);
     }
 
     $message->delivered_at = now();
     $message->save();
-    broadcast(new MessageSent($message))->toOthers();
 
-    return response()->json(['success' => true]);
+    // ✅ fire correct event — notifies sender their message was delivered
+ broadcast(new \App\Events\MessageDelivered(
+    $message->id,
+    $message->chat_id,
+    $authId,
+    $message->sender_id,
+    $message->delivered_at->toDateTimeString()
+))->toOthers();
+
+    return response()->json([
+        'success'      => true,
+        'message_id'   => $message->id,
+       'delivered_at' => $message->delivered_at->toDateTimeString(),
+    ]);
 }
 
 public function markSeen($id)
 {
+    $authId = $this->getAuthId();
+    if (!$authId) {
+        return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
+    }
     $message = Message::find($id);
 
     if (!$message) {
-        return response()->json([
-            'success' => false,
-            'error'   => 'Message not found'
-        ], 404);
+        return response()->json(['success' => false, 'error' => 'Message not found'], 404);
     }
 
     if ($message->seen_at) {
-        return response()->json([
-            'success' => false,
-            'error'   => 'Already seen'
-        ], 200);
+        return response()->json(['success' => false, 'error' => 'Already seen'], 200);
+    }
+
+    // ✅ only receiver can mark seen
+    if ($message->sender_id === $authId) {
+        return response()->json(['success' => false, 'error' => 'Sender cannot mark own message'], 403);
     }
 
     $message->seen_at = now();
     $message->save();
-    broadcast(new MessageSent($message))->toOthers();
 
-    return response()->json(['success' => true]);
+    // ✅ fire correct event — notifies sender their message was seen
+    broadcast(new \App\Events\MessageSeen(
+        $message->id,
+        $message->chat_id,
+        $authId,
+             $message->sender_id,
+        $message->seen_at->toDateTimeString()
+    ));
+
+    return response()->json([
+        'success'    => true,
+        'message_id' => $message->id,
+        'seen_at'    => $message->seen_at->toDateTimeString(),
+    ]);
 }
-
 }
