@@ -35,7 +35,7 @@ window.ChatSystem = {
 
             // Always query fresh from DOM — do not rely on stale chatItem reference
             let existingItem = document.querySelector(`.chat-item[data-chat-id="${message.chat_id}"]`);
-            
+
 
             if (!existingItem) {
                 // Only rebuild if I am the RECEIVER (not sender)
@@ -653,7 +653,45 @@ channel.listen('.message.edited', (e) => {
                 ChatSystem.listenSidebar(message.chat_id, newItem);
                 markDelivered(message.id);
                 updateUnreadFilterCount();
-            });
+            })
+
+
+    // ✅ ADD THIS — update tick to double grey when delivered
+    .listen('.message.delivered', (e) => {
+        const container = document.getElementById('chat-messages');
+        if (!container) return;
+
+        const bubble = container.querySelector(`[data-id="${e.message_id}"]`);
+        if (!bubble) return;
+
+        const timeDiv = bubble.querySelector('.time');
+        if (!timeDiv) return;
+
+        // Only update if currently single tick
+        if (!timeDiv.innerHTML.includes('✔✔')) {
+            timeDiv.innerHTML = timeDiv.innerHTML.replace('✔', '✔✔');
+        }
+    })
+
+    // ✅ ADD THIS — update tick to double blue when seen
+    .listen('.message.seen', (e) => {
+        const container = document.getElementById('chat-messages');
+        if (!container) return;
+
+        const bubble = container.querySelector(`[data-id="${e.message_id}"]`);
+        if (!bubble) return;
+
+        const timeDiv = bubble.querySelector('.time');
+        if (!timeDiv) return;
+
+        // Replace any tick with blue double tick
+        if (!timeDiv.innerHTML.includes('#53bdeb')) {
+            timeDiv.innerHTML = timeDiv.innerHTML.replace(
+                /✔✔|✔/,
+                '<span style="color:#53bdeb">✔✔</span>'
+            );
+        }
+    });
     },
 
     /*

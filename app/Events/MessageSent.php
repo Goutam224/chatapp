@@ -58,6 +58,8 @@ class MessageSent implements ShouldBroadcastNow
     // sender already has message from API response
     // chat channel removed — prevents sender seeing their own event
     return [
+         // ✅ chat channel — for dashboard sidebar and chat window (existing UI)
+    new PrivateChannel('chat.' . $this->message->chat_id),
         new PrivateChannel('user.messages.' . $this->receiverId),
     ];
 }

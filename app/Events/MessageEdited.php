@@ -33,14 +33,19 @@ public function broadcastWith()
             'chat_id' => $this->message->chat_id,
             'sender_id' => $this->message->sender_id,
             'message' => $this->message->message,
-
-            'edited_at' => $this->message->edited_at?->toDateTimeString(),
-'delivered_at' => $this->message->delivered_at?->toDateTimeString(),
-'seen_at' => $this->message->seen_at?->toDateTimeString(),
+            'edited_at'    => $this->message->edited_at
+                                ? \Carbon\Carbon::parse($this->message->edited_at)->toDateTimeString()
+                                : null,
+            'delivered_at' => $this->message->delivered_at
+                                ? \Carbon\Carbon::parse($this->message->delivered_at)->toDateTimeString()
+                                : null,
+            'seen_at'      => $this->message->seen_at
+                                ? \Carbon\Carbon::parse($this->message->seen_at)->toDateTimeString()
+                                : null,
             'link_preview' => $this->message->linkPreview,
               'is_edited'  => true,                                          // ← added
             'is_deleted' => (bool) $this->message->deleted_for_everyone,   // ← added
-            'reply_to'   => $this->message->reply_to,    
+            'reply_to'   => $this->message->reply_to,
 
         ]
     ];
