@@ -712,7 +712,26 @@ channel.listen('.message.edited', (e) => {
 
         this.chatChannel = window.EchoInstance.private('chat.' + chatId);
 
-        this.chatChannel.listen('.message.sent',   (e) => handleMessageSent(e));
+      this.chatChannel.listen('.message.sent', (e) => {
+
+    handleMessageSent(e);
+
+    // ✅ mark message seen if chat is currently open
+    if (window.currentChatId == e.message.chat_id &&
+        e.message.sender_id != window.AUTH_USER_ID) {
+
+        fetch('/message/seen/' + e.message.id, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin'
+        });
+
+    }
+
+});
         this.chatChannel.listen('.message.edited',  (e) => handleMessageEdited(e));
         this.chatChannel.listen('.message.deleted', (e) => handleMessageDeleted(e));
         this.chatChannel.listen('.user.typing',     (e) => handleTypingEvent(e.userId, chatId));
