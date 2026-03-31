@@ -514,8 +514,7 @@ public function open(Chat $chat)
         $iBlocked      = $blocks->contains(fn($b) => $b->blocker_id == $authId && $b->blocked_id == $otherParticipant->user_id);
         $blockTime     = null;
     }
-
-    if (!$theyBlockedMe && request()->has('mark_seen')) {
+if (false && !$theyBlockedMe && request()->has('mark_seen')) {
 
         $clearBoundary = \App\Models\ClearedChat::where('chat_id', $chat->id)
             ->where('user_id', $authId)
