@@ -892,6 +892,7 @@ if ($block) {
 
     return response()->json($message);
 }
+
 public function deleteForEveryone($id)
 {
     $message = Message::find($id);
@@ -1102,6 +1103,14 @@ public function info($id)
             $media = $message->media;
         }
 
+        // FIX: hide original text if message deleted
+$messageText = $message->deleted_for_everyone ? null : $message->message;
+
+// FIX: correct file extension for text messages
+$fileExt = $media?->file_name
+    ? strtoupper(pathinfo($media->file_name, PATHINFO_EXTENSION))
+    : null;
+
         return response()->json([
             'success' => true,
 
@@ -1115,8 +1124,8 @@ public function info($id)
             'media'        => $media,
             'file_name'    => $media?->file_name,
             'file_size'    => $media?->file_size ?? $media?->size,
-            'file_ext'     => $media?->file_name ? strtoupper(pathinfo($media->file_name, PATHINFO_EXTENSION)) : 'FILE',
-            'message'      => $message->message,
+           'file_ext' => $fileExt,
+'message'  => $messageText,
             'reply_to' => $message->reply_to,
             'time'         => $msgDate->format('g:i A'),
             'date_label'   => $label,
