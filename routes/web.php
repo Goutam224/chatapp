@@ -221,6 +221,8 @@ Route::post('/message/delete/everyone/{id}', [ChatController::class, 'deleteForE
 
 Route::post('/message/delivered/{id}', [ChatController::class, 'markDelivered']);
 
+Route::post('/message/delete/me/{id}', [ChatController::class, 'deleteForMe']);
+
 });
 
 
@@ -250,7 +252,6 @@ Route::get('/reverblab', function () {
 
 
 
-Route::post('/message/delete/me/{id}', [ChatController::class, 'deleteForMe']);
 
 Route::post('/user/update-last-seen', function () {
     $user = \App\Helpers\AuthHelper::user();

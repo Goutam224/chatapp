@@ -1124,7 +1124,7 @@ $fileExt = $media?->file_name
             'media'        => $media,
             'file_name'    => $media?->file_name,
             'file_size'    => $media?->file_size ?? $media?->size,
-           'file_ext' => $fileExt,
+            'file_ext' => $fileExt,
 'message'  => $messageText,
             'reply_to' => $message->reply_to,
             'time'         => $msgDate->format('g:i A'),
@@ -1196,7 +1196,10 @@ public function markAllDelivered()
         })
         ->get();
 
-    if ($messages->isEmpty()) return response()->json(['success' => true]);
+   if ($messages->isEmpty()) return response()->json([
+    'success' => true,
+    'updated' => 0
+]);
 
     $senderIds  = $messages->pluck('sender_id')->unique()->toArray();
     $msgChatIds = $messages->pluck('chat_id')->unique()->toArray();
@@ -1216,6 +1219,7 @@ public function markAllDelivered()
     $clearBoundaries = \App\Models\ClearedChat::where('user_id', $authId)
         ->whereIn('chat_id', $msgChatIds)
         ->pluck('cleared_at', 'chat_id');
+$updated = 0;
 
     foreach ($messages as $msg) {
         if (in_array($msg->sender_id, $theyBlockedMeIds)) continue;
@@ -1224,10 +1228,20 @@ public function markAllDelivered()
         if ($boundary && $msg->created_at <= $boundary) continue;
         $msg->delivered_at = now();
         $msg->save();
-        broadcast(new \App\Events\MessageSent($msg))->toOthers();
+        $updated++;
+       broadcast(new \App\Events\MessageDelivered(
+    $msg->id,
+    $msg->chat_id,
+    $authId,
+    $msg->sender_id,
+    $msg->delivered_at->toDateTimeString()
+))->toOthers();
     }
 
-    return response()->json(['success' => true]);
+   return response()->json([
+    'success' => true,
+    'updated' => $updated
+]);
 }
 
 
