@@ -170,7 +170,7 @@ const badge = item.querySelector('.unread-count');
 if(badge){
     badge.remove();
 }
-    updateUnreadFilterCount(); 
+    updateUnreadFilterCount();
 }
 
 /*
@@ -231,7 +231,7 @@ function formatMessageDate(dateString) {
 */
 function loadMessages(chatId, item) {
     $.ajax({
-        url: '/chat/' + chatId + '?mark_seen=1',
+        url: '/chat/' + chatId,
         method: 'GET',
         success: function(data) {
             window.theyBlockedMe = data.they_blocked_me ?? false;
@@ -342,6 +342,30 @@ if(msg.reply.media){
 </div>
 </div>`;
             });
+
+            // ✅ Mark messages as seen
+if (data.messages && data.messages.length) {
+
+    data.messages.forEach(msg => {
+
+        const isMine = msg.sender_id == window.AUTH_USER_ID;
+
+        if (!isMine && !msg.seen_at) {
+
+            fetch('/message/seen/' + msg.id, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin'
+            });
+
+        }
+
+    });
+
+}
 
             container.innerHTML = `
 <div class="chat-header" style="display:flex;align-items:center;gap:10px;padding:10px;">
@@ -810,7 +834,7 @@ if(window.pinnedMessages){
 }
 
         }
-        
+
     });
 const senderChatItem = document.querySelector(`.chat-item[data-chat-id="${window.currentChatId}"]`);
 if(senderChatItem){
