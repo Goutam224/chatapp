@@ -1057,6 +1057,7 @@ public function deleteForMe($id)
         'chat_id' => $message->chat_id,
         'deleted_by' => $userId,
         'user_id' => $userId,
+        'deleted_at'  => $message->deleted_at,
         'server_time' => now()
 
     ]);

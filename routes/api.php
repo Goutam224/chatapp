@@ -248,8 +248,8 @@ Route::post('/typing', [TypingController::class, 'typing']); //done
     |
     */
     Route::post('/message/edit/{message}',            [\App\Http\Controllers\ChatController::class, 'edit']);  //done
-    Route::post('/message/delete/everyone/{id}',      [ChatController::class, 'deleteForEveryone']);
-    Route::post('/message/delete/me/{id}',            [ChatController::class, 'deleteForMe']);
+    Route::post('/message/delete/everyone/{id}',      [ChatController::class, 'deleteForEveryone']); //done
+    Route::post('/message/delete/me/{id}',            [ChatController::class, 'deleteForMe']); //done
     Route::get('/message/info/{id}',                  [ChatController::class, 'info']);
 
 
