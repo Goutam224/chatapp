@@ -307,8 +307,8 @@ Route::post('/typing', [TypingController::class, 'typing']); //done
     | Fires event → MessagePinned on private-chat.{id}
     |
     */
-    Route::post('/chat/pin-message',   [PinMessageController::class, 'pin']);
-    Route::post('/chat/unpin-message', [PinMessageController::class, 'unpin']);
+    Route::post('/chat/pin-message',   [PinMessageController::class, 'pin']);  //done
+    Route::post('/chat/unpin-message', [PinMessageController::class, 'unpin']); //done
 
 
     /*

@@ -198,9 +198,9 @@ Route::post('/media/send', [App\Http\Controllers\MediaController::class, 'send']
     Route::get('/message/info/{id}', [ChatController::class,'info']);  //done
 
 
-Route::post('/chat/pin-message',[PinMessageController::class,'pin']);
+Route::post('/chat/pin-message',[PinMessageController::class,'pin']);  //done
 
-Route::post('/chat/unpin-message',[PinMessageController::class,'unpin']);
+Route::post('/chat/unpin-message',[PinMessageController::class,'unpin']); //done
 
 Route::post('/message/star',[StarredMessageController::class,'star']);
 Route::post('/message/unstar',[StarredMessageController::class,'unstar']);

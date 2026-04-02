@@ -14,11 +14,27 @@ public function pin(Request $request)
 
     $authId = $this->getAuthId();
 
-    $request->validate([
-        'message_id' => 'required|exists:messages,id'
-    ]);
+   if (!$request->message_id || !\App\Models\Message::where('id', $request->message_id)->exists()) {
+    return response()->json([
+        'success' => false,
+        'error'   => 'Message not found',
+        'message_id' => $request->message_id
+    ], 404);
+}
 
     $message = Message::findOrFail($request->message_id);
+
+    $participant = \App\Models\ChatParticipant::where('chat_id', $message->chat_id)
+    ->where('user_id', $authId)
+    ->exists();
+
+if (!$participant) {
+    return response()->json([
+        'success' => false,
+        'error'   => 'Unauthorized',
+        'message_id' => $message->id
+    ], 403);
+}
 
     $exists = PinnedMessage::where('message_id',$message->id)
         ->where('user_id',$authId)
@@ -41,11 +57,13 @@ if($pinCount >= 3){
         'oldest_id' => $oldest->message_id
     ]);
 }
-    if($exists){
-        return response()->json([
-            'success'=>false
-        ]);
-    }
+   if($exists){
+    return response()->json([
+        'success'    => false,
+        'error'      => 'Message already pinned',
+        'message_id' => $message->id
+    ], 409);
+}
 
     PinnedMessage::create([
         'message_id'=>$message->id,
@@ -60,14 +78,22 @@ if($pinCount >= 3){
     'sender_id' => $authId,
     'message'   => 'You pinned a message',
     'type'      => 'system',
-    'visible_to'=> [$authId], 
+    'visible_to'=> [$authId],
     'sent_at'   => now()
 ]);
 
-    return response()->json([
-        'success'=>true,
-        'message_id'=>$message->id
-    ]);
+   $pinned = PinnedMessage::where('message_id', $message->id)
+    ->where('user_id', $authId)
+    ->first();
+
+
+return response()->json([
+    'success'    => true,
+    'message_id' => $message->id,
+    'chat_id'    => $message->chat_id,
+    'pinned_at'  => $pinned->pinned_at
+]);
+
 }
 
 public function unpin(Request $request)
@@ -79,14 +105,50 @@ public function unpin(Request $request)
         'message_id'=>'required'
     ]);
 
+     // ✅ ADD THIS — check message exists first
+    $message = \App\Models\Message::find($request->message_id);
+    if (!$message) {
+        return response()->json([
+            'success'    => false,
+            'error'      => 'Message not found',
+            'message_id' => $request->message_id
+        ], 404);
+    }
+
+    // ✅ ADD THIS — participant check
+    $participant = \App\Models\ChatParticipant::where('chat_id', $message->chat_id)
+        ->where('user_id', $authId)
+        ->exists();
+
+    if (!$participant) {
+        return response()->json([
+            'success'    => false,
+            'error'      => 'Unauthorized',
+            'message_id' => $request->message_id
+        ], 403);
+    }
+    
+    $exists = PinnedMessage::where('message_id', $request->message_id)
+        ->where('user_id', $authId)
+        ->exists();
+
+    if (!$exists) {
+        return response()->json([
+            'success' => false,
+            'error'   => 'Message not pinned',
+            'message_id' => $request->message_id
+        ], 404);
+    }
+
+
     PinnedMessage::where('message_id',$request->message_id)
         ->where('user_id',$authId)
         ->delete();
 
-    return response()->json([
-        'success'=>true
-    ]);
-
+  return response()->json([
+    'success'    => true,
+    'message_id' => $request->message_id
+]);
 }
 
 }
