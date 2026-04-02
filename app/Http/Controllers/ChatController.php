@@ -1082,6 +1082,11 @@ public function info($id)
                 'error' => 'Unauthorized access'
             ], 403);
         }
+$deletedUsers = $message->deleted_for_users ?? [];
+if (!is_array($deletedUsers)) {
+    $deletedUsers = json_decode($deletedUsers, true) ?? [];
+}
+$deletedForMe = in_array($userId, $deletedUsers);
 
         $msgDate = \Carbon\Carbon::parse($message->created_at);
 
@@ -1105,7 +1110,7 @@ public function info($id)
         }
 
         // FIX: hide original text if message deleted
-$messageText = $message->deleted_for_everyone ? null : $message->message;
+  $messageText = ($message->deleted_for_everyone || $deletedForMe) ? null : $message->message;
 
 // FIX: correct file extension for text messages
 $fileExt = $media?->file_name
@@ -1139,7 +1144,7 @@ $fileExt = $media?->file_name
             // additional useful message states
             'edited_at' => $message->edited_at,
             'deleted_for_everyone' => (bool) $message->deleted_for_everyone,
-
+            'deleted_for_me'       => $deletedForMe,
             // server time for client sync
             'server_time' => now()->toISOString()
 

@@ -193,7 +193,7 @@ Route::post('/media/send', [App\Http\Controllers\MediaController::class, 'send']
 
     Route::get('/user/shared/{userId}', [SharedMediaController::class, 'index']);
 
-    Route::get('/message/info/{id}', [ChatController::class,'info']);
+    Route::get('/message/info/{id}', [ChatController::class,'info']);  //done
 
 
 Route::post('/chat/pin-message',[PinMessageController::class,'pin']);
