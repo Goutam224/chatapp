@@ -164,7 +164,7 @@ Route::post('/download/status/batch', [DownloadSessionController::class, 'batchS
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/chats', [ChatController::class, 'list']);
+    Route::get('/chats', [ChatController::class, 'list']); //done
 Route::get('/chat/search', [ChatSearchController::class, 'search']);
 Route::get('/chat/load-around/{messageId}', [ChatController::class,'loadAroundMessage']);
 
@@ -175,14 +175,14 @@ Route::post('/chat/unpin',[PinChatController::class,'unpin']);
 Route::get('/chat/pinned',[PinChatController::class,'list']);
 
 
-    Route::get('/chat/{chat}', [ChatController::class, 'open']);
+    Route::get('/chat/{chat}', [ChatController::class, 'open']); //done
 
-    Route::post('/message/send', [ChatController::class, 'send']);
+    Route::post('/message/send', [ChatController::class, 'send']);  //done
 
-    Route::get('/users', [ChatController::class, 'users']);
+    Route::get('/users', [ChatController::class, 'users']);  //done
 
-    Route::post('/chat/create', [ChatController::class, 'create']);
-Route::get('/chat/{chat}/more', [ChatController::class, 'loadMore']);
+    Route::post('/chat/create', [ChatController::class, 'create']);    //done
+Route::get('/chat/{chat}/more', [ChatController::class, 'loadMore']);  //done
 Route::post('/typing', [TypingController::class, 'typing']);
 
 Route::post('/media/send', [App\Http\Controllers\MediaController::class, 'send']);
@@ -213,13 +213,13 @@ Route::post('/chat/clear',[ClearChatController::class,'clear']);
 
 Route::post('/chat/delete', [DeleteChatController::class,'delete']);
 
-Route::post('/messages/mark-all-delivered', [ChatController::class, 'markAllDelivered']);
+Route::post('/messages/mark-all-delivered', [ChatController::class, 'markAllDelivered']); //done
 
-       Route::post('/message/seen/{id}', [ChatController::class, 'markSeen']);
+       Route::post('/message/seen/{id}', [ChatController::class, 'markSeen']); //done
 Route::post('/message/edit/{message}', [App\Http\Controllers\ChatController::class, 'edit']);
 Route::post('/message/delete/everyone/{id}', [ChatController::class, 'deleteForEveryone']);
 
-Route::post('/message/delivered/{id}', [ChatController::class, 'markDelivered']);
+Route::post('/message/delivered/{id}', [ChatController::class, 'markDelivered']);  //done
 
 Route::post('/message/delete/me/{id}', [ChatController::class, 'deleteForMe']);
 

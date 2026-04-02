@@ -14,7 +14,7 @@ class UserTyping implements ShouldBroadcastNow
     {
         $this->chatId = $chatId;
         $this->userId = $userId;
-        
+
         Log::info('UserTyping event created', [
             'chat_id' => $chatId,
             'user_id' => $userId
@@ -55,7 +55,7 @@ public function broadcastOn()
 
     Log::info('Broadcasting typing on channel: ' . $channel);
 
-    return new PrivateChannel($channel);
+   return [new PrivateChannel($channel)];
 }
 
    public function broadcastAs()

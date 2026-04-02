@@ -79,7 +79,7 @@ Route::middleware(['auth.session'])->group(function () {
     | Response: [{ "id": 1, "name": "John", "photo": "..." }, ...]
     |
     */
-    Route::get('/users', [ChatController::class, 'users']);
+    Route::get('/users', [ChatController::class, 'users']); //done
 
 
     /*
@@ -94,7 +94,7 @@ Route::middleware(['auth.session'])->group(function () {
     | Response: { "chat_id": 54, "created": true }
     |
     */
-    Route::post('/chat/create', [ChatController::class, 'create']);
+    Route::post('/chat/create', [ChatController::class, 'create']);  //done
 
 
     /*
@@ -112,7 +112,7 @@ Route::middleware(['auth.session'])->group(function () {
     | Fires event → MessageSent on private-chat.54
     |
     */
-    Route::post('/message/send', [ChatController::class, 'send']);
+    Route::post('/message/send', [ChatController::class, 'send']);  //done
 
 
     /*
@@ -126,7 +126,7 @@ Route::middleware(['auth.session'])->group(function () {
     | Response: { "chat": {...}, "messages": [...], "participants": [...] }
     |
     */
-    Route::get('/chat/{chat}', [ChatController::class, 'open']);
+    Route::get('/chat/{chat}', [ChatController::class, 'open']); //done
 
 
     /*
@@ -140,7 +140,7 @@ Route::middleware(['auth.session'])->group(function () {
     | Response: [{ "chat_id": 54, "last_message": "Hello!", "unread_count": 2, ... }]
     |
     */
-    Route::get('/chats', [ChatController::class, 'list']);
+    Route::get('/chats', [ChatController::class, 'list']); //done
 
 
     /*
@@ -154,13 +154,13 @@ Route::middleware(['auth.session'])->group(function () {
     | Response: { "messages": [...], "has_more": true }
     |
     */
-    Route::get('/chat/{chat}/more', [ChatController::class, 'loadMore']);
+    Route::get('/chat/{chat}/more', [ChatController::class, 'loadMore']); //done
 
 
     /*
     |--------------------------------------------------------------------------
     | STEP 7 — MARK MESSAGE DELIVERED
-    | Tell the sender their message was delivered to you
+    | Tell the sender their message was delivered to you after online
     |--------------------------------------------------------------------------
     |
     | POST /message/delivered/{message_id}
@@ -170,7 +170,7 @@ Route::middleware(['auth.session'])->group(function () {
     | Fires event → MessageSent (with delivered_at updated) on private-chat.{id}
     |
     */
-   Route::post('/message/delivered/{id}', [ChatController::class, 'markDelivered']);
+   Route::post('/message/delivered/{id}', [ChatController::class, 'markDelivered']);  //done
 
 
     /*
@@ -187,7 +187,7 @@ Route::middleware(['auth.session'])->group(function () {
     |
     */
 
-       Route::post('/message/seen/{id}', [ChatController::class, 'markSeen']);
+       Route::post('/message/seen/{id}', [ChatController::class, 'markSeen']);  //done
 
 
 
@@ -203,7 +203,7 @@ Route::middleware(['auth.session'])->group(function () {
     | Response: { "success": true }
     |
     */
-    Route::post('/messages/mark-all-delivered', [ChatController::class, 'markAllDelivered']);
+    Route::post('/messages/mark-all-delivered', [ChatController::class, 'markAllDelivered']); //done
 
 
     /*
