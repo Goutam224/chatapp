@@ -387,7 +387,7 @@ public function create(Request $request)
     if (!$otherUser) {
         return response()->json(['success' => false, 'error' => 'User not found'], 404);
     }
-
+$existing = true;
     $chat = Chat::where('type', 'private')
         ->whereHas('participants', function($q) use ($authId) { $q->where('user_id', $authId); })
         ->whereHas('participants', function($q) use ($otherId) { $q->where('user_id', $otherId); })
@@ -395,6 +395,7 @@ public function create(Request $request)
         ->first();
 
     if (!$chat) {
+        $existing = false;
        $chat = Chat::create(['type' => 'private', 'created_by' => $authId]);
 
 ChatParticipant::create([
@@ -410,7 +411,7 @@ if ($authId != $otherId) {
 }
     }
 
-    return response()->json(['success' => true, 'id' => $chat->id]);
+   return response()->json(['success' => true, 'id' => $chat->id, 'existing' => $existing]);
 }
 
 // =========================================================
