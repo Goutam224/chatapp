@@ -263,7 +263,7 @@ Route::post('/typing', [TypingController::class, 'typing']); //done
     | Response: { "chats": [...], "messages": [...] }
     |
     */
-    
+
     Route::get('/chat/search', [ChatSearchController::class, 'search']);
     //does not run from backend side because message is stored in encrypted
     //form so this will be performed by frontend
@@ -279,7 +279,7 @@ Route::post('/typing', [TypingController::class, 'typing']); //done
     |
     */
     Route::get('/chat/load-around/{messageId}', [ChatController::class, 'loadAroundMessage']);
-
+  //use to jump on the message if locally search for a message that is older / used on the replyed message 
 
     /*
     |--------------------------------------------------------------------------

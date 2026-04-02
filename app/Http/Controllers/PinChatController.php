@@ -15,21 +15,38 @@ class PinChatController extends Controller
 
         $chatId = $request->chat_id;
 
+        $chatExists = \App\Models\Chat::where('id', $chatId)->exists();
+if (!$chatExists) {
+    return response()->json([
+        'success' => false,
+        'error'   => 'Chat not found',
+        'chat_id' => $chatId
+    ], 404);
+}
+
    $count = PinnedChat::where('user_id',$userId)->count();
 
 $alreadyPinned = PinnedChat::where('user_id',$userId)
     ->where('chat_id',$chatId)
     ->exists();
 
+ if ($alreadyPinned) {
+            return response()->json([
+                'success' => false,
+                'error'   => 'Chat already pinned',
+                'chat_id' => $chatId
+            ], 409);
+        }
+
 if(!$alreadyPinned && $count >= 3){
 
             return response()->json([
                 'success'=>false,
-                'message'=>'Maximum 3 chats can be pinned'
-            ]);
+                'error'=>'Maximum 3 chats can be pinned'
+            ],422);
         }
 
-        PinnedChat::updateOrCreate(
+      $pinned=PinnedChat::updateOrCreate(
             [
                 'user_id'=>$userId,
                 'chat_id'=>$chatId
@@ -40,7 +57,9 @@ if(!$alreadyPinned && $count >= 3){
         );
 
         return response()->json([
-            'success'=>true
+            'success'   => true,
+            'chat_id'   => $chatId,
+            'pinned_at' => $pinned->pinned_at
         ]);
 
     }
@@ -49,14 +68,29 @@ if(!$alreadyPinned && $count >= 3){
     {
 
         $userId = $this->getAuthId();
+ $chatId = $request->chat_id;
+         $exists = PinnedChat::where('user_id', $userId)
+            ->where('chat_id', $chatId)
+            ->exists();
+
+
+             if (!$exists) {
+        return response()->json([
+            'success' => false,
+            'error'   => 'Chat not pinned',
+            'chat_id' => $chatId
+        ], 404);
+    }
 
         PinnedChat::where('user_id',$userId)
             ->where('chat_id',$request->chat_id)
             ->delete();
 
         return response()->json([
-            'success'=>true
+            'success' => true,
+            'chat_id' => $chatId
         ]);
+
 
     }
 
