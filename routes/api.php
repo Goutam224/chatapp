@@ -310,7 +310,7 @@ Route::post('/typing', [TypingController::class, 'typing']); //done
     Route::post('/chat/pin-message',   [PinMessageController::class, 'pin']);  //done
     Route::post('/chat/unpin-message', [PinMessageController::class, 'unpin']); //done
 
-
+Route::get('/chat/{chat}/pinned-messages', [PinMessageController::class, 'pinnedList']);
     /*
     |--------------------------------------------------------------------------
     | STARRED MESSAGES

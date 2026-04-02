@@ -202,6 +202,8 @@ Route::post('/chat/pin-message',[PinMessageController::class,'pin']);  //done
 
 Route::post('/chat/unpin-message',[PinMessageController::class,'unpin']); //done
 
+Route::get('/chat/{chat}/pinned-messages', [PinMessageController::class, 'pinnedList']);
+
 Route::post('/message/star',[StarredMessageController::class,'star']);
 Route::post('/message/unstar',[StarredMessageController::class,'unstar']);
 

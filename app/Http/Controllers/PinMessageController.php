@@ -127,7 +127,7 @@ public function unpin(Request $request)
             'message_id' => $request->message_id
         ], 403);
     }
-    
+
     $exists = PinnedMessage::where('message_id', $request->message_id)
         ->where('user_id', $authId)
         ->exists();
@@ -149,6 +149,45 @@ public function unpin(Request $request)
     'success'    => true,
     'message_id' => $request->message_id
 ]);
+}
+
+public function pinnedList($chatId)
+{
+    $authId = $this->getAuthId();
+
+    // check participant
+    $participant = \App\Models\ChatParticipant::where('chat_id', $chatId)
+        ->where('user_id', $authId)
+        ->exists();
+
+    if (!$participant) {
+        return response()->json([
+            'success' => false,
+            'error'   => 'Unauthorized'
+        ], 403);
+    }
+
+    $pinned = PinnedMessage::where('chat_id', $chatId)
+        ->where('user_id', $authId)
+        ->orderBy('pinned_at', 'desc')
+        ->with('message')
+        ->get()
+        ->map(function ($pin) {
+            return [
+                'message_id' => $pin->message_id,
+                'chat_id'    => $pin->chat_id,
+                'message'    => $pin->message?->message,
+                'type'       => $pin->message?->type,
+                'pinned_at'  => $pin->pinned_at,
+                'pinned_by'  => $pin->user_id,
+            ];
+        });
+
+    return response()->json([
+        'success'         => true,
+        'count'           => $pinned->count(),
+        'pinned_messages' => $pinned
+    ]);
 }
 
 }
