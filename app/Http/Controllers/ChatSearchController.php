@@ -16,7 +16,7 @@ public function search(Request $request)
     $authId = $this->getAuthId();
     $query = trim($request->q);
 
-  
+
 
 $clearedChats = DB::table('cleared_chats')
     ->where('user_id', $authId)

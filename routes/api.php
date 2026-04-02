@@ -263,7 +263,10 @@ Route::post('/typing', [TypingController::class, 'typing']); //done
     | Response: { "chats": [...], "messages": [...] }
     |
     */
+    
     Route::get('/chat/search', [ChatSearchController::class, 'search']);
+    //does not run from backend side because message is stored in encrypted
+    //form so this will be performed by frontend
 
 
     /*

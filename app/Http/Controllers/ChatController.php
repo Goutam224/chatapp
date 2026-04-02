@@ -1167,6 +1167,17 @@ public function loadAroundMessage($messageId)
 
     if (!$message) return response()->json(['messages' => []]);
 
+     $participant = \App\Models\ChatParticipant::where('chat_id', $message->chat_id)
+        ->where('user_id', $authId)
+        ->exists();
+
+    if (!$participant) {
+        return response()->json([
+            'success' => false,
+            'error'   => 'Unauthorized'
+        ], 403);
+    }
+    
     $cleared = DB::table('cleared_chats')
         ->where('chat_id', $message->chat_id)
         ->where('user_id', $authId)

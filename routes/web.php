@@ -166,6 +166,8 @@ Route::post('/download/status/batch', [DownloadSessionController::class, 'batchS
 
     Route::get('/chats', [ChatController::class, 'list']); //done
 Route::get('/chat/search', [ChatSearchController::class, 'search']);
+  //does not run from backend side because message is stored in encrypted
+    //form so this will be performed by frontend
 Route::get('/chat/load-around/{messageId}', [ChatController::class,'loadAroundMessage']);
 
 
