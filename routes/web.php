@@ -172,9 +172,9 @@ Route::get('/chat/load-around/{messageId}', [ChatController::class,'loadAroundMe
 
 
 
-Route::post('/chat/pin',[PinChatController::class,'pin']);
-Route::post('/chat/unpin',[PinChatController::class,'unpin']);
-Route::get('/chat/pinned',[PinChatController::class,'list']);
+Route::post('/chat/pin',[PinChatController::class,'pin']); //done
+Route::post('/chat/unpin',[PinChatController::class,'unpin']); //done
+Route::get('/chat/pinned',[PinChatController::class,'list']); //done
 
 
     Route::get('/chat/{chat}', [ChatController::class, 'open']); //done

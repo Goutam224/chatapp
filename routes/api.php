@@ -279,7 +279,7 @@ Route::post('/typing', [TypingController::class, 'typing']); //done
     |
     */
     Route::get('/chat/load-around/{messageId}', [ChatController::class, 'loadAroundMessage']);
-  //use to jump on the message if locally search for a message that is older / used on the replyed message 
+  //use to jump on the message if locally search for a message that is older / used on the replyed message
 
     /*
     |--------------------------------------------------------------------------
@@ -291,9 +291,9 @@ Route::post('/typing', [TypingController::class, 'typing']); //done
     | GET  /chat/pinned
     |
     */
-    Route::post('/chat/pin',    [PinChatController::class, 'pin']);
-    Route::post('/chat/unpin',  [PinChatController::class, 'unpin']);
-    Route::get('/chat/pinned',  [PinChatController::class, 'list']);
+    Route::post('/chat/pin',    [PinChatController::class, 'pin']);  //done
+    Route::post('/chat/unpin',  [PinChatController::class, 'unpin']); //done
+    Route::get('/chat/pinned',  [PinChatController::class, 'list']); //done
 
 
     /*

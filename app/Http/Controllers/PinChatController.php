@@ -103,8 +103,11 @@ if(!$alreadyPinned && $count >= 3){
     ->orderBy('pinned_at', 'desc')
     ->pluck('chat_id');
 
-        return response()->json($pinned);
-
+       return response()->json([
+        'success'      => true,
+        'count'        => $pinned->count(),
+        'pinned_chats' => $pinned
+    ]);
     }
 
 }
