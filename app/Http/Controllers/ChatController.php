@@ -958,7 +958,7 @@ public function deleteForEveryone($id)
 
         \App\Models\PinnedMessage::where('message_id', $message->id)->delete();
 
-        broadcast(new \App\Events\MessageDeleted($message->id,$message->chat_id,'everyone',$this->getAuthId()));
+      broadcast(new \App\Events\MessageDeleted($message->id, $message->chat_id, 'everyone', $this->getAuthId(), $message->deleted_at));
 
       return response()->json([
     'success' => true,
@@ -978,7 +978,7 @@ public function deleteForEveryone($id)
 
     \App\Models\PinnedMessage::where('message_id', $message->id)->delete();
 
-    broadcast(new \App\Events\MessageDeleted($message->id,$message->chat_id,'everyone',$this->getAuthId()));
+   broadcast(new \App\Events\MessageDeleted($message->id, $message->chat_id, 'everyone', $this->getAuthId(), $message->deleted_at));
 
  return response()->json([
     'success' => true,

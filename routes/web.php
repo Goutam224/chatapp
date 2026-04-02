@@ -183,7 +183,7 @@ Route::get('/chat/pinned',[PinChatController::class,'list']);
 
     Route::post('/chat/create', [ChatController::class, 'create']);    //done
 Route::get('/chat/{chat}/more', [ChatController::class, 'loadMore']);  //done
-Route::post('/typing', [TypingController::class, 'typing']);
+Route::post('/typing', [TypingController::class, 'typing']);  //done
 
 Route::post('/media/send', [App\Http\Controllers\MediaController::class, 'send']);
 
@@ -216,7 +216,7 @@ Route::post('/chat/delete', [DeleteChatController::class,'delete']);
 Route::post('/messages/mark-all-delivered', [ChatController::class, 'markAllDelivered']); //done
 
        Route::post('/message/seen/{id}', [ChatController::class, 'markSeen']); //done
-Route::post('/message/edit/{message}', [App\Http\Controllers\ChatController::class, 'edit']);
+Route::post('/message/edit/{message}', [App\Http\Controllers\ChatController::class, 'edit']);  //done
 Route::post('/message/delete/everyone/{id}', [ChatController::class, 'deleteForEveryone']);
 
 Route::post('/message/delivered/{id}', [ChatController::class, 'markDelivered']);  //done

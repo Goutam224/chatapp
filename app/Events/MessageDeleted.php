@@ -12,13 +12,14 @@ class MessageDeleted implements ShouldBroadcastNow
     public $chatId;
     public $type;
     public $userId;
-
-    public function __construct($messageId, $chatId, $type, $userId)
+ public $deletedAt;
+    public function __construct($messageId, $chatId, $type, $userId,$deletedAt)
     {
         $this->messageId = $messageId;
         $this->chatId = $chatId;
         $this->type = $type;
         $this->userId = $userId;
+        $this->deletedAt = $deletedAt;
     }
 
     public function broadcastOn()
@@ -38,7 +39,8 @@ class MessageDeleted implements ShouldBroadcastNow
         'chat_id' => $this->chatId,     // new field
         'type' => $this->type,
         'user_id' => $this->userId,     // keep this (UI already uses it)
-        'deleted_by' => $this->userId   // optional alias for developers
+        'deleted_by' => $this->userId,   // optional alias for developers
+           'deleted_at' => $this->deletedAt, 
     ];
 }
 }
