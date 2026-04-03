@@ -337,7 +337,7 @@ Route::get('/chat/{chat}/pinned-messages', [PinMessageController::class, 'pinned
     | POST /chat/delete  Body: { "chat_id": 54 }  → deletes chat for me only
     |
     */
-    Route::post('/chat/clear',  [ClearChatController::class, 'clear']);
+    Route::post('/chat/clear',  [ClearChatController::class, 'clear']); //done
     Route::post('/chat/delete', [DeleteChatController::class, 'delete']);
 
 

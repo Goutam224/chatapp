@@ -212,7 +212,7 @@ Route::get('/starred-messages',[StarredMessageController::class,'list']); //done
 
 Route::post('/message/unstar-on-delete/{messageId}', [StarredMessageController::class, 'unstarOnDelete']);  //done
 
-Route::post('/chat/clear',[ClearChatController::class,'clear']);
+Route::post('/chat/clear',[ClearChatController::class,'clear']);  //done
 
 
 Route::post('/chat/delete', [DeleteChatController::class,'delete']);
