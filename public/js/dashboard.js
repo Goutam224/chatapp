@@ -9,7 +9,7 @@ fetch('/chats', {
 })
 .then(res => res.json())
 .then(data => {
-    console.log('✅ Chats API Response:', data);
+  
     window.chatsApiData = data; // ✅ available globally
 })
 .catch(err => {

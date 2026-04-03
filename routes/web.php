@@ -189,9 +189,9 @@ Route::post('/typing', [TypingController::class, 'typing']);  //done
 
 Route::post('/media/send', [App\Http\Controllers\MediaController::class, 'send']);
 
- Route::post('/block', [BlockController::class, 'block']);
-    Route::post('/unblock', [BlockController::class, 'unblock']);
-    Route::get('/block/status/{user}', [BlockController::class, 'status']);
+ Route::post('/block', [BlockController::class, 'block']); //done
+    Route::post('/unblock', [BlockController::class, 'unblock']); //done
+    Route::get('/block/status/{user}', [BlockController::class, 'status']);  //done
 
     Route::get('/user/shared/{userId}', [SharedMediaController::class, 'index']);
 

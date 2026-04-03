@@ -79,9 +79,10 @@ class BlockController extends Controller
         }
 
         return response()->json([
-            'status'  => 'blocked',
-            'message' => 'User blocked successfully.'
-        ]);
+    'status'  => 'blocked',
+    'user_id' => (int) $targetId,
+    'message' => 'User blocked successfully.'
+]);
     }
 
     public function unblock(Request $request)
@@ -138,9 +139,10 @@ class BlockController extends Controller
         ));
 
         return response()->json([
-            'status'  => 'unblocked',
-            'message' => 'User unblocked successfully.'
-        ]);
+    'status'  => 'unblocked',
+    'user_id' => (int) $targetId,
+    'message' => 'User unblocked successfully.'
+]);
     }
 
    public function status($userId)
