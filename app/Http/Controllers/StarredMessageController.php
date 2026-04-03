@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\StarredMessage;
 use App\Models\Message;
-
+use Illuminate\Validation\ValidationException;
 class StarredMessageController extends Controller
 {
 
@@ -13,32 +13,138 @@ public function star(Request $request)
 {
     $authId = $this->getAuthId();
 
+    // ✅ Authorization
+    if (!$authId) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Unauthorized.',
+        ], 401);
+    }
+
+    $request->validate([
+        'message_id' => ['required', 'integer', 'exists:messages,id'],
+    ]);
+
+    // ✅ Ensure message belongs to a chat the user is part of
+    $message = Message::find($request->message_id);
+    $isMember = $message->chat->participants()
+        ->where('user_id', $authId)
+        ->exists();
+
+    if (!$isMember) {
+        return response()->json([
+            'success' => false,
+            'message' => 'You are not authorized to star this message.',
+        ], 403);
+    }
+
+    $alreadyExists = StarredMessage::where('user_id', $authId)
+        ->where('message_id', $request->message_id)
+        ->exists();
+
+    if ($alreadyExists) {
+        return response()->json([
+            'success'         => false,
+            'already_starred' => true,
+            'message'         => 'Message is already starred.',
+        ], 409);
+    }
+
     StarredMessage::firstOrCreate([
-        'user_id' => $authId,
-        'message_id' => $request->message_id
+        'user_id'    => $authId,
+        'message_id' => $request->message_id,
     ]);
 
     return response()->json([
-        'success'=>true
-    ]);
+        'success'         => true,
+        'already_starred' => false,
+        'message'         => 'Message starred successfully.',
+    ], 201);
 }
-
 public function unstar(Request $request)
 {
     $authId = $this->getAuthId();
 
-    StarredMessage::where('user_id',$authId)
-        ->where('message_id',$request->message_id)
-        ->delete();
+    // ✅ Authorization
+    if (!$authId) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Unauthorized.',
+        ], 401);
+    }
+
+    // ✅ Validation with custom messages + your own JSON shape
+    try {
+        $request->validate([
+            'message_id' => ['required', 'integer'],
+        ]);
+    } catch (ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => collect($e->errors())->flatten()->first(),
+        ], 422);
+    }
+
+    // ✅ Check message exists first — separate from "not starred"
+    $message = Message::find($request->message_id);
+    if (!$message) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Message not found.',
+        ], 404);
+    }
+
+    // ✅ Check user is a participant of the chat — separate 403
+    $isMember = $message->chat->participants()
+        ->where('user_id', $authId)
+        ->exists();
+
+    if (!$isMember) {
+        return response()->json([
+            'success' => false,
+            'message' => 'You are not authorized to unstar this message.',
+        ], 403);
+    }
+
+    $star = StarredMessage::where('user_id', $authId)
+        ->where('message_id', $request->message_id)
+        ->first();
+
+    if (!$star) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Message is not starred.',
+        ], 404);
+    }
+
+    // ✅ Ensure only the owner of the star can unstar it
+    if ($star->user_id !== $authId) {
+        return response()->json([
+            'success' => false,
+            'message' => 'You are not authorized to unstar this message.',
+        ], 403);
+    }
+
+    $star->delete();
 
     return response()->json([
-        'success'=>true
-    ]);
+        'success' => true,
+        'message' => 'Message unstarred successfully.',
+    ], 200);
 }
 
 public function list()
 {
+
+
     $authId = $this->getAuthId();
+
+     if (!$authId) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Unauthorized.',
+        ], 401);
+    }
 
    $stars = \App\Models\StarredMessage::where('user_id', $authId)
     ->with(['message.sender', 'message.media'])
@@ -94,7 +200,9 @@ if($star->message->deleted_for_everyone) return null;
                     ],
                 ];
 
-            })->filter()->values()
+           })->filter()->values(),
+    'total'   => $stars->count(),
+    'message' => $stars->count() === 0 ? 'No starred messages found.' : 'Starred messages retrieved successfully.',
         ]);
     }
 
@@ -120,15 +228,46 @@ if($star->message->deleted_for_everyone) return null;
         'page'  => 'starred'
     ]);
 }
+
 public function unstarOnDelete($messageId)
 {
     $authId = $this->getAuthId();
 
-    StarredMessage::where('user_id', $authId)
+    // ✅ Authorization
+    if (!$authId) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Unauthorized.',
+        ], 401);
+    }
+
+    if (!is_numeric($messageId) || (int)$messageId <= 0) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid message ID.',
+        ], 422);
+    }
+
+    $message = \App\Models\Message::find($messageId);
+
+if (!$message) {
+    return response()->json([
+        'success' => false,
+        'message' => 'Message not found.',
+    ], 404);
+}
+
+    // ✅ Ensure only the user's own starred entry is deleted
+    $deleted = StarredMessage::where('user_id', $authId)
         ->where('message_id', $messageId)
         ->delete();
 
-    return response()->json(['success' => true]);
+    return response()->json([
+        'success' => true,
+        'removed' => $deleted > 0,
+        'message' => $deleted > 0
+            ? 'Starred entry removed.'
+            : 'No starred entry found for this message.',
+    ], 200);
 }
-
 }

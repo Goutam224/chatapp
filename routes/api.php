@@ -310,7 +310,7 @@ Route::post('/typing', [TypingController::class, 'typing']); //done
     Route::post('/chat/pin-message',   [PinMessageController::class, 'pin']);  //done
     Route::post('/chat/unpin-message', [PinMessageController::class, 'unpin']); //done
 
-Route::get('/chat/{chat}/pinned-messages', [PinMessageController::class, 'pinnedList']);
+Route::get('/chat/{chat}/pinned-messages', [PinMessageController::class, 'pinnedList']); //done
     /*
     |--------------------------------------------------------------------------
     | STARRED MESSAGES
@@ -322,10 +322,10 @@ Route::get('/chat/{chat}/pinned-messages', [PinMessageController::class, 'pinned
     | POST /message/unstar-on-delete/{message_id}
     |
     */
-    Route::post('/message/star',                          [StarredMessageController::class, 'star']);
-    Route::post('/message/unstar',                        [StarredMessageController::class, 'unstar']);
-    Route::get('/starred-messages',                       [StarredMessageController::class, 'list']);
-    Route::post('/message/unstar-on-delete/{messageId}',  [StarredMessageController::class, 'unstarOnDelete']);
+    Route::post('/message/star',                          [StarredMessageController::class, 'star']); //done
+    Route::post('/message/unstar',                        [StarredMessageController::class, 'unstar']); //done
+    Route::get('/starred-messages',                       [StarredMessageController::class, 'list']); //done
+    Route::post('/message/unstar-on-delete/{messageId}',  [StarredMessageController::class, 'unstarOnDelete']); //done
 
 
     /*
