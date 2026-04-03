@@ -24,7 +24,15 @@ public function show($id)
         'about',
         'profile_photo',
         'last_seen'
-    )->findOrFail($id);
+    )->find($id);
+
+
+    // ✅ Handle user not found (clean API response)
+if (!$user) {
+    return response()->json([
+        'message' => 'User not found'
+    ], 404);
+}
 
     $isBlocking = \App\Models\UserBlock::where('blocker_id', $authId)
         ->where('blocked_id', $user->id)
@@ -71,7 +79,7 @@ public function show($id)
             'about' => null,
             'profile_photo' => asset('/default.png'),
             'last_seen' => null,
-            'shared_count' => $sharedCount 
+            'shared_count' => $sharedCount
         ]);
     }
 

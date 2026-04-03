@@ -38,17 +38,13 @@ use App\Models\ChatParticipant;
 */
 
 
-Route::get('/my/profile', [MyProfileController::class, 'get']);
+
 
 Route::post('/my/profile/update', [MyProfileController::class, 'update']);
 
 Route::post('/my/profile/photo', [MyProfileController::class, 'updatePhoto']);
 
 
-Route::get(
-    '/user/profile/{id}',
-    [UserProfileController::class, 'show']
-);
 
 Route::get('/', function () {
 
@@ -92,6 +88,14 @@ Route::any('/tus/upload', [TusController::class, 'server']);
 Route::any('/tus/upload/{token}', [TusController::class, 'server']);
 
 Route::middleware(['auth.session'])->group(function () {
+
+Route::get('/my/profile', [MyProfileController::class, 'get']); //done
+
+Route::get(
+    '/user/profile/{id}',
+    [UserProfileController::class, 'show']
+);  //done
+
 
 Route::post('/tus/complete', [TusController::class, 'complete']);
 Route::post(

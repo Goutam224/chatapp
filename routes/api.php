@@ -411,10 +411,10 @@ Route::post('/user/update-last-seen', function () {
     | GET  /user/profile/{user_id}
     |
     */
-    Route::get('/my/profile',           [MyProfileController::class, 'get']);
+    Route::get('/my/profile',           [MyProfileController::class, 'get']); //done
     Route::post('/my/profile/update',   [MyProfileController::class, 'update']);
     Route::post('/my/profile/photo',    [MyProfileController::class, 'updatePhoto']);
-    Route::get('/user/profile/{id}',    [UserProfileController::class, 'show']);
+    Route::get('/user/profile/{id}',    [UserProfileController::class, 'show']);  //done
 
 
     /*
