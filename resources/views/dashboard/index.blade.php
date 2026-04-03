@@ -225,6 +225,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
 window.blockedByUsers = @json($blockedByUsers);
 window.iBlockedUsers  = @json($iBlockedUsers);
+
 </script>
 
 {{-- ✅ jQuery loaded FIRST before any script that needs it --}}

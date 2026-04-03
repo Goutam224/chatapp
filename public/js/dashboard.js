@@ -1,3 +1,22 @@
+// ✅ Chats API call — works for both session and token users
+fetch('/chats', {
+    method: 'GET',
+    headers: {
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+    },
+    credentials: 'same-origin' // ✅ sends session cookie automatically
+})
+.then(res => res.json())
+.then(data => {
+    console.log('✅ Chats API Response:', data);
+    window.chatsApiData = data; // ✅ available globally
+})
+.catch(err => {
+    console.error('❌ Chats API Error:', err);
+});
+
+
 if(window.APP_PAGE !== "starred"){
 
 window.currentChatId = null;

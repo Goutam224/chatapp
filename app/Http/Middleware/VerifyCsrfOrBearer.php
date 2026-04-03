@@ -13,7 +13,7 @@ class VerifyCsrfOrBearer extends Middleware
         'send-otp',      // ← add this
     'verify-otp',
     'auth/token',
-            'broadcasting/auth', 
+            'broadcasting/auth',
     ];
 
     public function handle($request, \Closure $next)
