@@ -338,7 +338,7 @@ Route::get('/chat/{chat}/pinned-messages', [PinMessageController::class, 'pinned
     |
     */
     Route::post('/chat/clear',  [ClearChatController::class, 'clear']); //done
-    Route::post('/chat/delete', [DeleteChatController::class, 'delete']);
+    Route::post('/chat/delete', [DeleteChatController::class, 'delete']);  //done
 
 
     /*
