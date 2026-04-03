@@ -350,7 +350,7 @@ Route::get('/chat/{chat}/pinned-messages', [PinMessageController::class, 'pinned
     | POST /unblock         Body: { "user_id": 5 }
     | GET  /block/status/5
     |
-    | Fires event → UserBlocked on private-user.{id}
+    | Fires event → UserBlocked on private-user.messages.{id}
     |
     */
     Route::post('/block',              [BlockController::class, 'block']);

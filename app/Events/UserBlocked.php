@@ -36,8 +36,14 @@ class UserBlocked implements ShouldBroadcastNow
     public function broadcastOn()
     {
         return [
+             //for dashboard 
             new PrivateChannel('user.' . $this->blockedId),
             new PrivateChannel('user.' . $this->blockerId),
+
+            //for external user api
+              new PrivateChannel('user.messages.' . $this->blockedId),
+        new PrivateChannel('user.messages.' . $this->blockerId),
+
         ];
     }
 

@@ -375,7 +375,7 @@ function renderChannels() {
 
 const EVENT_NAMES = [
   'MessageSent','MessageEdited','MessageDeleted','MessagePinned',
-  'UserTyping','UserBlocked','UserOnlineStatusUpdated',
+  'UserTyping','UserBlocked','user.blocked','UserOnlineStatusUpdated',
   'App\\Events\\MessageSent','App\\Events\\MessageEdited',
   'App\\Events\\MessageDeleted','App\\Events\\UserTyping','App\\Events\\UserBlocked'
 ];
